@@ -6,19 +6,28 @@ const DashboardPage = () => {
   const [citasHoy, setCitasHoy] = useState([]);
   const [insumosCriticos, setInsumosCriticos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const cargarDatos = async () => {
       try {
+        setError(null);
         const hoy = new Date().toISOString().split('T')[0];
-        const [citas, insumos] = await Promise.all([
+        
+        // Cargar citas y insumos en paralelo
+        const [citasResponse, insumosResponse] = await Promise.all([
           citasService.getByFecha(hoy),
           insumosService.getStockCritico()
         ]);
-        setCitasHoy(citas.data);
-        setInsumosCriticos(insumos.data);
+
+        console.log('Respuesta de citas:', citasResponse);
+        console.log('Respuesta de insumos críticos:', insumosResponse);
+        
+        setCitasHoy(Array.isArray(citasResponse.data) ? citasResponse.data : []);
+        setInsumosCriticos(insumosResponse.data);
       } catch (error) {
         console.error('Error al cargar datos:', error);
+        setError('Error al cargar los datos del dashboard');
       } finally {
         setLoading(false);
       }
@@ -29,6 +38,10 @@ const DashboardPage = () => {
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Cargando...</div>;
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center h-screen text-red-600">{error}</div>;
   }
 
   return (

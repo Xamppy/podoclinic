@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { WhatsAppProvider } from './context/WhatsAppContext';
 
 // Layouts
 import Layout from './components/layout/Layout';
@@ -9,87 +10,94 @@ import Layout from './components/layout/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import PacientesPage from './pages/PacientesPage';
-import CitasPage from './pages/CitasPage';
+import AdminCitasPage from './pages/AdminCitasPage';
 import FichaClinicaPage from './pages/FichaClinicaPage';
 import InventarioPage from './pages/InventarioPage';
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import PublicRoutes from './routes/PublicRoutes';
 
 const App = () => {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Navigate to="/dashboard" replace />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <DashboardPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/pacientes"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <PacientesPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/citas"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <CitasPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/fichas-clinicas"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <FichaClinicaPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/inventario"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <InventarioPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </Router>
+      <WhatsAppProvider>
+        <Router>
+          <Routes>
+            {/* Rutas públicas */}
+            <Route path="/*" element={<PublicRoutes />} />
+            
+            {/* Rutas protegidas del admin */}
+            <Route path="/admin/login" element={<LoginPage />} />
+            
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Navigate to="/admin/dashboard" replace />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <DashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/pacientes"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PacientesPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/citas"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminCitasPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/fichas-clinicas"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <FichaClinicaPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/inventario"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <InventarioPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Router>
+      </WhatsAppProvider>
     </AuthProvider>
   );
 };

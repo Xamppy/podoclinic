@@ -30,7 +30,7 @@ const TIPOS_TRATAMIENTO = [
   'Retiro de esmalte'
 ];
 
-const CitasPage = () => {
+const AdminCitasPage = () => {
   const [citas, setCitas] = useState([]);
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -226,4 +226,4 @@ const CitasPage = () => {
   );
 };
 
-export default CitasPage; 
+export default AdminCitasPage; 

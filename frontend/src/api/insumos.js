@@ -17,7 +17,7 @@ export const insumosService = {
   delete: (id) => api.delete(`/insumos/${id}/`),
   
   // Obtener insumos con stock crítico
-  getStockCritico: () => api.get('/insumos/stock-critico/'),
+  getStockCritico: () => api.get('/insumos/stock_critico/'),
   
   // Actualizar stock
   updateStock: (id, cantidad) => api.patch(`/insumos/${id}/stock/`, { cantidad }),

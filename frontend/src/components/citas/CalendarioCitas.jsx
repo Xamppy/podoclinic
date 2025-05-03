@@ -119,7 +119,16 @@ const CalendarioCitas = () => {
             agenda: "Agenda",
             date: "Fecha",
             time: "Hora",
-            event: "Evento"
+            event: "Evento",
+            allDay: "Todo el día",
+            work_week: "Semana laboral",
+            yesterday: "Ayer",
+            tomorrow: "Mañana",
+            noEventsInRange: "No hay eventos en este rango.",
+            showMore: total => `+ Ver más (${total})`,
+            // Personalización de los días
+            dayNames: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+            dayNamesShort: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
           }}
           culture="es"
         />
