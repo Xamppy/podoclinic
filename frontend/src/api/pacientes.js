@@ -7,8 +7,13 @@ export const pacientesService = {
   // Obtener un paciente por RUT
   getByRut: (rut) => api.get(`/pacientes/${rut}/`),
   
-  // Crear un nuevo paciente
-  create: (paciente) => api.post('/pacientes/', paciente),
+  // Crear un nuevo paciente usando el endpoint con AllowAny
+  create: (pacienteData) => {
+    console.log('Enviando datos a crear_paciente_admin:', pacienteData);
+    
+    // Usar la URL completa del endpoint en lugar de una relativa
+    return api.post('/pacientes/crear_paciente_admin/', pacienteData);
+  },
   
   // Actualizar un paciente
   update: (rut, paciente) => api.put(`/pacientes/${rut}/`, paciente),

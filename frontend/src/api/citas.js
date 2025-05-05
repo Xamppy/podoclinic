@@ -10,15 +10,42 @@ export const citasService = {
   // Obtener citas por paciente
   getByPaciente: (rut) => api.get(`/citas/?paciente=${rut}`),
   
-  // Crear una nueva cita
-  create: (cita) => api.post('/citas/', cita),
+  // Crear una nueva cita - utilizando el endpoint específico para la admin
+  create: (formData) => {
+    // Convertir los datos del formulario al formato que espera el backend
+    const backendData = {
+      paciente: formData.paciente_rut,  // ID del paciente (el backend espera 'paciente', no 'paciente_rut')
+      tratamiento: formData.tipo_tratamiento, // Tipo de tratamiento
+      fecha: formData.fecha,
+      hora: formData.hora,
+      estado: 'reservada'  // Estado por defecto
+    };
+    
+    console.log('Enviando datos a /citas/crear_cita_admin/:', backendData);
+    
+    // Usar la ruta correcta
+    return api.post('/citas/crear_cita_admin/', backendData);
+  },
   
-  // Actualizar una cita
-  update: (id, cita) => api.put(`/citas/${id}/`, cita),
+  // Actualizar una cita - Usar el endpoint específico con AllowAny permissions
+  update: (id, formData) => {
+    // Convertir los datos del formulario al formato que espera el backend
+    const backendData = {
+      paciente: formData.paciente_rut,  // ID del paciente 
+      tratamiento: formData.tipo_tratamiento, // Tipo de tratamiento
+      fecha: formData.fecha,
+      hora: formData.hora,
+      estado: formData.estado
+    };
+    
+    console.log(`Actualizando cita ${id} con datos:`, backendData);
+    
+    return api.put(`/citas/actualizar/${id}/`, backendData);
+  },
   
-  // Eliminar una cita
-  delete: (id) => api.delete(`/citas/${id}/`),
+  // Eliminar una cita - Usar el endpoint específico con AllowAny permissions
+  delete: (id) => api.delete(`/citas/eliminar/${id}/`),
   
-  // Obtener horarios disponibles
-  getHorariosDisponibles: (fecha) => api.get(`/citas/horarios-disponibles/?fecha=${fecha}`),
+  // Obtener horarios disponibles - Usando el nuevo endpoint
+  getHorariosDisponibles: (fecha) => api.get(`/citas/disponibles/?fecha=${fecha}`),
 }; 

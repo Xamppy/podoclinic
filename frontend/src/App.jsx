@@ -24,8 +24,11 @@ const App = () => {
       <WhatsAppProvider>
         <Router>
           <Routes>
+            {/* Ruta raíz redirige a admin/login */}
+            <Route path="/" element={<Navigate to="/admin/login" replace />} />
+            
             {/* Rutas públicas */}
-            <Route path="/*" element={<PublicRoutes />} />
+            <Route path="/public/*" element={<PublicRoutes />} />
             
             {/* Rutas protegidas del admin */}
             <Route path="/admin/login" element={<LoginPage />} />

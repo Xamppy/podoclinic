@@ -7,5 +7,6 @@ router.register(r'', views.PacienteViewSet)
 router.register(r'fichas', views.FichaClinicaViewSet)
 
 urlpatterns = [
+    path('crear_paciente_admin/', views.crear_paciente_admin, name='crear_paciente_admin'),
     path('', include(router.urls)),
 ]

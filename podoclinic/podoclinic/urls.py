@@ -19,6 +19,11 @@ from django.urls import path, include, re_path
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
+
+# Vista para manejar 404 en rutas de API
+def api_not_found(request):
+    return JsonResponse({'error': 'Endpoint no encontrado'}, status=404)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,8 +33,14 @@ urlpatterns = [
     path('api/usuarios/', include('usuarios.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
+# API fallback para rutas no encontradas (debe ir antes del fallback general)
+urlpatterns += [
+    re_path(r'^api/.*$', api_not_found),
+]
+
 # En producción, esto debería manejarse por el servidor web
 if settings.DEBUG:
     urlpatterns += [
-        re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
+        # Todas las demás rutas van a la SPA de React
+        re_path(r'^(?!admin/)(?!api/).*$', TemplateView.as_view(template_name='index.html')),
     ]

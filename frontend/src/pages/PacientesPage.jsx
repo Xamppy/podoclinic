@@ -15,10 +15,52 @@ const PacientesPage = () => {
     contacto_emergencia: '',
     caso_clinico: ''
   });
+  const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: 'info' });
 
   useEffect(() => {
     cargarPacientes();
   }, []);
+
+  // Función para mostrar notificaciones
+  const mostrarNotificacion = (mensaje, tipo = 'info') => {
+    // Determinar clase CSS basada en el tipo de notificación
+    let claseBase = 'fixed z-50 p-4 rounded-md shadow-lg max-w-md';
+    let claseColor;
+    
+    switch (tipo) {
+      case 'error':
+        claseColor = 'bg-red-500 text-white';
+        break;
+      case 'success':
+        claseColor = 'bg-green-500 text-white';
+        break;
+      case 'warning':
+        claseColor = 'bg-yellow-500 text-white';
+        break;
+      case 'info':
+      default:
+        claseColor = 'bg-blue-500 text-white';
+        break;
+    }
+    
+    // Crear el elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = `${claseBase} ${claseColor} top-4 right-4`;
+    notification.textContent = mensaje;
+    
+    // Añadir a la página
+    document.body.appendChild(notification);
+    
+    // Eliminar después de un tiempo
+    const duracion = tipo === 'error' ? 8000 : 3000;
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, duracion);
+    
+    return notification;
+  };
 
   const cargarPacientes = async () => {
     try {
@@ -26,6 +68,7 @@ const PacientesPage = () => {
       setPacientes(response.data);
     } catch (error) {
       console.error('Error al cargar pacientes:', error);
+      mostrarNotificacion('Error al cargar la lista de pacientes', 'error');
     } finally {
       setLoading(false);
     }
@@ -33,15 +76,28 @@ const PacientesPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (rutError) return;
+    if (rutError) {
+      mostrarNotificacion(rutError, 'error');
+      return;
+    }
 
     try {
-      await pacientesService.create({
+      // Mostrar mensaje de carga
+      const loadingMsg = mostrarNotificacion('Creando paciente...', 'info');
+      
+      const response = await pacientesService.create({
         rut,
         ...formData
       });
+      
+      // Eliminar mensaje de carga si aún existe
+      if (document.body.contains(loadingMsg)) {
+        document.body.removeChild(loadingMsg);
+      }
+      
       setShowForm(false);
-      cargarPacientes();
+      await cargarPacientes();
+      
       // Limpiar formulario
       setFormData({
         nombre: '',
@@ -51,8 +107,29 @@ const PacientesPage = () => {
         contacto_emergencia: '',
         caso_clinico: ''
       });
+      
+      mostrarNotificacion('Paciente creado exitosamente', 'success');
     } catch (error) {
       console.error('Error al crear paciente:', error);
+      
+      // Mostrar información detallada del error
+      let mensajeError = 'Error al crear el paciente';
+      
+      if (error.response) {
+        console.log('Detalles del error:', {
+          status: error.response.status,
+          headers: error.response.headers,
+          data: error.response.data
+        });
+        
+        if (error.response.data && error.response.data.error) {
+          mensajeError = error.response.data.error;
+        } else if (error.response.data && typeof error.response.data === 'string') {
+          mensajeError = error.response.data;
+        }
+      }
+      
+      mostrarNotificacion(mensajeError, 'error');
     }
   };
 
@@ -175,7 +252,7 @@ const PacientesPage = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {pacientes.map((paciente) => (
+            {pacientes.length > 0 ? pacientes.map((paciente) => (
               <tr key={paciente.rut}>
                 <td className="px-6 py-4 whitespace-nowrap">{paciente.rut}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{paciente.nombre}</td>
@@ -186,7 +263,13 @@ const PacientesPage = () => {
                   <button className="text-red-600 hover:text-red-900">Eliminar</button>
                 </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                  No hay pacientes registrados
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
