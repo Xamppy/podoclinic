@@ -4,17 +4,20 @@ import { useRut } from '../hooks/useRut';
 
 const FichaClinicaPage = () => {
   const [pacientes, setPacientes] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [fichas, setFichas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [selectedFicha, setSelectedFicha] = useState(null);
   const { rut, rutError, handleRutChange } = useRut();
 
   const [formData, setFormData] = useState({
-    descripcion: '',
+    fecha: new Date().toISOString().split('T')[0],
+    descripcion_atencion: '',
     procedimiento: '',
     indicaciones: '',
-    proxima_sesion: ''
+    proxima_sesion_estimada: ''
   });
 
   useEffect(() => {
@@ -35,11 +38,19 @@ const FichaClinicaPage = () => {
   const handlePacienteSelect = async (rut) => {
     try {
       const response = await pacientesService.getFichaClinica(rut);
-      setFichas(response.data);
+      // Ordenar fichas por fecha de más reciente a más antigua
+      const fichasOrdenadas = response.data.sort((a, b) => 
+        new Date(b.fecha) - new Date(a.fecha)
+      );
+      setFichas(fichasOrdenadas);
       setSelectedPaciente(pacientes.find(p => p.rut === rut));
     } catch (error) {
       console.error('Error al cargar fichas:', error);
     }
+  };
+
+  const handleFichaClick = (ficha) => {
+    setSelectedFicha(ficha);
   };
 
   const handleSubmit = async (e) => {
@@ -47,18 +58,43 @@ const FichaClinicaPage = () => {
     if (!selectedPaciente) return;
 
     try {
-      await pacientesService.createFichaClinica(selectedPaciente.rut, formData);
+      const fichaData = {
+        ...formData,
+        descripcion_atencion: formData.descripcion_atencion,
+        fecha: formData.fecha,
+        proxima_sesion_estimada: formData.proxima_sesion_estimada
+      };
+      
+      await pacientesService.createFichaClinica(selectedPaciente.rut, fichaData);
       setShowForm(false);
       handlePacienteSelect(selectedPaciente.rut);
       setFormData({
-        descripcion: '',
+        fecha: new Date().toISOString().split('T')[0],
+        descripcion_atencion: '',
         procedimiento: '',
         indicaciones: '',
-        proxima_sesion: ''
+        proxima_sesion_estimada: ''
       });
     } catch (error) {
       console.error('Error al crear ficha:', error);
     }
+  };
+
+  const limpiarRut = (rut) => {
+    return rut.replace(/[^0-9kK]/g, '');
+  };
+
+  const filteredPacientes = pacientes.filter(paciente => {
+    const searchTermLimpio = limpiarRut(searchTerm);
+    const rutPacienteLimpio = limpiarRut(paciente.rut);
+    
+    return paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           rutPacienteLimpio.includes(searchTermLimpio);
+  });
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('es-ES', options);
   };
 
   if (loading) {
@@ -75,8 +111,17 @@ const FichaClinicaPage = () => {
         {/* Lista de Pacientes */}
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">Pacientes</h2>
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Buscar por nombre o RUT..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
           <div className="space-y-2">
-            {pacientes.map(paciente => (
+            {filteredPacientes.map(paciente => (
               <button
                 key={paciente.rut}
                 onClick={() => handlePacienteSelect(paciente.rut)}
@@ -93,7 +138,7 @@ const FichaClinicaPage = () => {
           </div>
         </div>
 
-        {/* Fichas del Paciente Seleccionado */}
+        {/* Lista de Fichas del Paciente Seleccionado */}
         <div className="md:col-span-2">
           {selectedPaciente ? (
             <div className="bg-white p-6 rounded-lg shadow">
@@ -110,19 +155,23 @@ const FichaClinicaPage = () => {
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {fichas.map((ficha, index) => (
-                  <div key={index} className="border-b pb-4">
-                    <p className="text-sm text-gray-500">{ficha.fecha}</p>
-                    <p className="font-medium mt-2">Descripción</p>
-                    <p className="text-gray-700">{ficha.descripcion}</p>
-                    <p className="font-medium mt-2">Procedimiento</p>
-                    <p className="text-gray-700">{ficha.procedimiento}</p>
-                    <p className="font-medium mt-2">Indicaciones</p>
-                    <p className="text-gray-700">{ficha.indicaciones}</p>
-                    <p className="font-medium mt-2">Próxima Sesión</p>
-                    <p className="text-gray-700">{ficha.proxima_sesion}</p>
-                  </div>
+                  <button
+                    key={index}
+                    onClick={() => handleFichaClick(ficha)}
+                    className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium">Ficha del {formatDate(ficha.fecha)}</h3>
+                      <span className="text-sm text-gray-500">
+                        {ficha.proxima_sesion_estimada ? 
+                          `Próxima sesión: ${formatDate(ficha.proxima_sesion_estimada)}` : 
+                          'Sin próxima sesión programada'}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 mt-2 line-clamp-2">{ficha.descripcion_atencion}</p>
+                  </button>
                 ))}
               </div>
             </div>
@@ -136,16 +185,33 @@ const FichaClinicaPage = () => {
 
       {/* Modal de Nueva Ficha */}
       {showForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div 
+          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+          onClick={() => setShowForm(false)}
+        >
+          <div 
+            className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Nueva Ficha Clínica</h3>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                  <label className="block text-sm font-medium text-gray-700">Fecha</label>
+                  <input
+                    type="date"
+                    value={formData.fecha}
+                    onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Descripción de la Atención</label>
                   <textarea
-                    value={formData.descripcion}
-                    onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                    value={formData.descripcion_atencion}
+                    onChange={(e) => setFormData({ ...formData, descripcion_atencion: e.target.value })}
                     rows="3"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     required
@@ -175,13 +241,12 @@ const FichaClinicaPage = () => {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Próxima Sesión</label>
+                  <label className="block text-sm font-medium text-gray-700">Próxima Sesión Estimada</label>
                   <input
                     type="date"
-                    value={formData.proxima_sesion}
-                    onChange={(e) => setFormData({ ...formData, proxima_sesion: e.target.value })}
+                    value={formData.proxima_sesion_estimada}
+                    onChange={(e) => setFormData({ ...formData, proxima_sesion_estimada: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
                   />
                 </div>
 
@@ -201,6 +266,60 @@ const FichaClinicaPage = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Detalles de Ficha */}
+      {selectedFicha && (
+        <div 
+          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+          onClick={() => setSelectedFicha(null)}
+        >
+          <div 
+            className="relative top-20 mx-auto p-5 border w-3/4 max-w-2xl shadow-lg rounded-md bg-white"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Ficha Clínica del {formatDate(selectedFicha.fecha)}
+                </h3>
+                <button
+                  onClick={() => setSelectedFicha(null)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <span className="sr-only">Cerrar</span>
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-700">Descripción de la Atención</h4>
+                  <p className="mt-1 text-gray-600 whitespace-pre-wrap">{selectedFicha.descripcion_atencion}</p>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-700">Procedimiento</h4>
+                  <p className="mt-1 text-gray-600 whitespace-pre-wrap">{selectedFicha.procedimiento}</p>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-700">Indicaciones</h4>
+                  <p className="mt-1 text-gray-600 whitespace-pre-wrap">{selectedFicha.indicaciones}</p>
+                </div>
+
+                {selectedFicha.proxima_sesion_estimada && (
+                  <div>
+                    <h4 className="font-medium text-gray-700">Próxima Sesión Estimada</h4>
+                    <p className="mt-1 text-gray-600">{formatDate(selectedFicha.proxima_sesion_estimada)}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
