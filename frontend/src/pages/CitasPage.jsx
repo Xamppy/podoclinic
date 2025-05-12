@@ -23,11 +23,12 @@ const localizer = dateFnsLocalizer({
 
 const TIPOS_TRATAMIENTO = [
   'Podología general',
-  'Reflexología Podal',
+  'Helomas interdigitales',
   'Uñas con hongos (Onicomicosis)',
   'Uña encarnada (Onicocriptosis)',
   'Curación Podología',
-  'Retiro de esmalte'
+  'Dermatomicoticos',
+  'Postura de brackets'
 ];
 
 const CitasPage = () => {

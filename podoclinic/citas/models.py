@@ -3,11 +3,12 @@ from django.db import models
 class Tratamiento(models.Model):
     TIPOS_TRATAMIENTO = [
         ('general', 'Podología general'),
-        ('reflexologia', 'Reflexología Podal'),
+        ('helomas', 'Helomas interdigitales'),
         ('hongos', 'Uñas con hongos (Onicomicosis)'),
         ('encarnada', 'Uña encarnada (Onicocriptosis)'),
         ('curacion', 'Curación Podología'),
-        ('esmalte', 'Retiro de esmalte'),
+        ('dermatomicoticos', 'Dermatomicoticos'),
+        ('postura', 'Postura de brackets'),
     ]
     
     nombre = models.CharField(max_length=100, choices=TIPOS_TRATAMIENTO)

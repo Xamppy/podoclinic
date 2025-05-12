@@ -88,7 +88,15 @@ class FichaClinicaViewSet(viewsets.ModelViewSet):
         queryset = FichaClinica.objects.all()
         paciente_id = self.request.query_params.get('paciente', None)
         
+        print(f"Buscando fichas para paciente_id: {paciente_id}")
+        
         if paciente_id is not None:
-            queryset = queryset.filter(paciente_id=paciente_id)
+            try:
+                paciente_id = int(paciente_id)
+                queryset = queryset.filter(paciente_id=paciente_id)
+                print(f"Fichas encontradas: {queryset.count()}")
+            except ValueError:
+                print(f"Error: paciente_id no es un número válido: {paciente_id}")
+                return FichaClinica.objects.none()
                 
         return queryset
