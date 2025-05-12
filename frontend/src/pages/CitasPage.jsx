@@ -21,15 +21,20 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-const TIPOS_TRATAMIENTO = [
-  'Podología general',
-  'Helomas interdigitales',
-  'Uñas con hongos (Onicomicosis)',
-  'Uña encarnada (Onicocriptosis)',
-  'Curación Podología',
-  'Dermatomicoticos',
-  'Postura de brackets'
-];
+const TIPOS_TRATAMIENTO = {
+  podologia: [
+    'Podología general',
+    'Helomas interdigitales',
+    'Uñas con hongos (Onicomicosis)',
+    'Uña encarnada (Onicocriptosis)',
+    'Curación Podología',
+    'Dermatomicoticos',
+    'Postura de brackets'
+  ],
+  manicura: [
+    'Manicura'
+  ]
+};
 
 const CitasPage = () => {
   const [citas, setCitas] = useState([]);
@@ -44,7 +49,8 @@ const CitasPage = () => {
     paciente_rut: '',
     fecha: '',
     hora: '',
-    tipo_tratamiento: ''
+    tipo_tratamiento: '',
+    tipo_cita: 'podologia'
   });
 
   useEffect(() => {
@@ -93,7 +99,8 @@ const CitasPage = () => {
         paciente_rut: '',
         fecha: '',
         hora: '',
-        tipo_tratamiento: ''
+        tipo_tratamiento: '',
+        tipo_cita: 'podologia'
       });
     } catch (error) {
       console.error('Error al crear cita:', error);
@@ -109,7 +116,27 @@ const CitasPage = () => {
     title: `${cita.paciente_nombre} - ${cita.tipo_tratamiento}`,
     start: new Date(`${cita.fecha}T${cita.hora}`),
     end: new Date(`${cita.fecha}T${cita.hora}`),
+    resource: cita,
   }));
+
+  const eventPropGetter = (event) => {
+    let backgroundColor = '#3b82f6';
+    
+    if (event.resource && event.resource.tipo_cita === 'manicura') {
+      backgroundColor = '#ec4899';
+    }
+    
+    return {
+      style: {
+        backgroundColor,
+        borderRadius: '5px',
+        opacity: 0.8,
+        color: 'white',
+        border: '0px',
+        display: 'block',
+      }
+    };
+  };
 
   return (
     <div className="p-6">
@@ -147,6 +174,7 @@ const CitasPage = () => {
             dayNames: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
             dayNamesShort: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
           }}
+          eventPropGetter={eventPropGetter}
         />
       </div>
 
@@ -156,6 +184,23 @@ const CitasPage = () => {
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Nueva Cita</h3>
               <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">Tipo de Cita</label>
+                  <select
+                    value={formData.tipo_cita}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      tipo_cita: e.target.value,
+                      tipo_tratamiento: '' // Resetear tratamiento al cambiar tipo de cita
+                    })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  >
+                    <option value="podologia">Podología</option>
+                    <option value="manicura">Manicura</option>
+                  </select>
+                </div>
+
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">Paciente</label>
                   <select
@@ -197,7 +242,7 @@ const CitasPage = () => {
                     required
                   >
                     <option value="">Seleccione un tratamiento</option>
-                    {TIPOS_TRATAMIENTO.map(tipo => (
+                    {TIPOS_TRATAMIENTO[formData.tipo_cita].map(tipo => (
                       <option key={tipo} value={tipo}>{tipo}</option>
                     ))}
                   </select>

@@ -18,9 +18,11 @@ export const citasService = {
       tratamiento: formData.tipo_tratamiento, // Tipo de tratamiento
       fecha: formData.fecha,
       hora: formData.hora,
-      estado: 'reservada'  // Estado por defecto
+      estado: 'reservada',  // Estado por defecto
+      tipo_cita: formData.tipo_cita // Tipo de cita (podologia o manicura)
     };
     
+    console.log('DATOS DE CITA A CREAR:', formData);
     console.log('Enviando datos a /citas/crear_cita_admin/:', backendData);
     
     // Usar la ruta correcta
@@ -35,9 +37,12 @@ export const citasService = {
       tratamiento: formData.tipo_tratamiento, // Tipo de tratamiento
       fecha: formData.fecha,
       hora: formData.hora,
-      estado: formData.estado
+      estado: formData.estado,
+      tipo_cita: formData.tipo_cita || 'podologia' // Incluir tipo de cita, con valor por defecto
     };
     
+    console.log('DATOS DE CITA A ACTUALIZAR:', formData);
+    console.log('CAMPO tipo_cita (antes de enviar):', typeof formData.tipo_cita, formData.tipo_cita);
     console.log(`Actualizando cita ${id} con datos:`, backendData);
     
     return api.put(`/citas/actualizar/${id}/`, backendData);

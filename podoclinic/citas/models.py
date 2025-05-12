@@ -9,6 +9,7 @@ class Tratamiento(models.Model):
         ('curacion', 'Curación Podología'),
         ('dermatomicoticos', 'Dermatomicoticos'),
         ('postura', 'Postura de brackets'),
+        ('manicura', 'Manicura'),
     ]
     
     nombre = models.CharField(max_length=100, choices=TIPOS_TRATAMIENTO)
@@ -28,11 +29,17 @@ class Cita(models.Model):
         ('cancelada', 'Cancelada'),
     ]
     
+    TIPOS_CITA = [
+        ('podologia', 'Podología'),
+        ('manicura', 'Manicura'),
+    ]
+    
     paciente = models.ForeignKey('pacientes.Paciente', on_delete=models.CASCADE)
     tratamiento = models.ForeignKey(Tratamiento, on_delete=models.CASCADE)
     fecha = models.DateField()
     hora = models.TimeField()
     estado = models.CharField(max_length=20, choices=ESTADOS, default='reservada')
+    tipo_cita = models.CharField(max_length=20, choices=TIPOS_CITA, default='podologia')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     recordatorio_enviado = models.BooleanField(default=False)
     

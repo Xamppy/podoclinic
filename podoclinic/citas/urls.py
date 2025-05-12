@@ -132,6 +132,7 @@ def actualizar_cita(request, cita_id):
         # Actualizar tratamiento si está presente en la solicitud
         if 'tratamiento' in data:
             nombre_tratamiento = data['tratamiento']
+            tipo_cita = data.get('tipo_cita', 'podologia')
             tratamiento = None
             
             # Buscar coincidencia exacta
@@ -142,7 +143,7 @@ def actualizar_cita(request, cita_id):
             
             # Si no se encontró, crear uno nuevo
             if not tratamiento:
-                tipo_tratamiento = 'general'
+                tipo_tratamiento = 'manicura' if tipo_cita == 'manicura' else 'general'
                 for tipo, nombre in Tratamiento.TIPOS_TRATAMIENTO:
                     if nombre == nombre_tratamiento:
                         tipo_tratamiento = tipo
@@ -166,6 +167,9 @@ def actualizar_cita(request, cita_id):
         
         if 'estado' in data:
             cita.estado = data['estado']
+            
+        if 'tipo_cita' in data:
+            cita.tipo_cita = data['tipo_cita']
         
         # Guardar cambios
         cita.save()

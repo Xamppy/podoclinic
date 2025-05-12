@@ -44,12 +44,20 @@ const ReservarCita = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Mapear tipoCita a tipo_cita para el backend
+      const datosParaEnviar = {
+        ...formData,
+        tipo_cita: formData.tipoCita === 'podologica' ? 'podologia' : 'manicura'
+      };
+      
+      console.log('Enviando datos al backend:', datosParaEnviar);
+      
       const response = await fetch('http://localhost:8000/api/citas/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(datosParaEnviar),
       });
 
       if (response.ok) {

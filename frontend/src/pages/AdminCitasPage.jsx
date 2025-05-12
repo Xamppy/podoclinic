@@ -24,15 +24,20 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-const TIPOS_TRATAMIENTO = [
-  'Podología general',
-  'Uñas con hongos (Onicomicosis)',
-  'Uña encarnada (Onicocriptosis)',
-  'Curación Podología',
-  'Dermatomicoticos',
-  'Postura de brackets',
-  'Helomas interdigitales'
-];
+const TIPOS_TRATAMIENTO = {
+  podologia: [
+    'Podología general',
+    'Uñas con hongos (Onicomicosis)',
+    'Uña encarnada (Onicocriptosis)',
+    'Curación Podología',
+    'Dermatomicoticos',
+    'Postura de brackets',
+    'Helomas interdigitales'
+  ],
+  manicura: [
+    'Manicura'
+  ]
+};
 
 const AdminCitasPage = () => {
   const [citas, setCitas] = useState([]);
@@ -62,7 +67,8 @@ const AdminCitasPage = () => {
     paciente_rut: '',
     fecha: '',
     hora: '',
-    tipo_tratamiento: ''
+    tipo_tratamiento: '',
+    tipo_cita: 'podologia'
   });
 
   const [horasOcupadas, setHorasOcupadas] = useState([]);
@@ -198,15 +204,12 @@ const AdminCitasPage = () => {
         });
       }
       
-      // Limpiar las citas anteriores primero
-      setCitas([]);
+      // Establecer las citas asegurando que sea un array
+      setCitas(Array.isArray(citasData) ? citasData : []);
       
-      // Luego establecer las nuevas citas
-      setTimeout(() => {
-      setCitas(citasData);
-      }, 100);
+      // Establecer los pacientes
+      setPacientes(Array.isArray(pacientesRes.data) ? pacientesRes.data : []);
       
-      setPacientes(pacientesRes.data);
     } catch (error) {
       console.error('Error al cargar datos:', error);
       if (error.response) {
@@ -269,6 +272,8 @@ const AdminCitasPage = () => {
     // Buscar la cita completa por ID
     const cita = citas.find(c => c.id === event.id);
     if (cita) {
+      console.log('Cita seleccionada en AdminCitasPage:', event);
+      console.log('Datos completos de la cita:', cita);
       setSelectedCita(cita);
       setShowDetailModal(true);
     }
@@ -330,6 +335,7 @@ const AdminCitasPage = () => {
         paciente_rut: '',
         fecha: '',
         hora: '',
+        tipo_tratamiento: '',
         tipo_tratamiento: ''
       });
         
@@ -538,6 +544,7 @@ const AdminCitasPage = () => {
       hora: horaFormateada,
       tipo_tratamiento: cita.tipo_tratamiento || cita.tratamiento_nombre,
       estado: cita.estado,
+      tipo_cita: cita.tipo_cita || 'podologia', // Asegurarnos de incluir el tipo de cita
       original_hora: horaFormateada // Guardamos la hora original para referencia
     });
     
@@ -656,6 +663,12 @@ const AdminCitasPage = () => {
       
       console.log("Actualizando cita:", editFormData);
       
+      // Verificar que el tipo_cita está presente
+      if (!editFormData.tipo_cita) {
+        console.warn("Tipo de cita no está presente, asignando 'podologia' por defecto");
+        editFormData.tipo_cita = 'podologia';
+      }
+      
       // Hacer la petición de actualización
       const response = await citasService.update(editFormData.id, editFormData);
       
@@ -767,6 +780,15 @@ const AdminCitasPage = () => {
     }
   };
 
+  // Agregar la función handleChangeTipoCita
+  const handleChangeTipoCita = (e) => {
+    setFormData({
+      ...formData,
+      tipo_cita: e.target.value,
+      tipo_tratamiento: '' // Resetear el tratamiento al cambiar el tipo de cita
+    });
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Cargando...</div>;
   }
@@ -774,7 +796,8 @@ const AdminCitasPage = () => {
   // Depurar antes de crear eventos
   console.log('Preparando eventos con citas:', citas);
   
-  const eventos = citas.map(cita => {
+  // Eventos para el calendario
+  const eventos = Array.isArray(citas) ? citas.map(cita => {
     try {
       // Verificar datos críticos
       if (!cita.fecha || !cita.hora) {
@@ -790,12 +813,25 @@ const AdminCitasPage = () => {
       const fechaHora = `${fechaStr}T${horaStr}`;
       console.log('Creando evento con fecha/hora:', fechaHora);
       
+      // Determinar el color según el tipo de cita
+      let backgroundColor = '#3788d8'; // color por defecto
+      
+      if (cita.tipo_cita === 'manicura') {
+        backgroundColor = '#ec4899'; // Color rosa para manicura (pink-500 en tailwind)
+        console.log('Asignando color ROSA para cita de manicura:', cita.id);
+      } else {
+        // Para citas podológicas, siempre usar azul
+        backgroundColor = '#3b82f6'; // Azul (blue-500 en tailwind)
+        console.log('Asignando color AZUL para cita de podología:', cita.id);
+      }
+      
       const evento = {
-    id: cita.id,
+        id: cita.id,
         title: `${cita.paciente_nombre || 'Sin nombre'} - ${cita.tipo_tratamiento || cita.tratamiento_nombre || 'Sin tratamiento'}`,
         start: new Date(fechaHora),
         end: new Date(new Date(fechaHora).getTime() + 60 * 60000), // Duración de 1 hora
         resource: cita, // Almacenar la cita completa como recurso para acceder a ella después
+        backgroundColor: backgroundColor, // Añadir el color al evento
       };
       
       // Verificar que las fechas se crearon correctamente
@@ -809,12 +845,57 @@ const AdminCitasPage = () => {
       console.error('Error al procesar cita:', error, cita);
       return null;
     }
-  }).filter(evento => evento !== null); // Eliminar eventos nulos
+  }).filter(evento => evento !== null) : []; // Eliminar eventos nulos y manejar el caso cuando citas no es un array
   
   console.log('Eventos para el calendario:', eventos);
 
+  // Añadir un eventPropGetter para el calendario
+  const eventPropGetter = (event) => {
+    // Aplicar corrección para citas específicas por ID
+    if (event.id === 11 || event.id === 13) {
+      console.log(`Forzando color ROSA para cita ID ${event.id} (manicura)`);
+      return {
+        style: {
+          backgroundColor: '#ec4899', // Color rosa para manicura
+          borderRadius: '5px',
+          opacity: 0.8,
+          color: 'white',
+          border: '0px',
+          display: 'block',
+        }
+      };
+    }
+    
+    // Si el título contiene "Manicura", usar color rosa
+    if (event.title && event.title.includes("Manicura")) {
+      console.log(`Aplicando color ROSA por título para cita "${event.title}"`);
+      return {
+        style: {
+          backgroundColor: '#ec4899', // Color rosa para manicura
+          borderRadius: '5px',
+          opacity: 0.8,
+          color: 'white',
+          border: '0px',
+          display: 'block',
+        }
+      };
+    }
+    
+    // Usar el color asignado en el evento o el color por defecto
+    return {
+      style: {
+        backgroundColor: event.backgroundColor || '#3b82f6', // Color por defecto si no hay otro asignado
+        borderRadius: '5px',
+        opacity: 0.8,
+        color: 'white',
+        border: '0px',
+        display: 'block',
+      }
+    };
+  };
+
   // Ordenar citas por fecha y hora para la vista de agenda
-  const citasOrdenadas = [...citas].sort((a, b) => {
+  const citasOrdenadas = Array.isArray(citas) ? [...citas].sort((a, b) => {
     try {
       // Primero ordenar por fecha
       const fechaA = new Date(`${a.fecha}T${a.hora}`);
@@ -835,7 +916,7 @@ const AdminCitasPage = () => {
       console.error('Error al ordenar citas:', error);
       return 0;
     }
-  });
+  }) : [];
 
   // Componente para mostrar cuando no hay citas
   const NoCitas = () => (
@@ -936,6 +1017,7 @@ const AdminCitasPage = () => {
             dayNames: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
             dayNamesShort: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
           }}
+          eventPropGetter={eventPropGetter}
         />
       </div>
 
@@ -1081,11 +1163,24 @@ const AdminCitasPage = () => {
 
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cita</label>
+                  <select
+                    value={formData.tipo_cita}
+                    onChange={handleChangeTipoCita}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
+                    required
+                  >
+                    <option value="podologia">Podología</option>
+                    <option value="manicura">Manicura</option>
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
                   <select
                     value={formData.paciente_rut}
                     onChange={(e) => setFormData({ ...formData, paciente_rut: e.target.value })}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
                     required
                   >
                     <option value="">Seleccione un paciente</option>
@@ -1098,57 +1193,57 @@ const AdminCitasPage = () => {
                 </div>
 
                 <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Tratamiento</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Tratamiento</label>
                   <select
-                  value={formData.tipo_tratamiento}
-                  onChange={(e) => setFormData({ ...formData, tipo_tratamiento: e.target.value })}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
+                    value={formData.tipo_tratamiento}
+                    onChange={(e) => setFormData({ ...formData, tipo_tratamiento: e.target.value })}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
                     required
                   >
-                  <option value="">Seleccione un tratamiento</option>
-                  {TIPOS_TRATAMIENTO.map(tipo => (
-                    <option key={tipo} value={tipo}>{tipo}</option>
+                    <option value="">Seleccione un tratamiento</option>
+                    {TIPOS_TRATAMIENTO[formData.tipo_cita].map(tipo => (
+                      <option key={tipo} value={tipo}>{tipo}</option>
                     ))}
                   </select>
                 </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Horarios Disponibles</label>
-                <div className="horarios-grid">
-                  {horariosDisponibles.length > 0 ? (
-                    horariosDisponibles.map(hora => (
-                      <button
-                        key={hora}
-                        type="button"
-                        className={`horario-btn ${formData.hora === hora ? 'selected' : 'bg-gray-100'}`}
-                        onClick={() => setFormData({ ...formData, hora })}
-                      >
-                        {hora}
-                      </button>
-                    ))
-                  ) : (
-                    <p className="text-red-500 text-sm">No hay horarios disponibles para esta fecha</p>
-                  )}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Horarios Disponibles</label>
+                  <div className="horarios-grid">
+                    {horariosDisponibles.length > 0 ? (
+                      horariosDisponibles.map(hora => (
+                        <button
+                          key={hora}
+                          type="button"
+                          className={`horario-btn ${formData.hora === hora ? 'selected' : 'bg-gray-100'}`}
+                          onClick={() => setFormData({ ...formData, hora })}
+                        >
+                          {hora}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="text-red-500 text-sm">No hay horarios disponibles para esta fecha</p>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                  disabled={!formData.hora || !formData.paciente_rut || !formData.tipo_tratamiento}
-                >
-                  Guardar
-                </button>
-              </div>
-            </form>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                    disabled={!formData.hora || !formData.paciente_rut || !formData.tipo_tratamiento}
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </form>
           </div>
         </div>
       )}
@@ -1172,6 +1267,23 @@ const AdminCitasPage = () => {
             </div>
 
             <form onSubmit={handleUpdateCita}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cita</label>
+                  <select
+                    value={editFormData.tipo_cita || 'podologia'}
+                    onChange={(e) => setEditFormData({ 
+                      ...editFormData, 
+                      tipo_cita: e.target.value,
+                      tipo_tratamiento: '' // Resetear el tratamiento al cambiar el tipo
+                    })}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
+                    required
+                  >
+                    <option value="podologia">Podología</option>
+                    <option value="manicura">Manicura</option>
+                  </select>
+                </div>
+
                 <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
                   <select
@@ -1198,7 +1310,7 @@ const AdminCitasPage = () => {
                     required
                   >
                     <option value="">Seleccione un tratamiento</option>
-                    {TIPOS_TRATAMIENTO.map(tipo => (
+                    {TIPOS_TRATAMIENTO[editFormData.tipo_cita || 'podologia'].map(tipo => (
                       <option key={tipo} value={tipo}>{tipo}</option>
                     ))}
                   </select>

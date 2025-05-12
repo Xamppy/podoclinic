@@ -9,6 +9,7 @@ class TratamientoSerializer(serializers.ModelSerializer):
 
 class CitaSerializer(serializers.ModelSerializer):
     paciente_nombre = serializers.ReadOnlyField(source='paciente.nombre')
+    paciente_rut = serializers.ReadOnlyField(source='paciente.rut')
     tratamiento_nombre = serializers.ReadOnlyField(source='tratamiento.get_nombre_display')
     
     class Meta:

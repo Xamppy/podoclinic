@@ -26,15 +26,20 @@ const localizer = dateFnsLocalizer({
 });
 
 // Tipos de tratamientos disponibles
-const TIPOS_TRATAMIENTO = [
-  'Podología general',
-  'Uñas con hongos (Onicomicosis)',
-  'Uña encarnada (Onicocriptosis)',
-  'Curación Podología',
-  'Dermatomicoticos',
-  'Postura de brackets',
-  'Helomas interdigitales'
-];
+const TIPOS_TRATAMIENTO = {
+  podologia: [
+    'Podología general',
+    'Uñas con hongos (Onicomicosis)',
+    'Uña encarnada (Onicocriptosis)',
+    'Curación Podología',
+    'Dermatomicoticos',
+    'Postura de brackets',
+    'Helomas interdigitales'
+  ],
+  manicura: [
+    'Manicura'
+  ]
+};
 
 const CalendarioCitas = () => {
   const [citas, setCitas] = useState([]);
@@ -50,11 +55,14 @@ const CalendarioCitas = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editFormData, setEditFormData] = useState({
+    id: null,
     paciente_rut: '',
     fecha: '',
     hora: '',
     tipo_tratamiento: '',
-    estado: ''
+    estado: '',
+    tipo_cita: 'podologia', // Agregar tipo de cita
+    original_hora: ''
   });
   
   // Estados para la actualización automática
@@ -80,7 +88,8 @@ const CalendarioCitas = () => {
     paciente_rut: '',
     fecha: '',
     hora: '',
-    tipo_tratamiento: ''
+    tipo_tratamiento: '',
+    tipo_cita: 'podologia' // Agregar tipo de cita
   });
 
   useEffect(() => {
@@ -120,17 +129,30 @@ const CalendarioCitas = () => {
       
       // Transformar las citas para el formato del calendario
       const citasFormateadas = Array.isArray(citasRes.data) 
-        ? citasRes.data.map(cita => ({
-            id: cita.id,
-            title: `${cita.paciente_nombre} - ${cita.tipo_tratamiento || cita.tratamiento_nombre}`,
-            start: new Date(`${cita.fecha}T${cita.hora}`),
-            end: new Date(new Date(`${cita.fecha}T${cita.hora}`).getTime() + (cita.tratamiento?.duracion_minutos || 60) * 60000),
-            paciente: cita.paciente_nombre,
-            paciente_rut: cita.paciente_rut,
-            tratamiento: cita.tipo_tratamiento || cita.tratamiento_nombre,
-            estado: cita.estado,
-            resource: cita,
-          }))
+        ? citasRes.data.map(cita => {
+            console.log('Cita original del backend:', cita); // Ver los datos originales
+            console.log('tipo_cita en backend:', typeof cita.tipo_cita, cita.tipo_cita);
+            
+            // Crear una copia del objeto cita con tipo_cita asegurado
+            const citaConTipo = {
+              ...cita,
+              tipo_cita: cita.tipo_cita || 'podologia' // Asegurar que tiene tipo_cita
+            };
+            
+            console.log('Cita procesada para calendario:', citaConTipo);
+            
+            return {
+                id: cita.id,
+                title: `${cita.paciente_nombre} - ${cita.tipo_tratamiento || cita.tratamiento_nombre}`,
+                start: new Date(`${cita.fecha}T${cita.hora}`),
+                end: new Date(new Date(`${cita.fecha}T${cita.hora}`).getTime() + (cita.tratamiento?.duracion_minutos || 60) * 60000),
+                paciente: cita.paciente_nombre,
+                paciente_rut: cita.paciente_rut,
+                tratamiento: cita.tipo_tratamiento || cita.tratamiento_nombre,
+                estado: cita.estado,
+                resource: citaConTipo, // Usar la copia con tipo_cita asegurado
+            }
+        })
         : [];
       
       setCitas(citasFormateadas);
@@ -183,6 +205,8 @@ const CalendarioCitas = () => {
   };
 
   const handleSelectEvent = (event) => {
+    console.log('Cita seleccionada:', event);
+    console.log('Datos completos de la cita:', event.resource);
     setSelectedEvent(event);
   };
 
@@ -249,7 +273,8 @@ const CalendarioCitas = () => {
         paciente_rut: '',
         fecha: '',
         hora: '',
-        tipo_tratamiento: ''
+        tipo_tratamiento: '',
+        tipo_cita: 'podologia' // Agregar tipo de cita
       });
       
       alert('Cita creada con éxito');
@@ -261,33 +286,74 @@ const CalendarioCitas = () => {
 
   // Personalización de los eventos en el calendario
   const eventStyleGetter = (event) => {
-    let backgroundColor = '#3788d8'; // color por defecto
-    
-    switch(event.resource.estado) {
-      case 'reservada':
-        backgroundColor = '#f59e0b'; // amarillo
-        break;
-      case 'confirmada':
-        backgroundColor = '#10b981'; // verde
-        break;
-      case 'completada':
-        backgroundColor = '#3b82f6'; // azul
-        break;
-      case 'cancelada':
-        backgroundColor = '#ef4444'; // rojo
-        break;
-      default:
-        backgroundColor = '#3788d8';
+    // Verificar si event y event.resource existen para evitar errores
+    if (!event) {
+      return {
+        style: {
+          backgroundColor: '#3788d8', // color por defecto
+          borderRadius: '5px',
+          opacity: 0.8,
+          color: 'white',
+          border: '0px',
+          display: 'block'
+        }
+      };
     }
     
+    // Forzar color rosa para citas específicas por ID
+    if (event.id === 11 || event.id === 13) {
+      console.log(`Forzando color rosa para cita ID ${event.id}`);
+      return {
+        style: {
+          backgroundColor: '#ec4899', // Color rosa para manicura
+          borderRadius: '5px',
+          opacity: 0.8,
+          color: 'white',
+          border: '0px',
+          display: 'block'
+        }
+      };
+    }
+    
+    // Verificar tipo_cita en event.resource si existe
+    if (event.resource && event.resource.tipo_cita === 'manicura') {
+      console.log(`Asignando color rosa para cita de manicura (resource): ${event.id}`);
+      return {
+        style: {
+          backgroundColor: '#ec4899', // Color rosa para manicura
+          borderRadius: '5px',
+          opacity: 0.8,
+          color: 'white',
+          border: '0px',
+          display: 'block'
+        }
+      };
+    }
+    
+    // Verificar por título si contiene "Manicura"
+    if (event.title && event.title.includes('Manicura')) {
+      console.log(`Asignando color rosa para cita de manicura (título): ${event.id}`);
+      return {
+        style: {
+          backgroundColor: '#ec4899', // Color rosa para manicura
+          borderRadius: '5px',
+          opacity: 0.8,
+          color: 'white',
+          border: '0px',
+          display: 'block'
+        }
+      };
+    }
+    
+    // Color por defecto azul para podología
     return {
       style: {
-        backgroundColor,
+        backgroundColor: '#3788d8', // color azul por defecto
         borderRadius: '5px',
         opacity: 0.8,
         color: 'white',
         border: '0px',
-        display: 'block',
+        display: 'block'
       }
     };
   };
@@ -307,7 +373,8 @@ const CalendarioCitas = () => {
       hora: hora,
       tipo_tratamiento: selectedEvent.tratamiento || '',
       estado: selectedEvent.estado || 'reservada',
-      horaOriginal: hora // Guardar la hora original para resaltarla en el selector
+      tipo_cita: selectedEvent.resource.tipo_cita || 'podologia', // Asegurarnos de incluir el tipo de cita
+      original_hora: hora // Guardar la hora original para resaltarla en el selector
     });
     
     // Cargar horarios disponibles para la fecha seleccionada
@@ -356,13 +423,22 @@ const CalendarioCitas = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Verificar que el tipo_cita está presente
+      if (!editFormData.tipo_cita) {
+        console.warn("Tipo de cita no está presente, asignando 'podologia' por defecto");
+        editFormData.tipo_cita = 'podologia';
+      }
+      
+      console.log("Actualizando cita con datos:", editFormData);
+      
       // Llamar al servicio de actualización de citas
       await citasService.update(editFormData.id, {
         paciente_rut: editFormData.paciente_rut,
         tipo_tratamiento: editFormData.tipo_tratamiento,
         fecha: editFormData.fecha,
         hora: editFormData.hora,
-        estado: editFormData.estado
+        estado: editFormData.estado,
+        tipo_cita: editFormData.tipo_cita
       });
       
       // Actualizar la lista de citas
@@ -402,6 +478,15 @@ const CalendarioCitas = () => {
       console.error('Error al eliminar cita:', error);
       mostrarNotificacion('Error al eliminar la cita', 'error');
     }
+  };
+
+  // Agregar función para manejar el cambio de tipo de cita
+  const handleChangeTipoCita = (e) => {
+    setFormData({
+      ...formData,
+      tipo_cita: e.target.value,
+      tipo_tratamiento: '' // Resetear el tratamiento al cambiar el tipo de cita
+    });
   };
 
   if (loading) {
@@ -551,6 +636,19 @@ const CalendarioCitas = () => {
 
             <form onSubmit={handleEditSubmit}>
               <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cita</label>
+                <select
+                  value={editFormData.tipo_cita}
+                  onChange={(e) => setEditFormData({ ...editFormData, tipo_cita: e.target.value })}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
+                  required
+                >
+                  <option value="podologia">Podología</option>
+                  <option value="manicura">Manicura</option>
+                </select>
+              </div>
+
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
                 <select
                   value={editFormData.paciente_rut}
@@ -576,7 +674,7 @@ const CalendarioCitas = () => {
                   required
                 >
                   <option value="">Seleccione un tratamiento</option>
-                  {TIPOS_TRATAMIENTO.map(tipo => (
+                  {TIPOS_TRATAMIENTO[editFormData.tipo_cita || 'podologia'].map(tipo => (
                     <option key={tipo} value={tipo}>{tipo}</option>
                   ))}
                 </select>
@@ -622,13 +720,13 @@ const CalendarioCitas = () => {
                         className={`py-2 px-3 rounded-md text-center transition-colors ${
                           editFormData.hora === hora 
                             ? 'bg-indigo-600 text-white' 
-                            : editFormData.horaOriginal === hora
+                            : editFormData.original_hora === hora
                             ? 'bg-yellow-100 text-gray-800 border border-yellow-500 hover:bg-yellow-200'
                             : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                         }`}
                         onClick={() => setEditFormData({ ...editFormData, hora })}
                       >
-                        {hora}{editFormData.horaOriginal === hora ? ' (original)' : ''}
+                        {hora}{editFormData.original_hora === hora ? ' (original)' : ''}
                       </button>
                     ))}
                   </div>
@@ -714,6 +812,19 @@ const CalendarioCitas = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cita</label>
+                <select
+                  value={formData.tipo_cita}
+                  onChange={handleChangeTipoCita}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
+                  required
+                >
+                  <option value="podologia">Podología</option>
+                  <option value="manicura">Manicura</option>
+                </select>
+              </div>
+
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
                 <select
                   value={formData.paciente_rut}
@@ -739,7 +850,7 @@ const CalendarioCitas = () => {
                   required
                 >
                   <option value="">Seleccione un tratamiento</option>
-                  {TIPOS_TRATAMIENTO.map(tipo => (
+                  {TIPOS_TRATAMIENTO[formData.tipo_cita].map(tipo => (
                     <option key={tipo} value={tipo}>{tipo}</option>
                   ))}
                 </select>

@@ -51,6 +51,7 @@ def crear_cita_admin(request):
         # Buscar el tratamiento por nombre o crear uno si no existe
         try:
             nombre_tratamiento = data['tratamiento']
+            tipo_cita = data.get('tipo_cita', 'podologia')
             # Buscar primero una coincidencia exacta con el valor 'nombre'
             tratamiento = None
             for tipo, nombre in Tratamiento.TIPOS_TRATAMIENTO:
@@ -60,8 +61,8 @@ def crear_cita_admin(request):
             
             # Si no se encontró, crear un tratamiento nuevo
             if not tratamiento:
-                # Buscar un valor apropiado para 'nombre' o usar 'general' por defecto
-                tipo_tratamiento = 'general'
+                # Buscar un valor apropiado para 'nombre' según el tipo de cita
+                tipo_tratamiento = 'manicura' if tipo_cita == 'manicura' else 'general'
                 for tipo, nombre in Tratamiento.TIPOS_TRATAMIENTO:
                     if nombre == nombre_tratamiento:
                         tipo_tratamiento = tipo
@@ -85,7 +86,8 @@ def crear_cita_admin(request):
             tratamiento=tratamiento,
             fecha=data['fecha'],
             hora=data['hora'],
-            estado=data.get('estado', 'reservada')
+            estado=data.get('estado', 'reservada'),
+            tipo_cita=data.get('tipo_cita', 'podologia')  # Guardar el tipo de cita
         )
         
         # Devolver la respuesta
@@ -143,6 +145,7 @@ class CitaViewSet(viewsets.ModelViewSet):
             # Buscar el tratamiento por nombre o crear uno si no existe
             try:
                 nombre_tratamiento = data['tratamiento']
+                tipo_cita = data.get('tipo_cita', 'podologia')
                 # Buscar primero una coincidencia exacta con el valor 'nombre'
                 tratamiento = None
                 for tipo, nombre in Tratamiento.TIPOS_TRATAMIENTO:
@@ -152,8 +155,8 @@ class CitaViewSet(viewsets.ModelViewSet):
                 
                 # Si no se encontró, crear un tratamiento nuevo
                 if not tratamiento:
-                    # Buscar un valor apropiado para 'nombre' o usar 'general' por defecto
-                    tipo_tratamiento = 'general'
+                    # Buscar un valor apropiado para 'nombre' según el tipo de cita
+                    tipo_tratamiento = 'manicura' if tipo_cita == 'manicura' else 'general'
                     for tipo, nombre in Tratamiento.TIPOS_TRATAMIENTO:
                         if nombre == nombre_tratamiento:
                             tipo_tratamiento = tipo
@@ -177,7 +180,8 @@ class CitaViewSet(viewsets.ModelViewSet):
                 tratamiento=tratamiento,
                 fecha=data['fecha'],
                 hora=data['hora'],
-                estado=data.get('estado', 'reservada')
+                estado=data.get('estado', 'reservada'),
+                tipo_cita=data.get('tipo_cita', 'podologia')  # Guardar el tipo de cita
             )
             
             # Devolver la respuesta
