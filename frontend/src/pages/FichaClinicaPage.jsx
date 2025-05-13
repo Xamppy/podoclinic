@@ -146,6 +146,12 @@ const FichaClinicaPage = () => {
                 <div>
                   <h2 className="text-xl font-semibold">{selectedPaciente.nombre}</h2>
                   <p className="text-gray-600">{selectedPaciente.rut}</p>
+                  {selectedPaciente.direccion && (
+                    <p className="text-gray-600 mt-1">Dirección: {selectedPaciente.direccion}</p>
+                  )}
+                  {selectedPaciente.fecha_nacimiento && (
+                    <p className="text-gray-600 mt-1">Fecha de nacimiento: {formatDate(selectedPaciente.fecha_nacimiento)}</p>
+                  )}
                 </div>
                 <button
                   onClick={() => setShowForm(true)}
@@ -295,6 +301,18 @@ const FichaClinicaPage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
+              </div>
+
+              <div className="bg-gray-100 p-3 rounded-lg mb-4">
+                <h4 className="font-medium text-gray-700 mb-2">Información del Paciente</h4>
+                <p className="text-gray-600"><strong>Nombre:</strong> {selectedPaciente.nombre}</p>
+                <p className="text-gray-600"><strong>RUT:</strong> {selectedPaciente.rut}</p>
+                {selectedPaciente.direccion && (
+                  <p className="text-gray-600"><strong>Dirección:</strong> {selectedPaciente.direccion}</p>
+                )}
+                {selectedPaciente.fecha_nacimiento && (
+                  <p className="text-gray-600"><strong>Fecha de nacimiento:</strong> {formatDate(selectedPaciente.fecha_nacimiento)}</p>
+                )}
               </div>
 
               <div className="space-y-4">

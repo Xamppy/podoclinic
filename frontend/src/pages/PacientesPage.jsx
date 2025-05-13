@@ -6,14 +6,18 @@ const PacientesPage = () => {
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const { rut, rutError, handleRutChange } = useRut();
+  const [editMode, setEditMode] = useState(false);
+  const [selectedPaciente, setSelectedPaciente] = useState(null);
+  const { rut, rutError, handleRutChange, setRut } = useRut();
   const [formData, setFormData] = useState({
     nombre: '',
     telefono: '',
     correo: '',
     enfermedad_base: '',
     contacto_emergencia: '',
-    caso_clinico: ''
+    caso_clinico: '',
+    direccion: '',
+    fecha_nacimiento: ''
   });
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: 'info' });
 
@@ -105,7 +109,9 @@ const PacientesPage = () => {
         correo: '',
         enfermedad_base: '',
         contacto_emergencia: '',
-        caso_clinico: ''
+        caso_clinico: '',
+        direccion: '',
+        fecha_nacimiento: ''
       });
       
       mostrarNotificacion('Paciente creado exitosamente', 'success');
@@ -133,6 +139,138 @@ const PacientesPage = () => {
     }
   };
 
+  const handleEditClick = (paciente) => {
+    setSelectedPaciente(paciente);
+    setRut(paciente.rut);
+    setFormData({
+      nombre: paciente.nombre || '',
+      telefono: paciente.telefono || '',
+      correo: paciente.correo || '',
+      enfermedad_base: paciente.enfermedad_base || '',
+      contacto_emergencia: paciente.contacto_emergencia || '',
+      caso_clinico: paciente.caso_clinico || '',
+      direccion: paciente.direccion || '',
+      fecha_nacimiento: paciente.fecha_nacimiento || ''
+    });
+    setEditMode(true);
+    setShowForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditMode(false);
+    setShowForm(false);
+    setSelectedPaciente(null);
+    // Limpiar formulario
+    setFormData({
+      nombre: '',
+      telefono: '',
+      correo: '',
+      enfermedad_base: '',
+      contacto_emergencia: '',
+      caso_clinico: '',
+      direccion: '',
+      fecha_nacimiento: ''
+    });
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    
+    try {
+      // Mostrar mensaje de carga
+      const loadingMsg = mostrarNotificacion('Actualizando paciente...', 'info');
+      
+      await pacientesService.update(selectedPaciente.rut, formData);
+      
+      // Eliminar mensaje de carga si aún existe
+      if (document.body.contains(loadingMsg)) {
+        document.body.removeChild(loadingMsg);
+      }
+      
+      setEditMode(false);
+      setShowForm(false);
+      await cargarPacientes();
+      
+      // Limpiar formulario
+      setFormData({
+        nombre: '',
+        telefono: '',
+        correo: '',
+        enfermedad_base: '',
+        contacto_emergencia: '',
+        caso_clinico: '',
+        direccion: '',
+        fecha_nacimiento: ''
+      });
+      
+      mostrarNotificacion('Paciente actualizado exitosamente', 'success');
+    } catch (error) {
+      console.error('Error al actualizar paciente:', error);
+      
+      // Mostrar información detallada del error
+      let mensajeError = 'Error al actualizar el paciente';
+      
+      if (error.response) {
+        console.log('Detalles del error:', {
+          status: error.response.status,
+          headers: error.response.headers,
+          data: error.response.data
+        });
+        
+        if (error.response.data && error.response.data.error) {
+          mensajeError = error.response.data.error;
+        } else if (error.response.data && typeof error.response.data === 'string') {
+          mensajeError = error.response.data;
+        }
+      }
+      
+      mostrarNotificacion(mensajeError, 'error');
+    }
+  };
+
+  const handleDeleteClick = async (rut) => {
+    // Mostrar un diálogo de confirmación
+    if (window.confirm('¿Está seguro de que desea eliminar este paciente? Esta acción no se puede deshacer.')) {
+      try {
+        // Mostrar mensaje de carga
+        const loadingMsg = mostrarNotificacion('Eliminando paciente...', 'info');
+        
+        await pacientesService.delete(rut);
+        
+        // Eliminar mensaje de carga si aún existe
+        if (document.body.contains(loadingMsg)) {
+          document.body.removeChild(loadingMsg);
+        }
+        
+        // Recargar la lista de pacientes
+        await cargarPacientes();
+        
+        mostrarNotificacion('Paciente eliminado exitosamente', 'success');
+      } catch (error) {
+        console.error('Error al eliminar paciente:', error);
+        
+        // Mostrar información detallada del error
+        let mensajeError = 'Error al eliminar el paciente';
+        
+        if (error.response) {
+          console.log('Detalles del error:', {
+            status: error.response.status,
+            headers: error.response.headers,
+            data: error.response.data
+          });
+          
+          if (error.response.data && error.response.data.error) {
+            mensajeError = error.response.data.error;
+          } else if (error.response.data && typeof error.response.data === 'string') {
+            mensajeError = error.response.data;
+          }
+        }
+        
+        mostrarNotificacion(mensajeError, 'error');
+      }
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Cargando...</div>;
   }
@@ -142,7 +280,13 @@ const PacientesPage = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Pacientes</h1>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            if (editMode) {
+              handleCancelEdit();
+            } else {
+              setShowForm(!showForm);
+            }
+          }}
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
         >
           {showForm ? 'Cancelar' : 'Nuevo Paciente'}
@@ -150,7 +294,10 @@ const PacientesPage = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6">
+        <form onSubmit={editMode ? handleUpdate : handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-800">{editMode ? 'Editar Paciente' : 'Nuevo Paciente'}</h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">RUT</label>
@@ -160,6 +307,7 @@ const PacientesPage = () => {
                 onChange={handleRutChange}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 placeholder="12.345.678-9"
+                disabled={editMode}
               />
               {rutError && <p className="mt-1 text-sm text-red-600">{rutError}</p>}
             </div>
@@ -218,6 +366,26 @@ const PacientesPage = () => {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Dirección</label>
+              <input
+                type="text"
+                value={formData.direccion}
+                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
+              <input
+                type="date"
+                value={formData.fecha_nacimiento}
+                onChange={(e) => setFormData({ ...formData, fecha_nacimiento: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700">Caso Clínico</label>
               <textarea
@@ -229,12 +397,19 @@ const PacientesPage = () => {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={editMode ? handleCancelEdit : () => setShowForm(false)}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+            >
+              Cancelar
+            </button>
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
             >
-              Guardar Paciente
+              {editMode ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
         </form>
@@ -259,8 +434,18 @@ const PacientesPage = () => {
                 <td className="px-6 py-4 whitespace-nowrap">{paciente.telefono}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{paciente.correo}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
-                  <button className="text-red-600 hover:text-red-900">Eliminar</button>
+                  <button 
+                    className="text-indigo-600 hover:text-indigo-900 mr-3" 
+                    onClick={() => handleEditClick(paciente)}
+                  >
+                    Editar
+                  </button>
+                  <button 
+                    className="text-red-600 hover:text-red-900"
+                    onClick={() => handleDeleteClick(paciente.rut)}
+                  >
+                    Eliminar
+                  </button>
                 </td>
               </tr>
             )) : (

@@ -62,6 +62,7 @@ export const useRut = () => {
     rutError,
     handleRutChange,
     validarRut,
-    formatearRut
+    formatearRut,
+    setRut
   };
 }; 
