@@ -73,152 +73,78 @@ const AdminCitasPage = () => {
 
   const [horasOcupadas, setHorasOcupadas] = useState([]);
 
-  // Añadir un estado para controlar el intervalo de actualización
-  const [actualizacionAutomatica, setActualizacionAutomatica] = useState(true);
-  const [intervaloActualizacion, setIntervaloActualizacion] = useState(null);
-
-  // Cuando el componente se monta, cargar datos y establecer actualización automática
+  // Cuando el componente se monta, cargar datos una sola vez
   useEffect(() => {
     cargarDatos();
-    
-    // Configurar actualización automática cada 30 segundos
-    const intervalo = setInterval(() => {
-      if (actualizacionAutomatica) {
-        console.log("Actualización automática de citas...");
-        cargarDatosCompletos();
-      }
-    }, 30000); // 30 segundos
-    
-    setIntervaloActualizacion(intervalo);
-    
-    // Mostrar notificación inicial
-    setTimeout(() => {
-      mostrarNotificacion(
-        'Las citas se actualizan automáticamente cada 30 segundos', 
-        'info'
-      );
-    }, 2000);
-    
-    // Limpiar intervalo al desmontar
-    return () => {
-      if (intervalo) {
-        clearInterval(intervalo);
-      }
-    };
   }, []);
 
-  // Detener la actualización automática cuando se abre cualquier modal
-  useEffect(() => {
-    // Si cualquier modal está abierto, pausar actualizaciones
-    const modalAbierto = showForm || showEditModal || showDetailModal || showDeleteConfirm;
-    
-    if (modalAbierto && actualizacionAutomatica) {
-      console.log("Pausando actualización automática (modal abierto)");
-      setActualizacionAutomatica(false);
-    } else if (!modalAbierto && !actualizacionAutomatica) {
-      console.log("Reanudando actualización automática");
-      setActualizacionAutomatica(true);
-      
-      // Hacer una actualización inmediata al cerrar modales
-      cargarDatosCompletos();
-    }
-  }, [showForm, showEditModal, showDetailModal, showDeleteConfirm]);
-
-  // Función para cargar datos completos (utilizando la API de debug)
-  const cargarDatosCompletos = async () => {
-    try {
-      // Obtener citas con el endpoint de depuración que proporciona más detalles
-      const citasDebug = await axiosInstance.get('/citas/debug/');
-      console.log('Respuesta de depuración:', citasDebug);
-      
-      if (citasDebug.data && citasDebug.data.citas && citasDebug.data.citas.length > 0) {
-        // Limpiar las citas anteriores primero
-        setCitas([]);
-        
-        // Establecer las nuevas citas con un ligero retraso para garantizar la actualización
-        setTimeout(() => {
-          setCitas(citasDebug.data.citas);
-          console.log(`Citas actualizadas automáticamente: ${citasDebug.data.citas.length} citas cargadas`);
-        }, 100);
-      } else {
-        console.log('No se encontraron citas en la respuesta del API de depuración');
-        setCitas([]);
-      }
-      
-      // También cargar datos de pacientes si es necesario
-      const pacientesRes = await pacientesService.getAll();
-      setPacientes(pacientesRes.data);
-      
-    } catch (error) {
-      console.error('Error al cargar datos completos:', error);
-      
-      // Si falla la API de depuración, intentar con la API estándar
-      cargarDatos();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Función original para cargar datos (como respaldo)
+  // Función para cargar datos
   const cargarDatos = async () => {
     try {
+      // Usar el endpoint de depuración para obtener las citas
       const [citasRes, pacientesRes] = await Promise.all([
-        citasService.getAll(),
+        axiosInstance.get('/citas/debug/'),
         pacientesService.getAll()
       ]);
+
+      console.log('Respuesta de citas (debug):', citasRes.data);
       
-      // Imprimir la respuesta completa para inspección
-      console.log('Respuesta completa del servidor (citas):', citasRes);
-      
-      // Asegurarse de que citas sea un array
       let citasData = [];
       
-      if (citasRes.data) {
-        if (Array.isArray(citasRes.data)) {
-          citasData = citasRes.data;
-        } else if (citasRes.data.results && Array.isArray(citasRes.data.results)) {
-          // Para APIs que devuelven paginación
-          citasData = citasRes.data.results;
-        } else if (typeof citasRes.data === 'object') {
-          // Intentar extraer datos de un objeto
-          console.log('Los datos de citas no son un array, intentando extraer contenido');
-          const keys = Object.keys(citasRes.data);
-          if (keys.length > 0 && Array.isArray(citasRes.data[keys[0]])) {
-            citasData = citasRes.data[keys[0]];
+      // Procesar los datos de citas desde el endpoint de depuración
+      if (citasRes.data && citasRes.data.citas) {
+        citasData = citasRes.data.citas;
+      }
+
+      console.log('Citas procesadas:', citasData);
+
+      // Verificar y formatear cada cita
+      const citasFormateadas = citasData.map(cita => {
+        if (!cita.id || !cita.fecha || !cita.hora) {
+          console.warn('Cita con datos incompletos:', cita);
+          return null;
+        }
+
+        // Asegurarse de que la hora tenga el formato correcto (HH:MM)
+        let horaFormateada = cita.hora;
+        if (horaFormateada && horaFormateada.includes(':')) {
+          const partes = horaFormateada.split(':');
+          if (partes.length >= 2) {
+            horaFormateada = `${partes[0]}:${partes[1]}`;
           }
         }
-      }
+
+        return {
+          ...cita,
+          fecha: cita.fecha,
+          hora: horaFormateada,
+          tipo_cita: cita.tipo_cita || 'podologia',
+          paciente_nombre: cita.paciente_nombre || 'Sin nombre',
+          tipo_tratamiento: cita.tratamiento_nombre || cita.tipo_tratamiento || 'Sin tratamiento'
+        };
+      }).filter(cita => cita !== null);
+
+      console.log('Citas formateadas finales:', citasFormateadas);
       
-      console.log('Citas procesadas:', citasData);
-      
-      if (citasData.length === 0) {
-        console.log('No se encontraron citas en la respuesta');
-      } else {
-        // Verificar formato de cada cita
-        citasData.forEach((cita, index) => {
-          console.log(`Cita ${index}:`, cita);
-          // Verificar campos críticos
-          if (!cita.id) console.warn(`Cita ${index} no tiene ID`);
-          if (!cita.fecha) console.warn(`Cita ${index} no tiene fecha`);
-          if (!cita.hora) console.warn(`Cita ${index} no tiene hora`);
-        });
-      }
-      
-      // Establecer las citas asegurando que sea un array
-      setCitas(Array.isArray(citasData) ? citasData : []);
+      // Establecer las citas en el estado
+      setCitas(citasFormateadas);
       
       // Establecer los pacientes
-      setPacientes(Array.isArray(pacientesRes.data) ? pacientesRes.data : []);
+      if (Array.isArray(pacientesRes.data)) {
+        setPacientes(pacientesRes.data);
+      } else {
+        console.warn('Datos de pacientes no válidos:', pacientesRes.data);
+        setPacientes([]);
+      }
       
     } catch (error) {
       console.error('Error al cargar datos:', error);
       if (error.response) {
-        console.error('Detalles del error:', {
-          status: error.response.status,
-          data: error.response.data
-        });
+        console.error('Detalles del error:', error.response.data);
       }
-      setCitas([]); // En caso de error, establecer un array vacío
+      setCitas([]);
+      setPacientes([]);
+      mostrarNotificacion('Error al cargar las citas', 'error');
     } finally {
       setLoading(false);
     }
@@ -312,166 +238,74 @@ const AdminCitasPage = () => {
       document.body.appendChild(loadingMsg);
       
       // Intento de creación de cita
-    try {
-      const response = await citasService.create(formData);
+      try {
+        const response = await citasService.create(formData);
         console.log("Respuesta de creación:", response.data);
         
         try {
-      await enviarConfirmacionCita(response.data);
+          await enviarConfirmacionCita(response.data);
         } catch (whatsappError) {
           console.error('Error al enviar confirmación por WhatsApp:', whatsappError);
-          // Continuamos aunque falle el envío de WhatsApp
         }
         
-      setShowForm(false);
+        setShowForm(false);
         
-        // Forzamos una pausa breve antes de recargar los datos
-        setTimeout(async () => {
-          await cargarDatos();
-          console.log("Citas actualizadas después de crear:", citas);
-        }, 500);
+        // Formatear la nueva cita antes de agregarla al estado
+        const paciente = pacientes.find(p => p.rut === formData.paciente_rut);
+        const nuevaCita = {
+          ...response.data,
+          paciente_nombre: paciente ? paciente.nombre : 'Sin nombre',
+          tipo_tratamiento: formData.tipo_tratamiento,
+          hora: formData.hora.substring(0, 5), // Asegurar formato HH:MM
+          tipo_cita: formData.tipo_cita
+        };
         
-      setFormData({
-        paciente_rut: '',
-        fecha: '',
-        hora: '',
-        tipo_tratamiento: '',
-        tipo_tratamiento: ''
-      });
+        // Agregar la nueva cita al estado local
+        setCitas(prevCitas => [...prevCitas, nuevaCita]);
+        
+        setFormData({
+          paciente_rut: '',
+          fecha: '',
+          hora: '',
+          tipo_tratamiento: '',
+          tipo_cita: 'podologia'
+        });
         
         // Eliminar mensaje de carga
         document.body.removeChild(loadingMsg);
         
         // Mostrar mensaje de éxito
-        const successMsg = document.createElement('div');
-        successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md z-50';
-        successMsg.textContent = 'Cita creada con éxito';
-        document.body.appendChild(successMsg);
-        
-        // Eliminar mensaje después de 3 segundos
-        setTimeout(() => {
-          document.body.removeChild(successMsg);
-        }, 3000);
+        mostrarNotificacion('Cita creada con éxito', 'success');
       } catch (apiError) {
         console.error('Error detallado al crear cita:', apiError);
-        
-        // Eliminar mensaje de carga
-        document.body.removeChild(loadingMsg);
-        
-        // Mostrar información más detallada del error
-        if (apiError.response) {
-          console.log('Detalles del error:', {
-            status: apiError.response.status,
-            headers: apiError.response.headers,
-            data: apiError.response.data
-          });
-          
-          // Mensaje de error más específico
-          let errorMsg = 'Error al crear la cita. Por favor, intente nuevamente.';
-          
-          // Mostrar mensaje de error más detallado si está disponible
-          if (apiError.response.data) {
-            if (apiError.response.data.error) {
-              errorMsg = apiError.response.data.error;
-            } else if (typeof apiError.response.data === 'string') {
-              errorMsg = apiError.response.data;
-            } else if (apiError.response.data.detail) {
-              errorMsg = apiError.response.data.detail;
-            } else if (apiError.response.data.message) {
-              errorMsg = apiError.response.data.message;
-            } else {
-              // Intentar extraer cualquier mensaje de error disponible
-              const errData = apiError.response.data;
-              for (const key in errData) {
-                if (Array.isArray(errData[key])) {
-                  errorMsg = `${key}: ${errData[key].join(", ")}`;
-                  break;
-                } else if (typeof errData[key] === 'string') {
-                  errorMsg = `${key}: ${errData[key]}`;
-                  break;
-                }
-              }
-            }
-          }
-          
-          // Mostrar mensaje de error
-          const errorElement = document.createElement('div');
-          errorElement.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md z-50';
-          errorElement.textContent = errorMsg;
-          document.body.appendChild(errorElement);
-          
-          // Eliminar mensaje después de 5 segundos
-          setTimeout(() => {
-            document.body.removeChild(errorElement);
-          }, 5000);
-        } else {
-          // Mensaje genérico para errores sin respuesta
-          const errorElement = document.createElement('div');
-          errorElement.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md z-50';
-          errorElement.textContent = 'Error al crear la cita. Por favor, intente nuevamente.';
-          document.body.appendChild(errorElement);
-          
-          // Eliminar mensaje después de 5 segundos
-          setTimeout(() => {
-            document.body.removeChild(errorElement);
-          }, 5000);
+        if (document.body.contains(loadingMsg)) {
+          document.body.removeChild(loadingMsg);
         }
+        mostrarNotificacion('Error al crear la cita', 'error');
       }
     } catch (error) {
       console.error('Error general al crear cita:', error);
-      
-      // Mensaje genérico para errores generales
-      const errorElement = document.createElement('div');
-      errorElement.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md z-50';
-      errorElement.textContent = 'Error general al crear la cita. Por favor, intente nuevamente.';
-      document.body.appendChild(errorElement);
-      
-      // Eliminar mensaje después de 5 segundos
-      setTimeout(() => {
-        document.body.removeChild(errorElement);
-      }, 5000);
+      mostrarNotificacion('Error al crear la cita', 'error');
     }
   };
 
   // Función para mostrar notificaciones
   const mostrarNotificacion = (mensaje, tipo = 'info') => {
-    // Determinar clase CSS basada en el tipo de notificación
-    let claseBase = 'fixed z-50 p-4 rounded-md shadow-lg max-w-md';
-    let claseColor;
+    const notificacion = document.createElement('div');
+    notificacion.className = `fixed top-4 right-4 px-4 py-2 rounded-md z-50 ${
+      tipo === 'error' ? 'bg-red-500' :
+      tipo === 'success' ? 'bg-green-500' :
+      'bg-blue-500'
+    } text-white`;
+    notificacion.textContent = mensaje;
     
-    switch (tipo) {
-      case 'error':
-        claseColor = 'bg-red-500 text-white';
-        break;
-      case 'success':
-        claseColor = 'bg-green-500 text-white';
-        break;
-      case 'warning':
-        claseColor = 'bg-yellow-500 text-white';
-        break;
-      case 'info':
-      default:
-        claseColor = 'bg-blue-500 text-white';
-        break;
-    }
+    document.body.appendChild(notificacion);
     
-    // Crear el elemento de notificación
-    const notification = document.createElement('div');
-    notification.className = `${claseBase} ${claseColor} top-4 right-4`;
-    notification.textContent = mensaje;
-    
-    // Añadir a la página
-    document.body.appendChild(notification);
-    
-    // Eliminar después de un tiempo
-    const duracion = tipo === 'error' ? 8000 : 3000;
     setTimeout(() => {
-      if (document.body.contains(notification)) {
-        document.body.removeChild(notification);
+      if (document.body.contains(notificacion)) {
+        document.body.removeChild(notificacion);
       }
-    }, duracion);
-    
-    return notification;
+    }, 3000);
   };
 
   const depurarCitas = async () => {
@@ -941,15 +775,6 @@ const AdminCitasPage = () => {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center">
           <h1 className="text-2xl font-bold text-gray-800">Calendario de Citas</h1>
-          {actualizacionAutomatica && (
-            <span 
-              className="relative flex h-3 w-3 ml-2" 
-              title="Actualización automática activada"
-            >
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-            </span>
-          )}
         </div>
         <div className="flex space-x-4">
           <button
@@ -969,15 +794,6 @@ const AdminCitasPage = () => {
             }}
           >
             + Nueva Cita
-          </button>
-          <button
-            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-            onClick={() => cargarDatosCompletos()}
-            title="Actualizar manualmente la lista de citas"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-            </svg>
           </button>
         </div>
       </div>

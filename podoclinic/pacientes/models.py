@@ -17,6 +17,8 @@ class Paciente(models.Model):
     contacto_emergencia = models.CharField(max_length=100, blank=True, null=True)
     caso_clinico = models.TextField(blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
+    direccion = models.CharField(max_length=200, blank=True, null=True)
+    fecha_nacimiento = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.nombre} ({self.rut})"

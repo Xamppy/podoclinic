@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { citasService } from '../api/citas';
 import { insumosService } from '../api/insumos';
+import axiosInstance from '../api/axios';
+import { format } from 'date-fns';
+import es from 'date-fns/locale/es';
 
 const DashboardPage = () => {
   const [citasHoy, setCitasHoy] = useState([]);
@@ -14,16 +17,30 @@ const DashboardPage = () => {
         setError(null);
         const hoy = new Date().toISOString().split('T')[0];
         
-        // Cargar citas y insumos en paralelo
+        // Cargar citas usando el endpoint de depuración y insumos en paralelo
         const [citasResponse, insumosResponse] = await Promise.all([
-          citasService.getByFecha(hoy),
+          axiosInstance.get('/citas/debug/'),
           insumosService.getStockCritico()
         ]);
 
-        console.log('Respuesta de citas:', citasResponse);
-        console.log('Respuesta de insumos críticos:', insumosResponse);
+        console.log('Respuesta de citas:', citasResponse.data);
         
-        setCitasHoy(Array.isArray(citasResponse.data) ? citasResponse.data : []);
+        // Filtrar las citas para hoy y ordenarlas por hora
+        let citasData = [];
+        if (citasResponse.data && citasResponse.data.citas) {
+          citasData = citasResponse.data.citas
+            .filter(cita => cita.fecha === hoy)
+            .map(cita => ({
+              ...cita,
+              hora: cita.hora.substring(0, 5), // Formato HH:MM
+              tipo_tratamiento: cita.tratamiento_nombre || cita.tipo_tratamiento || 'Sin especificar',
+              estado_color: getEstadoColor(cita.estado)
+            }))
+            .sort((a, b) => a.hora.localeCompare(b.hora));
+        }
+
+        console.log('Citas de hoy procesadas:', citasData);
+        setCitasHoy(citasData);
         setInsumosCriticos(insumosResponse.data);
       } catch (error) {
         console.error('Error al cargar datos:', error);
@@ -36,12 +53,51 @@ const DashboardPage = () => {
     cargarDatos();
   }, []);
 
+  // Función para obtener el color según el estado de la cita
+  const getEstadoColor = (estado) => {
+    switch (estado) {
+      case 'confirmada':
+        return 'bg-green-100 text-green-800';
+      case 'completada':
+        return 'bg-blue-100 text-blue-800';
+      case 'cancelada':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-yellow-100 text-yellow-800';
+    }
+  };
+
+  // Función para formatear la fecha
+  const formatearFecha = (fecha) => {
+    return format(new Date(fecha), "EEEE d 'de' MMMM", { locale: es });
+  };
+
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Cargando...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <span className="ml-2">Cargando...</span>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="flex justify-center items-center h-screen text-red-600">{error}</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -51,19 +107,49 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Citas del día */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Citas del Día</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Citas del Día</h2>
+            <p className="text-sm text-gray-600 capitalize">
+              {formatearFecha(new Date())}
+            </p>
+          </div>
+          
           {citasHoy.length === 0 ? (
-            <p className="text-gray-500">No hay citas programadas para hoy</p>
+            <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <p className="text-gray-500">No hay citas programadas para hoy</p>
+            </div>
           ) : (
-            <ul className="space-y-4">
+            <div className="space-y-4">
               {citasHoy.map((cita) => (
-                <li key={cita.id} className="border-b pb-2">
-                  <p className="font-medium">{cita.paciente_nombre}</p>
-                  <p className="text-sm text-gray-600">{cita.hora}</p>
-                  <p className="text-sm text-gray-600">{cita.tipo_tratamiento}</p>
-                </li>
+                <div 
+                  key={cita.id} 
+                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-medium text-gray-900">{cita.paciente_nombre}</h3>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Hora:</span> {cita.hora}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${cita.estado_color}`}>
+                      {cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1)}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Tratamiento:</span> {cita.tipo_tratamiento}
+                    </p>
+                    {cita.tipo_cita && (
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Tipo:</span> {cita.tipo_cita === 'podologia' ? 'Podología' : 'Manicura'}
+                      </p>
+                    )}
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
 
@@ -71,21 +157,28 @@ const DashboardPage = () => {
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">Insumos con Stock Crítico</h2>
           {insumosCriticos.length === 0 ? (
-            <p className="text-gray-500">No hay insumos con stock crítico</p>
+            <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <p className="text-gray-500">No hay insumos con stock crítico</p>
+            </div>
           ) : (
-            <ul className="space-y-4">
+            <div className="space-y-4">
               {insumosCriticos.map((insumo) => (
-                <li key={insumo.id} className="border-b pb-2">
-                  <p className="font-medium">{insumo.nombre}</p>
-                  <p className="text-sm text-red-600">
-                    Stock actual: {insumo.stock_actual} {insumo.unidad_medida}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Stock crítico: {insumo.stock_critico} {insumo.unidad_medida}
-                  </p>
-                </li>
+                <div 
+                  key={insumo.id} 
+                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <h3 className="font-medium text-gray-900">{insumo.nombre}</h3>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm text-red-600">
+                      Stock actual: {insumo.stock_actual} {insumo.unidad_medida}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Stock crítico: {insumo.stock_critico} {insumo.unidad_medida}
+                    </p>
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
       </div>
