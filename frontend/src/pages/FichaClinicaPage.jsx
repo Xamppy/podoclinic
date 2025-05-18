@@ -556,10 +556,11 @@ const FichaClinicaPage = () => {
                   <div className="mb-4 h-20">
                     {/* Espacio para firma */}
                   </div>
-                  <p className="font-medium">NOMBRE DEL PROFESIONAL</p>
-                  <p>Podólogo/a</p>
-                  <p>RUT: XX.XXX.XXX-X</p>
-                  <p>Registro: XXXXX</p>
+                  <p className="font-medium">Esmeralda Valdevenito V.</p>
+                  <p>Podóloga</p>
+                  <p>RUT: 10.925.406-1</p>
+                  <p>ROL: N° 3578</p>
+                  <p>VILLA EL BOSQUE - ALCALDE SERGIO JORQUERA N°65, LA CRUZ</p>
                 </div>
               </div>
             </div>
