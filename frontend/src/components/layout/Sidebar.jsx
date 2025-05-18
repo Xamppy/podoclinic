@@ -8,6 +8,7 @@ const Sidebar = () => {
     { path: '/admin/citas', label: 'Citas', icon: '📅' },
     { path: '/admin/fichas-clinicas', label: 'Fichas Clínicas', icon: '📋' },
     { path: '/admin/inventario', label: 'Inventario', icon: '📦' },
+    { path: '/admin/respaldo', label: 'Respaldo', icon: '💾' },
   ];
 
   return (

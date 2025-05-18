@@ -180,7 +180,20 @@ const PacientesPage = () => {
       // Mostrar mensaje de carga
       const loadingMsg = mostrarNotificacion('Actualizando paciente...', 'info');
       
-      await pacientesService.update(selectedPaciente.rut, formData);
+      // Preparar los datos para la actualización
+      const datosActualizados = { ...formData, rut: selectedPaciente.rut };
+      
+      // Manejar el campo fecha_nacimiento
+      if (datosActualizados.fecha_nacimiento === '') {
+        // Si es una cadena vacía, establecerlo como null
+        datosActualizados.fecha_nacimiento = null;
+      }
+      
+      console.log('rut a actualizar:', selectedPaciente.rut);
+      console.log('datos a enviar:', datosActualizados);
+      
+      // Enviar los datos incluyendo explícitamente el RUT
+      await pacientesService.update(selectedPaciente.rut, datosActualizados);
       
       // Eliminar mensaje de carga si aún existe
       if (document.body.contains(loadingMsg)) {

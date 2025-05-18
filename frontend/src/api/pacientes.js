@@ -15,8 +15,19 @@ export const pacientesService = {
     return api.post('/pacientes/crear_paciente_admin/', pacienteData);
   },
   
-  // Actualizar un paciente
-  update: (rut, paciente) => api.put(`/pacientes/${rut}/`, paciente),
+  // Actualizar un paciente usando el endpoint admin
+  update: (rut, paciente) => {
+    // Verificar que el RUT esté presente
+    const pacienteData = { ...paciente };
+    if (!pacienteData.rut) {
+      pacienteData.rut = rut;
+    }
+    
+    console.log('Enviando datos a actualizar_paciente_admin:', pacienteData);
+    
+    // Asegurarse de que el RUT esté incluido en los datos
+    return api.put('/pacientes/actualizar_paciente_admin/', pacienteData);
+  },
   
   // Eliminar un paciente
   delete: (rut) => api.delete(`/pacientes/${rut}/`),

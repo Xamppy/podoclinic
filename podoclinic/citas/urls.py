@@ -252,6 +252,7 @@ def debug_citas(request):
                 'paciente_id': cita.paciente.id if cita.paciente else None,
                 'paciente_rut': cita.paciente.rut if cita.paciente else None,
                 'paciente_nombre': cita.paciente.nombre if cita.paciente else None,
+                'paciente_fecha_nacimiento': cita.paciente.fecha_nacimiento.isoformat() if cita.paciente and cita.paciente.fecha_nacimiento else None,
                 'tratamiento_id': cita.tratamiento.id if cita.tratamiento else None,
                 'tratamiento_nombre': cita.tratamiento.get_nombre_display() if cita.tratamiento else None,
                 'fecha': cita.fecha,

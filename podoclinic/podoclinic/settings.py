@@ -84,6 +84,14 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+# Configuración CSRF
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
+CSRF_COOKIE_SECURE = False  # Cambiar a True en producción
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_NAME = 'csrftoken'
+
 ROOT_URLCONF = 'podoclinic.urls'
 
 TEMPLATES = [

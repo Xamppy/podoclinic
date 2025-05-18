@@ -13,6 +13,7 @@ import PacientesPage from './pages/PacientesPage';
 import AdminCitasPage from './pages/AdminCitasPage';
 import FichaClinicaPage from './pages/FichaClinicaPage';
 import InventarioPage from './pages/InventarioPage';
+import RespaldoPage from './pages/RespaldoPage';
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -94,6 +95,17 @@ const App = () => {
                 <ProtectedRoute>
                   <Layout>
                     <InventarioPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/respaldo"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <RespaldoPage />
                   </Layout>
                 </ProtectedRoute>
               }

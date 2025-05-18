@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { pacientesService } from '../api/pacientes';
 import { useRut } from '../hooks/useRut';
-import { format } from 'date-fns';
+import { format, differenceInYears } from 'date-fns';
 import es from 'date-fns/locale/es';
 
 const FichaClinicaPage = () => {
@@ -125,6 +125,13 @@ const FichaClinicaPage = () => {
     window.print();
   };
 
+  const calcularEdad = (fechaNacimiento) => {
+    if (!fechaNacimiento) return null;
+    const fechaNac = new Date(fechaNacimiento);
+    const edad = differenceInYears(new Date(), fechaNac);
+    return edad;
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Cargando...</div>;
   }
@@ -138,14 +145,14 @@ const FichaClinicaPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Lista de Pacientes */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Pacientes</h2>
+          <h2 className="text-2xl font-semibold mb-4">Pacientes</h2>
           <div className="mb-4">
             <input
               type="text"
               placeholder="Buscar por nombre o RUT..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-3 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
@@ -153,14 +160,14 @@ const FichaClinicaPage = () => {
               <button
                 key={paciente.rut}
                 onClick={() => handlePacienteSelect(paciente.rut)}
-                className={`w-full text-left p-3 rounded-lg transition-colors ${
+                className={`w-full text-left p-4 rounded-lg transition-colors ${
                   selectedPaciente?.rut === paciente.rut
                     ? 'bg-indigo-100 text-indigo-700'
                     : 'hover:bg-gray-100'
                 }`}
               >
-                <p className="font-medium">{paciente.nombre}</p>
-                <p className="text-sm text-gray-600">{paciente.rut}</p>
+                <p className="text-xl font-medium">{paciente.nombre}</p>
+                <p className="text-lg text-gray-600">{paciente.rut}</p>
               </button>
             ))}
           </div>
@@ -172,28 +179,28 @@ const FichaClinicaPage = () => {
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-xl font-semibold">{selectedPaciente.nombre}</h2>
-                  <p className="text-gray-600">{selectedPaciente.rut}</p>
+                  <h2 className="text-3xl font-semibold mb-2">{selectedPaciente.nombre}</h2>
+                  <p className="text-xl text-gray-600 mb-1">{selectedPaciente.rut}</p>
                   {selectedPaciente.direccion && (
-                    <p className="text-gray-600 mt-1">Dirección: {selectedPaciente.direccion}</p>
+                    <p className="text-xl text-gray-600 mb-1">Dirección: {selectedPaciente.direccion}</p>
                   )}
                   {selectedPaciente.fecha_nacimiento && (
-                    <p className="text-gray-600 mt-1">
-                      Fecha de nacimiento: {formatDate(selectedPaciente.fecha_nacimiento)}
+                    <p className="text-xl text-gray-600">
+                      Edad: {calcularEdad(selectedPaciente.fecha_nacimiento)} años
                     </p>
                   )}
                 </div>
                 <div className="space-x-2">
                   <button
                     onClick={() => setShowForm(true)}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-lg"
                   >
                     Nueva Ficha
                   </button>
                   {selectedFicha && (
                     <button
                       onClick={handleGenerarCertificado}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-lg"
                     >
                       Generar Certificado
                     </button>
@@ -384,7 +391,7 @@ const FichaClinicaPage = () => {
                     )}
                     {selectedPaciente.fecha_nacimiento && (
                       <p className="text-gray-600">
-                        <strong>Fecha de nacimiento:</strong> {formatDate(selectedPaciente.fecha_nacimiento)}
+                        <strong>Edad:</strong> {calcularEdad(selectedPaciente.fecha_nacimiento)} años
                       </p>
                     )}
                   </div>

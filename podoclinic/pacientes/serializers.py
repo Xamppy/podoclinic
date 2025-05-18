@@ -17,6 +17,12 @@ class PacienteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("RUT inválido (dígito verificador incorrecto)")
         
         return rut_formateado
+    
+    def validate_fecha_nacimiento(self, value):
+        # Si el valor es una cadena vacía, devolver None
+        if value == '':
+            return None
+        return value
 
 class FichaClinicaSerializer(serializers.ModelSerializer):
     class Meta:

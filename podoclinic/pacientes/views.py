@@ -64,6 +64,85 @@ def crear_paciente_admin(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+@api_view(['PUT', 'OPTIONS'])
+@permission_classes([AllowAny])
+def actualizar_paciente_admin(request):
+    """
+    Vista específica para actualizar pacientes desde la interfaz de administración.
+    No requiere autenticación.
+    """
+    # Manejar solicitudes OPTIONS para CORS
+    if request.method == 'OPTIONS':
+        response = Response()
+        response['Allow'] = 'PUT, OPTIONS'
+        response['Access-Control-Allow-Methods'] = 'PUT, OPTIONS'
+        response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return response
+    
+    # Protección para otros métodos no permitidos
+    if request.method != 'PUT':
+        return Response(
+            {'error': 'Método no permitido. Esta vista solo acepta solicitudes PUT.'},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+        
+    try:
+        data = request.data
+        print(f"Datos recibidos en actualizar_paciente_admin: {data}")
+        
+        # Validar que se proporcione el RUT
+        if 'rut' not in data:
+            return Response(
+                {'error': 'Falta el RUT del paciente'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validar los datos necesarios
+        required_fields = ['nombre', 'telefono', 'correo']
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            return Response(
+                {'error': f'Faltan los siguientes campos requeridos: {", ".join(missing_fields)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Buscar el paciente por RUT
+        try:
+            paciente = Paciente.objects.get(rut=data['rut'])
+        except Paciente.DoesNotExist:
+            return Response(
+                {'error': f'No se encontró un paciente con el RUT {data["rut"]}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Preparar los datos para la actualización
+        datos_actualizados = data.copy()
+        
+        # Manejar fecha_nacimiento
+        if 'fecha_nacimiento' in datos_actualizados:
+            if datos_actualizados['fecha_nacimiento'] == '' or datos_actualizados['fecha_nacimiento'] is None:
+                datos_actualizados['fecha_nacimiento'] = None
+        
+        # Actualizar el paciente
+        serializer = PacienteSerializer(paciente, data=datos_actualizados, partial=True)
+        if serializer.is_valid():
+            paciente = serializer.save()
+            return Response(serializer.data)
+        else:
+            print(f"Errores de validación: {serializer.errors}")
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response(
+            {'error': f'Error al actualizar el paciente: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
 class PacienteViewSet(viewsets.ModelViewSet):
     queryset = Paciente.objects.all()
     serializer_class = PacienteSerializer

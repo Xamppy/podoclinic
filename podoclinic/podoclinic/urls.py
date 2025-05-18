@@ -20,6 +20,7 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
+from .views import database_backup
 
 # Vista para manejar 404 en rutas de API
 def api_not_found(request):
@@ -31,6 +32,7 @@ urlpatterns = [
     path('api/citas/', include('citas.urls')),
     path('api/insumos/', include('insumos.urls')),
     path('api/usuarios/', include('usuarios.urls')),
+    path('api/database/backup/', database_backup, name='database_backup'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # API fallback para rutas no encontradas (debe ir antes del fallback general)

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { citasService } from '../api/citas';
 import { insumosService } from '../api/insumos';
 import axiosInstance from '../api/axios';
-import { format } from 'date-fns';
+import { format, differenceInYears } from 'date-fns';
 import es from 'date-fns/locale/es';
 
 const DashboardPage = () => {
@@ -72,6 +72,13 @@ const DashboardPage = () => {
     return format(new Date(fecha), "EEEE d 'de' MMMM", { locale: es });
   };
 
+  const calcularEdad = (fechaNacimiento) => {
+    if (!fechaNacimiento) return null;
+    const fechaNac = new Date(fechaNacimiento);
+    const edad = differenceInYears(new Date(), fechaNac);
+    return edad;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -125,16 +132,22 @@ const DashboardPage = () => {
                   key={cita.id} 
                   className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{cita.paciente_nombre}</h3>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Hora:</span> {cita.hora}
-                      </p>
-                    </div>
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-medium text-gray-900">{cita.paciente_nombre}</h3>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${cita.estado_color}`}>
                       {cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1)}
                     </span>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Hora:</span> {cita.hora}
+                    </p>
+                    {cita.paciente_fecha_nacimiento && (
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Edad:</span> {calcularEdad(cita.paciente_fecha_nacimiento)} años
+                      </p>
+                    )}
                   </div>
                   
                   <div className="mt-2">
