@@ -4,6 +4,7 @@ import { insumosService } from '../api/insumos';
 import axiosInstance from '../api/axios';
 import { format, differenceInYears } from 'date-fns';
 import es from 'date-fns/locale/es';
+import { formatInTimeZone } from 'date-fns-tz';
 
 const DashboardPage = () => {
   const [citasHoy, setCitasHoy] = useState([]);
@@ -15,7 +16,11 @@ const DashboardPage = () => {
     const cargarDatos = async () => {
       try {
         setError(null);
-        const hoy = new Date().toISOString().split('T')[0];
+        
+        // Obtener la fecha actual en la zona horaria de Chile
+        const timeZone = 'America/Santiago';
+        const hoy = formatInTimeZone(new Date(), timeZone, 'yyyy-MM-dd');
+        console.log('Fecha en Chile:', hoy);
         
         // Cargar citas usando el endpoint de depuración y insumos en paralelo
         const [citasResponse, insumosResponse] = await Promise.all([
@@ -23,13 +28,27 @@ const DashboardPage = () => {
           insumosService.getStockCritico()
         ]);
 
-        console.log('Respuesta de citas:', citasResponse.data);
+        console.log('Respuesta completa de citas:', citasResponse.data);
+        console.log('Estructura de la primera cita:', citasResponse.data.citas?.[0]);
         
         // Filtrar las citas para hoy y ordenarlas por hora
         let citasData = [];
         if (citasResponse.data && citasResponse.data.citas) {
           citasData = citasResponse.data.citas
-            .filter(cita => cita.fecha === hoy)
+            .filter(cita => {
+              try {
+                // Comparar directamente las fechas en formato string YYYY-MM-DD
+                console.log('Comparando fechas:', {
+                  fecha_cita: cita.fecha,
+                  fecha_chile: hoy,
+                  sonIguales: cita.fecha === hoy
+                });
+                return cita.fecha === hoy;
+              } catch (error) {
+                console.error('Error procesando fecha de cita:', cita.fecha, error);
+                return false;
+              }
+            })
             .map(cita => ({
               ...cita,
               hora: cita.hora.substring(0, 5), // Formato HH:MM
@@ -51,6 +70,12 @@ const DashboardPage = () => {
     };
 
     cargarDatos();
+
+    // Actualizar los datos cada 5 minutos
+    const intervalo = setInterval(cargarDatos, 5 * 60 * 1000);
+
+    // Limpiar el intervalo cuando el componente se desmonte
+    return () => clearInterval(intervalo);
   }, []);
 
   // Función para obtener el color según el estado de la cita

@@ -182,7 +182,7 @@ const FichaClinicaPage = () => {
                     <p className="text-xl text-indigo-600 mb-1">Dirección: {selectedPaciente.direccion}</p>
                   )}
                   {selectedPaciente.fecha_nacimiento && (
-                    <p className="text-xl text-indigo-600">
+                    <p className="text-xl font-bold text-indigo-600">
                       Edad: {calcularEdad(selectedPaciente.fecha_nacimiento)} años
                     </p>
                   )}

@@ -207,7 +207,23 @@ const CalendarioCitas = () => {
   const handleSelectEvent = (event) => {
     console.log('Cita seleccionada:', event);
     console.log('Datos completos de la cita:', event.resource);
-    setSelectedEvent(event);
+    
+    // Determinar si es una cita de manicura
+    const esManicura = event.resource.tipo_cita === 'manicura' || 
+                      event.title.toLowerCase().includes('manicura') ||
+                      event.tratamiento === 'Manicura';
+                      
+    // Modificar el evento para asegurar que tiene el tipo correcto
+    const eventoModificado = {
+      ...event,
+      resource: {
+        ...event.resource,
+        tipo_cita: esManicura ? 'manicura' : 'podologia',
+        tipo_tratamiento: esManicura ? 'Manicura' : event.tratamiento
+      }
+    };
+    
+    setSelectedEvent(eventoModificado);
   };
 
   const handleSelectSlot = async (slotInfo) => {
@@ -366,15 +382,18 @@ const CalendarioCitas = () => {
     const fecha = format(selectedEvent.start, 'yyyy-MM-dd');
     const hora = format(selectedEvent.start, 'HH:mm');
     
+    // Determinar si es una cita de manicura basándonos en el resource ya modificado
+    const esManicura = selectedEvent.resource.tipo_cita === 'manicura';
+    
     setEditFormData({
       id: selectedEvent.id,
       paciente_rut: selectedEvent.paciente_rut || '',
       fecha: fecha,
       hora: hora,
-      tipo_tratamiento: selectedEvent.tratamiento || '',
+      tipo_tratamiento: esManicura ? 'Manicura' : (selectedEvent.tratamiento || ''),
       estado: selectedEvent.estado || 'reservada',
-      tipo_cita: selectedEvent.resource.tipo_cita || 'podologia', // Asegurarnos de incluir el tipo de cita
-      original_hora: hora // Guardar la hora original para resaltarla en el selector
+      tipo_cita: selectedEvent.resource.tipo_cita || 'podologia',
+      original_hora: hora
     });
     
     // Cargar horarios disponibles para la fecha seleccionada
@@ -489,6 +508,15 @@ const CalendarioCitas = () => {
     });
   };
 
+  // Función para detectar si es dispositivo móvil
+  const isMobile = () => window.innerWidth <= 768;
+
+  // Configuración de vistas según el dispositivo
+  const views = isMobile() ? ['month', 'agenda'] : ['month', 'week', 'day', 'agenda'];
+  
+  // Ajustar altura del calendario según el dispositivo
+  const calendarHeight = isMobile() ? 'calc(100vh - 200px)' : '100%';
+
   if (loading) {
     return <div className="flex justify-center items-center h-64">Cargando calendario...</div>;
   }
@@ -498,11 +526,11 @@ const CalendarioCitas = () => {
       <h2 className="text-2xl font-semibold mb-4">Calendario de Citas</h2>
       
       {/* Controles y estado de actualización */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
           <button 
             onClick={cargarDatos} 
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center w-full sm:w-auto justify-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -511,7 +539,7 @@ const CalendarioCitas = () => {
           </button>
           <button 
             onClick={toggleAutoRefresh} 
-            className={`px-3 py-1 ${autoRefresh ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 hover:bg-gray-600'} text-white rounded flex items-center`}
+            className={`px-3 py-1 ${autoRefresh ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 hover:bg-gray-600'} text-white rounded flex items-center w-full sm:w-auto justify-center`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -520,7 +548,7 @@ const CalendarioCitas = () => {
           </button>
         </div>
         {autoRefresh && (
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 w-full sm:w-auto text-center">
             Última actualización: {format(lastUpdate, 'HH:mm:ss')}
           </div>
         )}
@@ -537,7 +565,7 @@ const CalendarioCitas = () => {
         </div>
       )}
       
-      <div className="h-5/6 bg-white rounded-lg shadow p-4">
+      <div className="h-5/6 bg-white rounded-lg shadow p-2 sm:p-4" style={{ height: calendarHeight }}>
         <Calendar
           localizer={localizer}
           events={citas}
@@ -547,14 +575,14 @@ const CalendarioCitas = () => {
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
           selectable={true}
-          defaultView="month"
-          views={['month', 'week', 'day', 'agenda']}
+          defaultView={isMobile() ? 'month' : 'month'}
+          views={views}
           min={minTime}
           max={maxTime}
           step={step}
           timeslots={timeslots}
           dayLayoutAlgorithm={dayLayoutAlgorithm}
-          className="calendar-hover-pointer" // Clase CSS personalizada para el cursor
+          className="calendar-hover-pointer"
           eventPropGetter={eventStyleGetter}
           messages={{
             next: "Siguiente",
@@ -563,7 +591,7 @@ const CalendarioCitas = () => {
             month: "Mes",
             week: "Semana",
             day: "Día",
-            agenda: "Agenda",
+            agenda: "Lista",
             date: "Fecha",
             time: "Hora",
             event: "Evento",
@@ -571,9 +599,8 @@ const CalendarioCitas = () => {
             work_week: "Semana laboral",
             yesterday: "Ayer",
             tomorrow: "Mañana",
-            noEventsInRange: "No hay eventos en este rango.",
+            noEventsInRange: "No hay citas en este rango.",
             showMore: total => `+ Ver más (${total})`,
-            // Personalización de los días
             dayNames: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
             dayNamesShort: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
           }}
@@ -584,7 +611,7 @@ const CalendarioCitas = () => {
       {/* Modal para detalles de cita */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 max-w-md w-full mx-4">
             <h3 className="text-xl font-semibold mb-2">{selectedEvent.title}</h3>
             <p><strong>Paciente:</strong> {selectedEvent.paciente}</p>
             <p><strong>Tratamiento:</strong> {selectedEvent.tratamiento}</p>
@@ -592,21 +619,21 @@ const CalendarioCitas = () => {
             <p><strong>Hora:</strong> {format(selectedEvent.start, 'HH:mm')}</p>
             <p><strong>Estado:</strong> {selectedEvent.resource.estado}</p>
             
-            <div className="mt-4 flex justify-end space-x-2">
+            <div className="mt-4 flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
               <button 
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 onClick={handleEditCita}
               >
                 Editar
               </button>
               <button 
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                className="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                 onClick={handleDeleteCita}
               >
                 Eliminar
               </button>
               <button 
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
                 onClick={() => setSelectedEvent(null)}
               >
                 Cerrar
@@ -642,6 +669,7 @@ const CalendarioCitas = () => {
                   onChange={(e) => setEditFormData({ ...editFormData, tipo_cita: e.target.value })}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
                   required
+                  disabled={editFormData.tipo_cita === 'manicura'}
                 >
                   <option value="podologia">Podología</option>
                   <option value="manicura">Manicura</option>
@@ -672,6 +700,7 @@ const CalendarioCitas = () => {
                   onChange={(e) => setEditFormData({ ...editFormData, tipo_tratamiento: e.target.value })}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
                   required
+                  disabled={editFormData.tipo_cita === 'manicura'}
                 >
                   <option value="">Seleccione un tratamiento</option>
                   {TIPOS_TRATAMIENTO[editFormData.tipo_cita || 'podologia'].map(tipo => (
