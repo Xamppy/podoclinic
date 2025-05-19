@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { pacientesService } from '../api/pacientes';
+import { insumosService } from '../api/insumos';
 import { differenceInYears } from 'date-fns';
 
 const FichaClinicaPage = () => {
@@ -11,13 +12,17 @@ const FichaClinicaPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedFicha, setSelectedFicha] = useState(null);
   const [showCertificado, setShowCertificado] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [viewMode, setViewMode] = useState('none'); // 'none', 'view', 'edit'
 
   const [formData, setFormData] = useState({
     fecha: new Date().toISOString().split('T')[0],
     descripcion_atencion: '',
     procedimiento: '',
     indicaciones: '',
-    proxima_sesion_estimada: ''
+    proxima_sesion_estimada: '',
+    productos_usados: [],
+    tiene_proxima_cita: false
   });
 
   const [certificadoData, setCertificadoData] = useState({
@@ -28,8 +33,13 @@ const FichaClinicaPage = () => {
     tipo_certificado: 'general' // general, deportivo, laboral
   });
 
+  const [productosInventario, setProductosInventario] = useState([]);
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [cantidadProducto, setCantidadProducto] = useState(1);
+
   useEffect(() => {
     cargarPacientes();
+    cargarProductosInventario();
   }, []);
 
   const cargarPacientes = async () => {
@@ -40,6 +50,15 @@ const FichaClinicaPage = () => {
       console.error('Error al cargar pacientes:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const cargarProductosInventario = async () => {
+    try {
+      const response = await insumosService.getAll();
+      setProductosInventario(response.data);
+    } catch (error) {
+      console.error('Error al cargar productos de inventario:', error);
     }
   };
 
@@ -58,7 +77,54 @@ const FichaClinicaPage = () => {
   };
 
   const handleFichaClick = (ficha) => {
+    if (viewMode !== 'none') return; // No hacer nada si ya hay un modal abierto
     setSelectedFicha(ficha);
+    setViewMode('view');
+  };
+
+  const handleEditClick = (e, ficha) => {
+    e.stopPropagation(); // Evitar que se propague al click de la ficha
+    setSelectedFicha(ficha);
+    
+    // Asegurarse de que los productos usados estén correctamente formateados
+    const productosFormateados = ficha.productos_usados.map(p => ({
+      id: p.insumo,
+      nombre: p.nombre_insumo || p.nombre,
+      cantidad: p.cantidad,
+      insumo: p.insumo // Asegurar que tengamos ambos campos
+    }));
+    
+    console.log('Productos formateados para edición:', productosFormateados);
+    
+    setFormData({
+      fecha: ficha.fecha,
+      descripcion_atencion: ficha.descripcion_atencion,
+      procedimiento: ficha.procedimiento,
+      indicaciones: ficha.indicaciones,
+      proxima_sesion_estimada: ficha.proxima_sesion_estimada || '',
+      productos_usados: productosFormateados,
+      tiene_proxima_cita: !!ficha.proxima_sesion_estimada
+    });
+    setViewMode('edit');
+  };
+
+  const handleCloseModal = () => {
+    if (viewMode === 'edit') {
+      setViewMode('view');
+    } else {
+      setSelectedFicha(null);
+      setViewMode('none');
+    }
+    
+    setFormData({
+      fecha: new Date().toISOString().split('T')[0],
+      descripcion_atencion: '',
+      procedimiento: '',
+      indicaciones: '',
+      proxima_sesion_estimada: '',
+      productos_usados: [],
+      tiene_proxima_cita: false
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -66,25 +132,88 @@ const FichaClinicaPage = () => {
     if (!selectedPaciente) return;
 
     try {
-      const fichaData = {
-        ...formData,
-        descripcion_atencion: formData.descripcion_atencion,
-        fecha: formData.fecha,
-        proxima_sesion_estimada: formData.proxima_sesion_estimada
-      };
+      // Preparar los datos de la ficha
+      const productosFormateados = formData.productos_usados.map(p => ({
+        insumo: parseInt(p.id || p.insumo),
+        cantidad: parseInt(p.cantidad),
+        nombre_insumo: p.nombre
+      }));
       
-      await pacientesService.createFichaClinica(selectedPaciente.rut, fichaData);
-      setShowForm(false);
-      handlePacienteSelect(selectedPaciente.rut);
+      console.log('Productos formateados para enviar:', productosFormateados);
+      
+      const fichaData = {
+        fecha: formData.fecha,
+        descripcion_atencion: formData.descripcion_atencion,
+        procedimiento: formData.procedimiento,
+        indicaciones: formData.indicaciones,
+        proxima_sesion_estimada: formData.tiene_proxima_cita ? formData.proxima_sesion_estimada : null,
+        productos_usados: productosFormateados,
+        paciente: selectedPaciente.id
+      };
+
+      console.log('Enviando datos de ficha:', fichaData);
+
+      let response;
+      if (viewMode === 'edit' && selectedFicha) {
+        response = await pacientesService.updateFichaClinica(selectedFicha.id, fichaData);
+        if (response.status === 200) {
+          // Actualizar la ficha seleccionada con los datos de la respuesta
+          const fichaActualizada = response.data;
+          setSelectedFicha(fichaActualizada);
+          
+          // Actualizar la lista de fichas
+          setFichas(prevFichas => 
+            prevFichas.map(ficha => 
+              ficha.id === selectedFicha.id ? fichaActualizada : ficha
+            )
+          );
+          
+          await cargarProductosInventario(); // Recargar inventario
+          setViewMode('view');
+          
+          // Mostrar mensaje de éxito
+          alert('Ficha clínica actualizada correctamente');
+        }
+      } else {
+        response = await pacientesService.createFichaClinica(selectedPaciente.rut, fichaData);
+        if (response.status === 201) {
+          await handlePacienteSelect(selectedPaciente.rut);
+          await cargarProductosInventario(); // Recargar inventario
+          setShowForm(false);
+          
+          // Mostrar mensaje de éxito
+          alert('Ficha clínica creada correctamente');
+        }
+      }
+      
+      // Resetear formulario
       setFormData({
         fecha: new Date().toISOString().split('T')[0],
         descripcion_atencion: '',
         procedimiento: '',
         indicaciones: '',
-        proxima_sesion_estimada: ''
+        proxima_sesion_estimada: '',
+        productos_usados: [],
+        tiene_proxima_cita: false
       });
     } catch (error) {
-      console.error('Error al crear ficha:', error);
+      console.error('Error al guardar ficha:', error);
+      if (error.response) {
+        console.error('Detalles del error:', error.response.data);
+        
+        // Mostrar mensaje de error
+        if (error.response.data && typeof error.response.data === 'object') {
+          const errorMessages = [];
+          for (const key in error.response.data) {
+            errorMessages.push(`${key}: ${error.response.data[key]}`);
+          }
+          alert(`Error: ${errorMessages.join('\n')}`);
+        } else {
+          alert(`Error: ${error.message}`);
+        }
+      } else {
+        alert(`Error: ${error.message}`);
+      }
     }
   };
 
@@ -127,6 +256,49 @@ const FichaClinicaPage = () => {
     const fechaNac = new Date(fechaNacimiento);
     const edad = differenceInYears(new Date(), fechaNac);
     return edad;
+  };
+
+  const agregarProducto = () => {
+    if (!productoSeleccionado || cantidadProducto < 1) return;
+    
+    // Verificar que no se exceda el stock disponible
+    if (cantidadProducto > productoSeleccionado.stock_actual) {
+      alert(`No hay suficiente stock disponible. Stock actual: ${productoSeleccionado.stock_actual}`);
+      return;
+    }
+    
+    // Clonar el producto seleccionado para evitar referencias cruzadas
+    const nuevoProducto = {
+      id: productoSeleccionado.id,
+      nombre: productoSeleccionado.nombre,
+      cantidad: cantidadProducto,
+      insumo: productoSeleccionado.id
+    };
+    
+    console.log('Agregando producto:', nuevoProducto);
+    
+    // Actualizar el estado de productos usados de forma inmutada
+    const nuevosProductos = [...formData.productos_usados, nuevoProducto];
+    console.log('Productos usados actualizados:', nuevosProductos);
+    
+    // Actualizar el estado del formulario con los nuevos productos
+    setFormData(prevState => ({
+      ...prevState,
+      productos_usados: nuevosProductos
+    }));
+    
+    // Limpiar la selección actual
+    setProductoSeleccionado(null);
+    setCantidadProducto(1);
+  };
+
+  const eliminarProducto = (index) => {
+    setFormData(prevState => ({
+      ...prevState,
+      productos_usados: prevState.productos_usados.filter((_, i) => i !== index)
+    }));
+    
+    console.log('Producto eliminado en índice:', index);
   };
 
   if (loading) {
@@ -194,14 +366,6 @@ const FichaClinicaPage = () => {
                   >
                     Nueva Ficha
                   </button>
-                  {selectedFicha && (
-                    <button
-                      onClick={handleGenerarCertificado}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-lg"
-                    >
-                      Generar Certificado
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -249,9 +413,23 @@ const FichaClinicaPage = () => {
           >
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Nueva Ficha Clínica</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  {isEditing ? 'Editar Ficha Clínica' : 'Nueva Ficha Clínica'}
+                </h3>
                 <button
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false);
+                    setIsEditing(false);
+                    setFormData({
+                      fecha: new Date().toISOString().split('T')[0],
+                      descripcion_atencion: '',
+                      procedimiento: '',
+                      indicaciones: '',
+                      proxima_sesion_estimada: '',
+                      productos_usados: [],
+                      tiene_proxima_cita: false
+                    });
+                  }}
                   className="text-gray-400 hover:text-gray-500"
                 >
                   <span className="sr-only">Cerrar</span>
@@ -274,13 +452,45 @@ const FichaClinicaPage = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Próxima Sesión Estimada</label>
-                    <input
-                      type="date"
-                      value={formData.proxima_sesion_estimada}
-                      onChange={(e) => setFormData({ ...formData, proxima_sesion_estimada: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">¿Habrá próxima cita?</label>
+                    <div className="space-x-4">
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name="tiene_proxima_cita"
+                          checked={formData.tiene_proxima_cita}
+                          onChange={() => setFormData({ ...formData, tiene_proxima_cita: true })}
+                          className="form-radio h-4 w-4 text-indigo-600"
+                        />
+                        <span className="ml-2">Sí</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name="tiene_proxima_cita"
+                          checked={!formData.tiene_proxima_cita}
+                          onChange={() => setFormData({ 
+                            ...formData, 
+                            tiene_proxima_cita: false,
+                            proxima_sesion_estimada: '' // Limpiar la fecha si se selecciona "No"
+                          })}
+                          className="form-radio h-4 w-4 text-indigo-600"
+                        />
+                        <span className="ml-2">No</span>
+                      </label>
+                    </div>
+                    {formData.tiene_proxima_cita && (
+                      <div className="mt-2">
+                        <label className="block text-sm font-medium text-gray-700">Fecha Próxima Cita</label>
+                        <input
+                          type="date"
+                          value={formData.proxima_sesion_estimada}
+                          onChange={(e) => setFormData({ ...formData, proxima_sesion_estimada: e.target.value })}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          required={formData.tiene_proxima_cita}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -319,6 +529,92 @@ const FichaClinicaPage = () => {
                     required
                   />
                 </div>
+                
+                {/* Nueva sección para productos usados */}
+                <div className="border-t pt-4">
+                  <h4 className="text-lg font-medium text-gray-700 mb-3">Productos Utilizados</h4>
+                  
+                  <div className="grid grid-cols-12 gap-2 mb-2">
+                    <div className="col-span-7">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                      <select
+                        value={productoSeleccionado?.id || ''}
+                        onChange={(e) => {
+                          const productoId = e.target.value;
+                          const producto = productosInventario.find(p => p.id.toString() === productoId);
+                          setProductoSeleccionado(producto || null);
+                        }}
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="">Seleccione un producto</option>
+                        {productosInventario.map(producto => (
+                          <option 
+                            key={producto.id} 
+                            value={producto.id}
+                            disabled={producto.stock_actual <= 0}
+                          >
+                            {producto.nombre} ({producto.stock_actual} {producto.unidad_medida} disponibles)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="col-span-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={productoSeleccionado?.stock_actual || 1}
+                        value={cantidadProducto}
+                        onChange={(e) => setCantidadProducto(parseInt(e.target.value))}
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      />
+                    </div>
+                    
+                    <div className="col-span-2 flex items-end">
+                      <button
+                        type="button"
+                        onClick={agregarProducto}
+                        disabled={!productoSeleccionado}
+                        className="w-full py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                      >
+                        Agregar
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Tabla de productos agregados */}
+                  {formData.productos_usados.length > 0 && (
+                    <div className="mt-3 border rounded-md overflow-hidden">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {formData.productos_usados.map((producto, index) => (
+                            <tr key={index}>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">{producto.nombre}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">{producto.cantidad}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => eliminarProducto(index)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  Eliminar
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex justify-end space-x-3">
                   <button
@@ -341,11 +637,11 @@ const FichaClinicaPage = () => {
         </div>
       )}
 
-      {/* Modal de Detalles de Ficha */}
-      {selectedFicha && (
+      {/* Modal de Vista de Ficha */}
+      {viewMode === 'view' && selectedFicha && (
         <div 
           className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-          onClick={() => setSelectedFicha(null)}
+          onClick={handleCloseModal}
         >
           <div 
             className="relative top-20 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white"
@@ -358,13 +654,22 @@ const FichaClinicaPage = () => {
                 </h3>
                 <div className="flex space-x-2">
                   <button
+                    onClick={(e) => {
+                      handleCloseModal();
+                      handleEditClick(e, selectedFicha);
+                    }}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  >
+                    Editar
+                  </button>
+                  <button
                     onClick={handleGenerarCertificado}
                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                   >
                     Generar Certificado
                   </button>
                   <button
-                    onClick={() => setSelectedFicha(null)}
+                    onClick={handleCloseModal}
                     className="text-gray-400 hover:text-gray-500"
                   >
                     <span className="sr-only">Cerrar</span>
@@ -411,6 +716,31 @@ const FichaClinicaPage = () => {
                   <p className="text-gray-600 whitespace-pre-wrap">{selectedFicha.indicaciones}</p>
                 </div>
 
+                {/* Mostrar productos utilizados si existen */}
+                {selectedFicha.productos_usados && selectedFicha.productos_usados.length > 0 && (
+                  <div className="bg-white p-4 rounded-lg border">
+                    <h4 className="font-medium text-gray-700 mb-2">Productos Utilizados</h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Cantidad</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {selectedFicha.productos_usados.map((producto, index) => (
+                            <tr key={index}>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">{producto.nombre_insumo || producto.nombre}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-center">{producto.cantidad}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {selectedFicha.proxima_sesion_estimada && (
                   <div className="bg-white p-4 rounded-lg border">
                     <h4 className="font-medium text-gray-700 mb-2">Próxima Sesión Estimada</h4>
@@ -418,6 +748,230 @@ const FichaClinicaPage = () => {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edición */}
+      {viewMode === 'edit' && (
+        <div 
+          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          onClick={handleCloseModal}
+        >
+          <div 
+            className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Editar Ficha Clínica
+                </h3>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <span className="sr-only">Cerrar</span>
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Fecha de Atención</label>
+                    <input
+                      type="date"
+                      value={formData.fecha}
+                      onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">¿Habrá próxima cita?</label>
+                    <div className="space-x-4">
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name="tiene_proxima_cita"
+                          checked={formData.tiene_proxima_cita}
+                          onChange={() => setFormData({ ...formData, tiene_proxima_cita: true })}
+                          className="form-radio h-4 w-4 text-indigo-600"
+                        />
+                        <span className="ml-2">Sí</span>
+                      </label>
+                      <label className="inline-flex items-center">
+                        <input
+                          type="radio"
+                          name="tiene_proxima_cita"
+                          checked={!formData.tiene_proxima_cita}
+                          onChange={() => setFormData({ 
+                            ...formData, 
+                            tiene_proxima_cita: false,
+                            proxima_sesion_estimada: '' // Limpiar la fecha si se selecciona "No"
+                          })}
+                          className="form-radio h-4 w-4 text-indigo-600"
+                        />
+                        <span className="ml-2">No</span>
+                      </label>
+                    </div>
+                    {formData.tiene_proxima_cita && (
+                      <div className="mt-2">
+                        <label className="block text-sm font-medium text-gray-700">Fecha Próxima Cita</label>
+                        <input
+                          type="date"
+                          value={formData.proxima_sesion_estimada}
+                          onChange={(e) => setFormData({ ...formData, proxima_sesion_estimada: e.target.value })}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          required={formData.tiene_proxima_cita}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Descripción de la Atención</label>
+                  <textarea
+                    value={formData.descripcion_atencion}
+                    onChange={(e) => setFormData({ ...formData, descripcion_atencion: e.target.value })}
+                    rows="3"
+                    placeholder="Motivo de consulta, evaluación, observaciones generales..."
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Procedimiento Realizado</label>
+                  <textarea
+                    value={formData.procedimiento}
+                    onChange={(e) => setFormData({ ...formData, procedimiento: e.target.value })}
+                    rows="3"
+                    placeholder="Detalles del tratamiento efectuado..."
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Indicaciones</label>
+                  <textarea
+                    value={formData.indicaciones}
+                    onChange={(e) => setFormData({ ...formData, indicaciones: e.target.value })}
+                    rows="3"
+                    placeholder="Recomendaciones y cuidados para el paciente..."
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                
+                {/* Nueva sección para productos usados */}
+                <div className="border-t pt-4">
+                  <h4 className="text-lg font-medium text-gray-700 mb-3">Productos Utilizados</h4>
+                  
+                  <div className="grid grid-cols-12 gap-2 mb-2">
+                    <div className="col-span-7">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                      <select
+                        value={productoSeleccionado?.id || ''}
+                        onChange={(e) => {
+                          const productoId = e.target.value;
+                          const producto = productosInventario.find(p => p.id.toString() === productoId);
+                          setProductoSeleccionado(producto || null);
+                        }}
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="">Seleccione un producto</option>
+                        {productosInventario.map(producto => (
+                          <option 
+                            key={producto.id} 
+                            value={producto.id}
+                            disabled={producto.stock_actual <= 0}
+                          >
+                            {producto.nombre} ({producto.stock_actual} {producto.unidad_medida} disponibles)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="col-span-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={productoSeleccionado?.stock_actual || 1}
+                        value={cantidadProducto}
+                        onChange={(e) => setCantidadProducto(parseInt(e.target.value))}
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      />
+                    </div>
+                    
+                    <div className="col-span-2 flex items-end">
+                      <button
+                        type="button"
+                        onClick={agregarProducto}
+                        disabled={!productoSeleccionado}
+                        className="w-full py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                      >
+                        Agregar
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Tabla de productos agregados */}
+                  {formData.productos_usados.length > 0 && (
+                    <div className="mt-3 border rounded-md overflow-hidden">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {formData.productos_usados.map((producto, index) => (
+                            <tr key={index}>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">{producto.nombre}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">{producto.cantidad}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => eliminarProducto(index)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  Eliminar
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  >
+                    Guardar Cambios
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

@@ -28,7 +28,7 @@ class MovimientoInsumo(models.Model):
     tipo_movimiento = models.CharField(max_length=10, choices=TIPOS)
     motivo = models.CharField(max_length=200)
     fecha_movimiento = models.DateTimeField(auto_now_add=True)
-    usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.CASCADE)
+    usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.SET_NULL, null=True, blank=True)
     
     def __str__(self):
         return f"{self.get_tipo_movimiento_display()} de {self.cantidad} {self.insumo.unidad_medida} de {self.insumo.nombre}"

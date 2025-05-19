@@ -174,9 +174,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Directorio para collectstatic
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-    BASE_DIR / 'frontend' / 'build' / 'static',  # Para servir los estáticos de React
+    BASE_DIR / 'static',  # Directorio principal de archivos estáticos
 ]
 
 # Default primary key field type

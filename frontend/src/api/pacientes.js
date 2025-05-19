@@ -67,4 +67,39 @@ export const pacientesService = {
       throw error;
     }
   },
+
+  // Actualizar ficha clínica
+  updateFichaClinica: async (id, ficha) => {
+    try {
+      console.log('Enviando datos para actualizar ficha:', ficha);
+      
+      // Validar que los productos usados estén correctamente formateados
+      if (ficha.productos_usados && Array.isArray(ficha.productos_usados)) {
+        console.log(`Enviando ${ficha.productos_usados.length} productos usados:`, ficha.productos_usados);
+        ficha.productos_usados.forEach((producto, index) => {
+          console.log(`Producto ${index + 1}:`, producto);
+          if (!producto.insumo) {
+            console.error(`Error: Producto ${index + 1} no tiene ID de insumo`);
+          }
+          if (!producto.cantidad) {
+            console.error(`Error: Producto ${index + 1} no tiene cantidad`);
+          }
+        });
+      } else {
+        console.log('No se están enviando productos usados o el formato es incorrecto');
+      }
+      
+      const response = await api.put(`/pacientes/fichas/${id}/`, ficha);
+      console.log('Respuesta de actualización:', response.data);
+      return response;
+    } catch (error) {
+      console.error('Error al actualizar ficha clínica:', error);
+      if (error.response) {
+        console.error('Datos del error:', error.response.data);
+        console.error('Estado HTTP:', error.response.status);
+        console.error('Cabeceras:', error.response.headers);
+      }
+      throw error;
+    }
+  }
 }; 

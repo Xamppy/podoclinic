@@ -34,3 +34,16 @@ class FichaClinica(models.Model):
     
     def __str__(self):
         return f"Ficha de {self.paciente.nombre} - {self.fecha}"
+
+class UsoProductoEnFicha(models.Model):
+    ficha = models.ForeignKey(FichaClinica, on_delete=models.CASCADE, related_name='productos_usados')
+    insumo = models.ForeignKey('insumos.Insumo', on_delete=models.PROTECT)
+    cantidad = models.PositiveIntegerField()
+    fecha_uso = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Uso de producto en ficha"
+        verbose_name_plural = "Usos de productos en fichas"
+        
+    def __str__(self):
+        return f"{self.cantidad} de {self.insumo.nombre} en ficha de {self.ficha.paciente.nombre} ({self.ficha.fecha})"
