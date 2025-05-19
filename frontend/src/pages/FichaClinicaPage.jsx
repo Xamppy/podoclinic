@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { pacientesService } from '../api/pacientes';
-import { useRut } from '../hooks/useRut';
-import { format, differenceInYears } from 'date-fns';
-import es from 'date-fns/locale/es';
+import { differenceInYears } from 'date-fns';
 
 const FichaClinicaPage = () => {
   const [pacientes, setPacientes] = useState([]);
@@ -13,7 +11,6 @@ const FichaClinicaPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedFicha, setSelectedFicha] = useState(null);
   const [showCertificado, setShowCertificado] = useState(false);
-  const { rut, rutError, handleRutChange } = useRut();
 
   const [formData, setFormData] = useState({
     fecha: new Date().toISOString().split('T')[0],
@@ -180,12 +177,12 @@ const FichaClinicaPage = () => {
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h2 className="text-3xl font-semibold mb-2">{selectedPaciente.nombre}</h2>
-                  <p className="text-xl text-gray-600 mb-1">{selectedPaciente.rut}</p>
+                  <p className="text-xl text-indigo-600 mb-1">{selectedPaciente.rut}</p>
                   {selectedPaciente.direccion && (
-                    <p className="text-xl text-gray-600 mb-1">Dirección: {selectedPaciente.direccion}</p>
+                    <p className="text-xl text-indigo-600 mb-1">Dirección: {selectedPaciente.direccion}</p>
                   )}
                   {selectedPaciente.fecha_nacimiento && (
-                    <p className="text-xl text-gray-600">
+                    <p className="text-xl text-indigo-600">
                       Edad: {calcularEdad(selectedPaciente.fecha_nacimiento)} años
                     </p>
                   )}

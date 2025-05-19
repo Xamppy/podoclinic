@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ReservaCliente from '../pages/ReservaCliente';
 
@@ -8,10 +8,8 @@ const PublicRoutes = () => {
     <>
       <Navbar />
       <Routes>
-        <Route path="/" element={<div>Página de Inicio</div>} />
-        <Route path="/servicios" element={<div>Página de Servicios</div>} />
+        <Route path="/" element={<Navigate to="/public/reservar" replace />} />
         <Route path="/reservar" element={<ReservaCliente />} />
-        <Route path="/contacto" element={<div>Página de Contacto</div>} />
       </Routes>
     </>
   );
