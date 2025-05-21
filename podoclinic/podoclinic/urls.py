@@ -19,12 +19,16 @@ from django.urls import path, include, re_path
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .views import database_backup
 
 # Vista para manejar 404 en rutas de API
 def api_not_found(request):
     return JsonResponse({'error': 'Endpoint no encontrado'}, status=404)
+
+# Vista simple para manejar favicon.ico
+def favicon_view(request):
+    return HttpResponse(status=204)  # No content response
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,6 +37,7 @@ urlpatterns = [
     path('api/insumos/', include('insumos.urls')),
     path('api/usuarios/', include('usuarios.urls')),
     path('api/database/backup/', database_backup, name='database_backup'),
+    path('favicon.ico', favicon_view),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # API fallback para rutas no encontradas (debe ir antes del fallback general)

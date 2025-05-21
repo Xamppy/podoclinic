@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CitaViewSet, TratamientoViewSet
+from .views import CitaViewSet, TratamientoViewSet, test_email, test_email_paciente
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -83,7 +83,7 @@ def crear_cita_admin_inline(request):
     except Exception as e:
         return Response({'error': f'Error al crear la cita: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PUT', 'PATCH'])
+@api_view(['PUT'])
 @permission_classes([AllowAny])
 def actualizar_cita(request, cita_id):
     try:
@@ -278,4 +278,6 @@ urlpatterns = [
     path('debug/', debug_citas, name='debug_citas'),
     path('eliminar/<int:cita_id>/', eliminar_cita, name='eliminar_cita'),
     path('actualizar/<int:cita_id>/', actualizar_cita, name='actualizar_cita'),
+    path('test-email/', test_email, name='test_email'),
+    path('test-email-paciente/', test_email_paciente, name='test_email_paciente'),
 ] 

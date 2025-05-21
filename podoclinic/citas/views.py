@@ -10,6 +10,10 @@ from datetime import datetime
 from .models import Cita, Tratamiento
 from .serializers import CitaSerializer, TratamientoSerializer, ReservaCitaSerializer
 from pacientes.models import Paciente
+from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives
+from django.conf import settings
+from django.template.loader import render_to_string
+import logging
 
 # Vista separada para crear citas desde el admin (sin ViewSet)
 @api_view(['POST'])
@@ -200,6 +204,9 @@ class CitaViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             try:
                 cita = serializer.save()
+                
+                # La señal post_save se encargará del envío del correo
+                
                 return Response({
                     'message': 'Cita reservada exitosamente',
                     'cita_id': cita.id
@@ -246,3 +253,217 @@ class CitaViewSet(viewsets.ModelViewSet):
 class TratamientoViewSet(viewsets.ModelViewSet):
     queryset = Tratamiento.objects.all()
     serializer_class = TratamientoSerializer
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def test_email(request):
+    """
+    Vista para probar el envío de correos electrónicos
+    """
+    logger = logging.getLogger('citas')
+    
+    try:
+        # Obtener el correo de destino
+        email = request.query_params.get('email', 'ejemplo@email.com')
+        
+        # Contexto para la plantilla
+        contexto = {
+            'nombre_paciente': 'Usuario de Prueba',
+            'fecha_cita': '1 de junio de 2025',
+            'hora_cita': '15:30',
+            'tipo_cita': 'Podología',
+            'nombre_clinica': 'PodoClinic',
+            'telefono_clinica': '+56 9 1234 5678',
+            'whatsapp_clinica': '+56 9 1234 5678',
+            'direccion_clinica': 'Villa El Bosque - Alcalde Sergio Jorquera N°65, La Cruz'
+        }
+        
+        # Renderizar plantillas
+        mensaje_html = render_to_string('emails/confirmacion_cita.html', contexto)
+        mensaje_texto = render_to_string('emails/confirmacion_cita_texto.txt', contexto)
+        
+        # Enviar correo
+        send_mail(
+            subject="Correo de Prueba - PodoClinic",
+            message=mensaje_texto,
+            from_email=settings.EMAIL_FROM,
+            recipient_list=[email],
+            html_message=mensaje_html,
+            fail_silently=False,
+        )
+        
+        logger.info(f"Correo de prueba enviado a {email}")
+        
+        return Response({
+            'status': 'success',
+            'message': f'Correo enviado a {email}',
+            'settings': {
+                'EMAIL_HOST': settings.EMAIL_HOST,
+                'EMAIL_PORT': settings.EMAIL_PORT,
+                'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
+                'EMAIL_FROM': settings.EMAIL_FROM
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error al enviar correo de prueba: {str(e)}")
+        return Response({
+            'status': 'error',
+            'message': f'Error al enviar correo: {str(e)}',
+            'settings': {
+                'EMAIL_HOST': settings.EMAIL_HOST,
+                'EMAIL_PORT': settings.EMAIL_PORT,
+                'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
+                'EMAIL_FROM': settings.EMAIL_FROM
+            }
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def test_email_paciente(request):
+    """
+    Vista para probar el envío de correo a un paciente específico por su RUT
+    """
+    from django.core.mail import send_mail, EmailMultiAlternatives
+    from django.conf import settings
+    from django.template.loader import render_to_string
+    from pacientes.models import Paciente
+    import logging
+    
+    logger = logging.getLogger('citas')
+    
+    try:
+        # Obtener el RUT del paciente de los parámetros de la URL
+        rut = request.query_params.get('rut')
+        
+        # Opción para forzar modo debug (mostrar en consola)
+        force_debug = request.query_params.get('debug', 'false').lower() == 'true'
+        
+        if not rut:
+            return Response({
+                'status': 'error',
+                'message': 'Se requiere el parámetro "rut" para enviar el correo'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Buscar el paciente por RUT
+        try:
+            paciente = Paciente.objects.get(rut=rut)
+        except Paciente.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': f'No se encontró ningún paciente con el RUT {rut}'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Verificar que el paciente tenga correo
+        if not paciente.correo:
+            return Response({
+                'status': 'error',
+                'message': f'El paciente {paciente.nombre} no tiene un correo electrónico registrado'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Contexto para la plantilla
+        contexto = {
+            'nombre_paciente': paciente.nombre,
+            'fecha_cita': '1 de junio de 2025',
+            'hora_cita': '15:30',
+            'tipo_cita': 'Podología',
+            'nombre_clinica': 'PodoClinic',
+            'telefono_clinica': '+56 9 1234 5678',
+            'whatsapp_clinica': '+56 9 1234 5678',
+            'direccion_clinica': 'Villa El Bosque - Alcalde Sergio Jorquera N°65, La Cruz'
+        }
+        
+        # Renderizar plantillas
+        mensaje_html = render_to_string('emails/confirmacion_cita.html', contexto)
+        mensaje_texto = render_to_string('emails/confirmacion_cita_texto.txt', contexto)
+        
+        logger.info(f"Intentando enviar correo a {paciente.correo}")
+        
+        # Si se solicita modo debug, usamos console backend
+        if force_debug:
+            # Guardar el backend actual
+            original_backend = settings.EMAIL_BACKEND
+            settings.EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+            
+            # Enviar correo usando console backend
+            send_mail(
+                subject="Correo de Prueba para Paciente - PodoClinic (MODO DEBUG)",
+                message=mensaje_texto,
+                from_email=settings.EMAIL_FROM,
+                recipient_list=[paciente.correo],
+                html_message=mensaje_html,
+                fail_silently=False,
+            )
+            
+            # Restaurar el backend original
+            settings.EMAIL_BACKEND = original_backend
+            
+            logger.info(f"Correo mostrado en consola (modo debug) para: {paciente.correo}")
+        else:
+            # Enviar correo usando el backend configurado
+            try:
+                # Envío con más detalles para diagnóstico usando EmailMultiAlternatives
+                email = EmailMultiAlternatives(
+                    subject="Correo de Prueba para Paciente - PodoClinic",
+                    body=mensaje_texto,
+                    from_email=settings.EMAIL_FROM,
+                    to=[paciente.correo],
+                    reply_to=[settings.EMAIL_FROM],
+                    headers={'X-PodoClinic-Test': 'True'}
+                )
+                
+                # Agregar la versión HTML como alternativa
+                email.attach_alternative(mensaje_html, "text/html")
+                
+                # Intento de envío con detalles
+                logger.info(f"Configuración correo: FROM={settings.EMAIL_FROM}, TO={paciente.correo}")
+                result = email.send(fail_silently=False)
+                logger.info(f"Resultado de envío: {result}")
+            except Exception as e:
+                logger.error(f"Error en EmailMessage: {str(e)}")
+                # Intento alternativo con send_mail simple
+                send_mail(
+                    subject="Correo de Prueba para Paciente (alternativo) - PodoClinic",
+                    message=mensaje_texto,
+                    from_email=settings.EMAIL_FROM,
+                    recipient_list=[paciente.correo],
+                    html_message=mensaje_html,
+                    fail_silently=False,
+                )
+            
+            logger.info(f"Correo de prueba enviado a {paciente.correo} (Paciente: {paciente.nombre})")
+        
+        # Añadir el correo utilizado en la respuesta para depuración
+        email_usado = paciente.correo
+        
+        return Response({
+            'status': 'success',
+            'message': f'Correo enviado a {paciente.nombre} ({paciente.correo})',
+            'paciente': {
+                'rut': paciente.rut,
+                'nombre': paciente.nombre,
+                'correo': paciente.correo,
+                'correo_usado': email_usado
+            },
+            'settings': {
+                'EMAIL_HOST': settings.EMAIL_HOST,
+                'EMAIL_PORT': settings.EMAIL_PORT,
+                'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
+                'EMAIL_FROM': settings.EMAIL_FROM,
+                'EMAIL_DEBUG': getattr(settings, 'EMAIL_DEBUG', False),
+                'BACKEND': settings.EMAIL_BACKEND
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error al enviar correo de prueba al paciente: {str(e)}")
+        return Response({
+            'status': 'error',
+            'message': f'Error al enviar correo: {str(e)}',
+            'settings': {
+                'EMAIL_HOST': settings.EMAIL_HOST,
+                'EMAIL_PORT': settings.EMAIL_PORT,
+                'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
+                'EMAIL_FROM': settings.EMAIL_FROM
+            }
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

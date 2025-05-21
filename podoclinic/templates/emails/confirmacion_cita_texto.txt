@@ -1,0 +1,19 @@
+Estimada/o {{ nombre_paciente }},
+
+Le informamos que su cita de {{ tipo_cita }} para el {{ fecha_cita }} a las {{ hora_cita }} ha sido agendada exitosamente.
+
+Para asegurar su horario, le agradecemos confirmar su asistencia por alguno de estos medios:
+- Respondiendo a este correo electrónico
+- Enviando un WhatsApp al {{ whatsapp_clinica }}
+- Llamando al {{ telefono_clinica }}
+
+En caso de no poder asistir, le solicitamos avisar con al menos 24 horas de anticipación para poder reasignar su horario.
+
+Estaremos encantados de atenderle y proporcionarle el mejor servicio profesional.
+
+Atentamente,
+Equipo {{ nombre_clinica }}
+{{ direccion_clinica }}
+
+-----
+Este es un correo automático. Por favor no responda directamente a esta dirección. 
