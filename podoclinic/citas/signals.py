@@ -48,7 +48,7 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             'nombre_paciente': paciente.nombre,
             'fecha_cita': fecha_formateada,
             'hora_cita': hora_formateada,
-            'tipo_cita': cita.get_tipo_cita_display(),
+            'tipo_cita': cita.tratamiento.get_nombre_display() if 'manicura' in cita.tratamiento.nombre.lower() else cita.get_tipo_cita_display(),
             'nombre_clinica': 'Clínica Podológica Esmeralda',
             'telefono_clinica': '+56 9 8543 3364',
             'whatsapp_clinica': '+56 9 8543 3364',
