@@ -49,6 +49,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-top: 8px;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .horario-btn {
@@ -58,9 +59,10 @@
   font-size: 14px;
   transition: all 0.2s;
   position: relative;
+  border: 1px solid transparent;
 }
 
-.horario-btn:hover:not(:disabled) {
+.horario-btn:hover {
   cursor: pointer;
   background-color: #e5e7eb;
 }
@@ -68,25 +70,12 @@
 .horario-btn.selected {
   background-color: #4f46e5;
   color: white;
+  font-weight: 600;
+  transform: scale(1.05);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* Estilos para horas ocupadas */
-.horario-btn.ocupada {
-  background-color: #e5e5e5;
-  color: #9ca3af;
-  cursor: not-allowed;
-}
-
-.horario-btn.ocupada:hover {
-  background-color: #e5e5e5;
-  cursor: not-allowed;
-}
-
-.horario-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
+/* Estilos para la hora original en edición */
 .horario-btn.original {
   border: 2px dashed #d97706;
   background-color: #fef3c7;
@@ -104,12 +93,10 @@
   color: #d97706;
 }
 
-.ocupada-indicator {
-  position: absolute;
-  top: 1px;
-  right: 4px;
-  font-size: 10px;
-  color: #ef4444;
+/* Animación para los cambios de estado */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Estilos para la tabla de citas en vista agenda */

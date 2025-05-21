@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import es from 'date-fns/locale/es';
-import { format as formatDate, parseISO } from 'date-fns';
+import { format as formatDate } from 'date-fns';
 import { citasService } from '../api/citas';
 import { pacientesService } from '../api/pacientes';
 import { useWhatsApp } from '../context/WhatsAppContext';
@@ -50,7 +50,6 @@ const AdminCitasPage = () => {
   const [currentView, setCurrentView] = useState('month');
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedCita, setSelectedCita] = useState(null);
-  const [depuracionActiva, setDepuracionActiva] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -60,7 +59,9 @@ const AdminCitasPage = () => {
     hora: '',
     tipo_tratamiento: '',
     estado: '',
-    original_hora: ''
+    original_hora: '',
+    duracion_extendida: false,
+    original_duracion_extendida: false
   });
 
   const [formData, setFormData] = useState({
@@ -68,7 +69,8 @@ const AdminCitasPage = () => {
     fecha: '',
     hora: '',
     tipo_tratamiento: '',
-    tipo_cita: 'podologia'
+    tipo_cita: 'podologia',
+    duracion_extendida: false
   });
 
   const [horasOcupadas, setHorasOcupadas] = useState([]);
@@ -76,7 +78,7 @@ const AdminCitasPage = () => {
   // Cuando el componente se monta, cargar datos una sola vez
   useEffect(() => {
     cargarDatos();
-  }, []);
+  }, []);  // No es necesario añadir cargarDatos como dependencia ya que solo queremos ejecutarlo una vez al montar
 
   // Función para cargar datos
   const cargarDatos = async () => {
@@ -165,28 +167,71 @@ const AdminCitasPage = () => {
     }));
     
     try {
-      // Usamos un enfoque más simple para depurar el problema
-      // Generamos horarios fijos entre 9:00 y 18:00 para evitar errores del backend
-      const horariosGenerados = [];
-      for (let hora = 9; hora <= 18; hora++) {
-        horariosGenerados.push(`${hora.toString().padStart(2, '0')}:00`);
-      }
-      
-      setHorariosDisponibles(horariosGenerados);
+      // Primero establecer un estado de carga para evitar parpadeo
+      setHorariosDisponibles([]);
       setShowForm(true);
       
-      // Luego intentamos obtener los horarios reales del backend
+      // Obtener los horarios desde el backend
       try {
-        // Usamos el nuevo endpoint correcto
         const response = await axiosInstance.get(`/citas/disponibles/?fecha=${fechaFormateada}`);
         console.log("Respuesta de horarios:", response.data);
         
         if (response.data && response.data.horas_disponibles) {
           setHorariosDisponibles(response.data.horas_disponibles);
+          
+          // Obtener también las citas existentes para esa fecha
+          try {
+            const citasResponse = await citasService.getByFecha(fechaFormateada);
+            console.log("Citas en la fecha seleccionada:", citasResponse.data);
+            
+            if (citasResponse.data && Array.isArray(citasResponse.data)) {
+              // Inicializar un array para todas las horas ocupadas
+              let todasHorasOcupadas = [];
+              
+              // Procesar las citas para obtener todas las horas ocupadas
+              citasResponse.data.forEach(c => {
+                let hora = c.hora;
+                if (hora && hora.includes(':')) {
+                  const partes = hora.split(':');
+                  if (partes.length >= 2) {
+                    hora = `${partes[0]}:${partes[1]}`;
+                  }
+                }
+                
+                // Añadir la hora principal
+                todasHorasOcupadas.push(hora);
+                
+                // Si la cita tiene duración extendida, añadir también la hora siguiente
+                if (c.duracion_extendida) {
+                  const [horaH, horaM] = hora.split(':').map(Number);
+                  const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+                  todasHorasOcupadas.push(siguienteHora);
+                }
+              });
+              
+              console.log("Todas las horas ocupadas (incluyendo duración extendida):", todasHorasOcupadas);
+              setHorasOcupadas(todasHorasOcupadas);
+              
+              // Filtrar los horarios disponibles eliminando todas las horas ocupadas
+              if (response.data.horas_disponibles.length > 0) {
+                const horariosActualizados = response.data.horas_disponibles.filter(
+                  hora => !todasHorasOcupadas.includes(hora)
+                );
+                setHorariosDisponibles(horariosActualizados);
+              }
+            }
+          } catch (error) {
+            console.error("Error al cargar citas para la fecha:", error);
+          }
         }
       } catch (apiError) {
         console.error('Error al obtener horarios desde la API:', apiError);
-        // No mostramos alerta porque ya estamos mostrando horarios generados
+        // Si hay error, generamos horarios fijos como fallback
+        const horariosGenerados = [];
+        for (let hora = 9; hora <= 18; hora++) {
+          horariosGenerados.push(`${hora.toString().padStart(2, '0')}:00`);
+        }
+        setHorariosDisponibles(horariosGenerados);
       }
     } catch (error) {
       console.error('Error general al procesar la selección de fecha:', error);
@@ -257,18 +302,40 @@ const AdminCitasPage = () => {
           paciente_nombre: paciente ? paciente.nombre : 'Sin nombre',
           tipo_tratamiento: formData.tipo_tratamiento,
           hora: formData.hora.substring(0, 5), // Asegurar formato HH:MM
-          tipo_cita: formData.tipo_cita
+          tipo_cita: formData.tipo_cita,
+          duracion_extendida: formData.duracion_extendida
         };
         
         // Agregar la nueva cita al estado local
         setCitas(prevCitas => [...prevCitas, nuevaCita]);
+        
+        // Si la cita tiene duración extendida, añadir la hora siguiente a las horas ocupadas
+        if (formData.duracion_extendida) {
+          const [horaH, horaM] = formData.hora.split(':').map(Number);
+          const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+          
+          // Actualizar la lista de horas ocupadas
+          setHorasOcupadas(prevHoras => [...prevHoras, formData.hora, siguienteHora]);
+          
+          // Actualizar la lista de horarios disponibles
+          setHorariosDisponibles(prevHorarios => 
+            prevHorarios.filter(h => h !== formData.hora && h !== siguienteHora)
+          );
+        } else {
+          // Si no tiene duración extendida, solo bloquear la hora seleccionada
+          setHorasOcupadas(prevHoras => [...prevHoras, formData.hora]);
+          setHorariosDisponibles(prevHorarios => 
+            prevHorarios.filter(h => h !== formData.hora)
+          );
+        }
         
         setFormData({
           paciente_rut: '',
           fecha: '',
           hora: '',
           tipo_tratamiento: '',
-          tipo_cita: 'podologia'
+          tipo_cita: 'podologia',
+          duracion_extendida: false
         });
         
         // Eliminar mensaje de carga
@@ -308,56 +375,6 @@ const AdminCitasPage = () => {
     }, 3000);
   };
 
-  const depurarCitas = async () => {
-    setDepuracionActiva(true);
-    const notificacion = mostrarNotificacion('Iniciando depuración de citas...', 'info');
-    
-    try {
-      // Obtener citas usando el endpoint normal
-      console.log('=== INICIANDO DEPURACIÓN DE CITAS ===');
-      
-      console.log('1. Obteniendo citas desde endpoint estándar...');
-      const citasEstandar = await citasService.getAll();
-      console.log('Respuesta estándar:', citasEstandar);
-      
-      // Obtener citas con el endpoint de depuración
-      console.log('2. Obteniendo citas desde endpoint de depuración...');
-      const citasDebug = await axiosInstance.get('/citas/debug/');
-      console.log('Respuesta de depuración:', citasDebug);
-      
-      // Remover la notificación inicial si sigue existiendo
-      if (document.body.contains(notificacion)) {
-        document.body.removeChild(notificacion);
-      }
-      
-      // Comparar resultados
-      console.log('3. Comparando resultados:');
-      const totalEstandar = Array.isArray(citasEstandar.data) ? citasEstandar.data.length : 'No es un array';
-      const totalDebug = citasDebug.data.total_citas;
-      
-      console.log(`   - Total citas estándar: ${totalEstandar}`);
-      console.log(`   - Total citas debug: ${totalDebug}`);
-      
-      // Mostrar notificación con resultados
-      mostrarNotificacion(`Depuración completada:
-        • API estándar: ${totalEstandar} citas
-        • API debug: ${totalDebug} citas
-        Resultados detallados en consola.`, 'success');
-      
-      // Si hay citas en la API de depuración, actualizamos el estado
-      if (citasDebug.data.citas && citasDebug.data.citas.length > 0) {
-        mostrarNotificacion(`Actualizando vista con ${citasDebug.data.citas.length} citas del endpoint de depuración`, 'info');
-        setCitas(citasDebug.data.citas);
-      }
-      
-    } catch (error) {
-      console.error('Error en la depuración:', error);
-      mostrarNotificacion(`Error en la depuración: ${error.message}. Consulta la consola para más detalles.`, 'error');
-    } finally {
-      setDepuracionActiva(false);
-    }
-  };
-
   // Función para editar una cita
   const handleEditCita = (cita) => {
     // Normalizar el formato de hora (eliminar segundos si existen)
@@ -379,7 +396,9 @@ const AdminCitasPage = () => {
       tipo_tratamiento: cita.tipo_tratamiento || cita.tratamiento_nombre,
       estado: cita.estado,
       tipo_cita: cita.tipo_cita || 'podologia', // Asegurarnos de incluir el tipo de cita
-      original_hora: horaFormateada // Guardamos la hora original para referencia
+      original_hora: horaFormateada, // Guardamos la hora original para referencia
+      duracion_extendida: cita.duracion_extendida || false,
+      original_duracion_extendida: cita.duracion_extendida || false // Guardar el estado original de duración extendida
     });
     
     // Cargar horarios disponibles para la fecha incluyendo la hora actual
@@ -455,10 +474,13 @@ const AdminCitasPage = () => {
             console.log("Citas en la fecha seleccionada:", citasResponse.data);
             
             if (citasResponse.data && Array.isArray(citasResponse.data)) {
+              // Inicializar array para todas las horas ocupadas
+              let todasHorasOcupadas = [];
+              
               // Filtrar las citas que no sean la que estamos editando
-              const horasOcupadas = citasResponse.data
+              citasResponse.data
                 .filter(c => c.id !== slotInfo.citaId)
-                .map(c => {
+                .forEach(c => {
                   // Normalizar formato de hora
                   let hora = c.hora;
                   if (hora && hora.includes(':')) {
@@ -467,13 +489,22 @@ const AdminCitasPage = () => {
                       hora = `${partes[0]}:${partes[1]}`;
                     }
                   }
-                  return hora;
+                  
+                  // Añadir la hora principal
+                  todasHorasOcupadas.push(hora);
+                  
+                  // Si la cita tiene duración extendida, añadir la siguiente hora también
+                  if (c.duracion_extendida) {
+                    const [horaH, horaM] = hora.split(':').map(Number);
+                    const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+                    todasHorasOcupadas.push(siguienteHora);
+                  }
                 });
                 
-              console.log("Horas ocupadas (excluyendo la actual):", horasOcupadas);
+              console.log("Horas ocupadas para edición (incluyendo extendidas):", todasHorasOcupadas);
               
-              // Guardamos las horas ocupadas en un state para usarlas en la visualización
-              setHorasOcupadas(horasOcupadas);
+              // Guardar las horas ocupadas en state pero preservar la hora original y permitir su selección
+              setHorasOcupadas(todasHorasOcupadas);
             }
           } catch (error) {
             console.error("Error al cargar citas para la fecha:", error);
@@ -503,20 +534,200 @@ const AdminCitasPage = () => {
         editFormData.tipo_cita = 'podologia';
       }
       
-      // Hacer la petición de actualización
-      const response = await citasService.update(editFormData.id, editFormData);
-      
-      console.log("Respuesta de actualización:", response.data);
-      
-      // Cerrar el modal y recargar los datos
-      setShowEditModal(false);
-      await cargarDatos();
-      
-      if (document.body.contains(notificacion)) {
-        document.body.removeChild(notificacion);
+      // Verificar que la duración extendida esté definida
+      if (editFormData.duracion_extendida === undefined) {
+        console.warn("Duración extendida no está definida, asignando 'false' por defecto");
+        editFormData.duracion_extendida = false;
       }
       
-      mostrarNotificacion('Cita actualizada correctamente', 'success');
+      // Verificar si hay conflictos con otras citas si se cambió la hora o se activó la duración extendida
+      if (editFormData.duracion_extendida && 
+          (editFormData.hora !== editFormData.original_hora || !editFormData.original_duracion_extendida)) {
+        
+        // Obtener la siguiente hora para verificar disponibilidad
+        const [horaH, horaM] = editFormData.hora.split(':').map(Number);
+        const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+        
+        // Verificar si ya hay alguna cita en esa hora (que no sea la que estamos editando)
+        const citaEnSiguienteHora = citas.find(cita => {
+          // Omitir la cita actual que estamos editando
+          if (cita.id === editFormData.id) return false;
+          
+          // Verificar si hay una cita en la misma fecha y hora siguiente
+          return cita.fecha === editFormData.fecha && 
+                 cita.hora === siguienteHora;
+        });
+        
+        // Si hay una cita en la siguiente hora, no podemos extender la duración
+        if (citaEnSiguienteHora) {
+          if (document.body.contains(notificacion)) {
+            document.body.removeChild(notificacion);
+          }
+          mostrarNotificacion(
+            `No es posible extender la duración porque ya existe una cita a las ${siguienteHora} (${citaEnSiguienteHora.paciente_nombre})`, 
+            'error'
+          );
+          return; // Detener la actualización
+        }
+      }
+      
+      // Guardar la información original de la cita para compararla después
+      const citaOriginal = {
+        hora: editFormData.original_hora,
+        duracion_extendida: editFormData.original_duracion_extendida
+      };
+      
+      // Hacer una copia de los datos para enviar al backend
+      const datosCita = {
+        ...editFormData,
+        id: editFormData.id,
+        paciente_rut: editFormData.paciente_rut,
+        tipo_tratamiento: editFormData.tipo_tratamiento,
+        fecha: editFormData.fecha,
+        hora: editFormData.hora,
+        estado: editFormData.estado,
+        tipo_cita: editFormData.tipo_cita,
+        duracion_extendida: editFormData.duracion_extendida
+      };
+      
+      console.log("Datos enviados al API:", datosCita);
+      
+      // Hacer la petición de actualización
+      try {
+        const response = await citasService.update(editFormData.id, datosCita);
+        console.log("Respuesta de actualización:", response.data);
+        
+        // Cerrar el modal y recargar los datos
+        setShowEditModal(false);
+        
+        // Actualizar la información en la lista local de citas
+        setCitas(prevCitas => prevCitas.map(cita => 
+          cita.id === editFormData.id 
+            ? { 
+                ...cita, 
+                ...editFormData,
+                paciente_nombre: pacientes.find(p => p.rut === editFormData.paciente_rut)?.nombre || cita.paciente_nombre
+              } 
+            : cita
+        ));
+        
+        // Actualizar las horas ocupadas y disponibles según los cambios
+        if (editFormData.hora !== citaOriginal.hora || editFormData.duracion_extendida !== citaOriginal.duracion_extendida) {
+          // Si cambió la hora o la duración, actualizar las listas de horas
+          
+          // 1. Liberar las horas de la cita original
+          let horasALiberar = [citaOriginal.hora];
+          if (citaOriginal.duracion_extendida) {
+            const [horaH, horaM] = citaOriginal.hora.split(':').map(Number);
+            const siguienteHoraOriginal = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+            horasALiberar.push(siguienteHoraOriginal);
+          }
+          
+          // 2. Bloquear las horas de la nueva configuración
+          let horasAOcupar = [editFormData.hora];
+          if (editFormData.duracion_extendida) {
+            const [horaH, horaM] = editFormData.hora.split(':').map(Number);
+            const siguienteHoraNueva = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+            horasAOcupar.push(siguienteHoraNueva);
+          }
+          
+          // 3. Actualizar el estado de horas ocupadas
+          setHorasOcupadas(prevHoras => {
+            // Eliminar las horas que se liberaron
+            const horasFiltradas = prevHoras.filter(h => !horasALiberar.includes(h));
+            // Añadir las nuevas horas ocupadas
+            return [...horasFiltradas, ...horasAOcupar];
+          });
+          
+          // 4. Actualizar los horarios disponibles
+          setHorariosDisponibles(prevHorarios => {
+            // Añadir las horas liberadas
+            const horariosConLiberadas = [...prevHorarios, ...horasALiberar];
+            // Eliminar las horas ocupadas nuevamente
+            return horariosConLiberadas.filter(h => !horasAOcupar.includes(h));
+          });
+        }
+        
+        // Actualizar datos completos
+        await cargarDatos();
+        
+        if (document.body.contains(notificacion)) {
+          document.body.removeChild(notificacion);
+        }
+        
+        mostrarNotificacion('Cita actualizada correctamente', 'success');
+      } catch (updateError) {
+        console.error('Error específico en la actualización:', updateError);
+        
+        // Incluir error 404 en la lista de códigos que activan el método alternativo
+        if (updateError.response && (updateError.response.status === 401 || 
+                                     updateError.response.status === 403 || 
+                                     updateError.response.status === 404)) {
+          // Intentar un enfoque alternativo: crear una nueva cita y eliminar la original
+          mostrarNotificacion('Intentando método alternativo de actualización...', 'info');
+          
+          try {
+            // Verificar nuevamente si hay conflictos con otras citas
+            if (datosCita.duracion_extendida && 
+                (datosCita.hora !== editFormData.original_hora || !editFormData.original_duracion_extendida)) {
+              
+              // Obtener la siguiente hora para verificar disponibilidad
+              const [horaH, horaM] = datosCita.hora.split(':').map(Number);
+              const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+              
+              // Verificar si ya hay alguna cita en esa hora (que no sea la que estamos editando)
+              const citaEnSiguienteHora = citas.find(cita => {
+                // Omitir la cita actual que estamos editando
+                if (cita.id === editFormData.id) return false;
+                
+                // Verificar si hay una cita en la misma fecha y hora siguiente
+                return cita.fecha === datosCita.fecha && 
+                       cita.hora === siguienteHora;
+              });
+              
+              // Si hay una cita en la siguiente hora, no podemos extender la duración
+              if (citaEnSiguienteHora) {
+                mostrarNotificacion(
+                  `No es posible extender la duración porque ya existe una cita a las ${siguienteHora} (${citaEnSiguienteHora.paciente_nombre})`, 
+                  'error'
+                );
+                return; // Detener la actualización
+              }
+            }
+            
+            // 1. Crear una nueva cita con los datos actualizados
+            // Adaptar los datos para el método create (que espera un formato diferente)
+            const datosParaCrear = {
+              paciente_rut: datosCita.paciente_rut,
+              tipo_tratamiento: datosCita.tipo_tratamiento,
+              fecha: datosCita.fecha,
+              hora: datosCita.hora,
+              tipo_cita: datosCita.tipo_cita,
+              duracion_extendida: datosCita.duracion_extendida
+            };
+            
+            console.log("Intentando crear nueva cita con datos:", datosParaCrear);
+            const nuevaCitaResponse = await citasService.create(datosParaCrear);
+            console.log("Nueva cita creada:", nuevaCitaResponse.data);
+            
+            // 2. Eliminar la cita original
+            await citasService.delete(editFormData.id);
+            
+            // 3. Recargar los datos
+            await cargarDatos();
+            
+            // Cerrar el modal
+            setShowEditModal(false);
+            
+            mostrarNotificacion('Cita actualizada mediante recreación', 'success');
+          } catch (altError) {
+            console.error('Error en el método alternativo:', altError);
+            mostrarNotificacion('Error al actualizar la cita incluso con el método alternativo', 'error');
+          }
+        } else {
+          throw updateError; // Propagar el error para manejarlo en el catch general
+        }
+      }
     } catch (error) {
       console.error('Error al actualizar cita:', error);
       
@@ -530,10 +741,20 @@ const AdminCitasPage = () => {
           headers: error.response.headers
         });
         
-        if (error.response.status === 403) {
+        if (error.response.status === 401) {
+          mensaje = 'Error de autenticación. Por favor, refresca la página e intenta nuevamente.';
+        } else if (error.response.status === 403) {
           mensaje = 'No tienes permiso para actualizar esta cita. Error de CSRF o autenticación.';
         } else if (error.response.status === 404) {
           mensaje = 'La cita que intentas actualizar no existe o ya fue eliminada.';
+        } else if (error.response.status === 400) {
+          mensaje = 'Datos inválidos. Verifica la información de la cita.';
+          if (error.response.data && typeof error.response.data === 'object') {
+            const errores = Object.entries(error.response.data)
+              .map(([key, value]) => `${key}: ${value}`)
+              .join(', ');
+            mensaje += ` (${errores})`;
+          }
         } else if (error.response.data) {
           if (error.response.data.error) {
             mensaje = error.response.data.error;
@@ -543,6 +764,8 @@ const AdminCitasPage = () => {
             mensaje = error.response.data.detail;
           }
         }
+      } else if (error.message) {
+        mensaje = `Error: ${error.message}`;
       }
       
       mostrarNotificacion(mensaje, 'error');
@@ -623,6 +846,119 @@ const AdminCitasPage = () => {
     });
   };
 
+  // Agregar función para manejar cambio en duración extendida
+  const handleDuracionExtendidaChange = (e) => {
+    const nuevaDuracionExtendida = e.target.checked;
+    
+    // Si se desactiva el checkbox, simplemente actualizar el estado
+    if (!nuevaDuracionExtendida) {
+      setFormData({
+        ...formData,
+        duracion_extendida: nuevaDuracionExtendida
+      });
+      return;
+    }
+    
+    // Si se activa el checkbox, hay que verificar varias condiciones
+    if (nuevaDuracionExtendida && formData.hora) {
+      // 1. Obtener la siguiente hora para verificar disponibilidad
+      const [horaH, horaM] = formData.hora.split(':').map(Number);
+      const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+      
+      // 2. Verificar si ya hay alguna cita en esa hora
+      const citaEnSiguienteHora = citas.find(cita => 
+        cita.fecha === formData.fecha && cita.hora === siguienteHora
+      );
+      
+      // Si hay una cita en la siguiente hora, no podemos extender la duración
+      if (citaEnSiguienteHora) {
+        mostrarNotificacion(
+          `No es posible extender la duración porque ya existe una cita a las ${siguienteHora} (${citaEnSiguienteHora.paciente_nombre})`, 
+          'warning'
+        );
+        return;
+      }
+      
+      // 3. Verificar si la siguiente hora está dentro de los horarios disponibles
+      const siguienteHoraDisponible = horariosDisponibles.includes(siguienteHora);
+      
+      if (!siguienteHoraDisponible) {
+        mostrarNotificacion(
+          `La hora siguiente (${siguienteHora}) no está disponible para reservar 2 horas`, 
+          'warning'
+        );
+        return;
+      }
+    }
+    
+    // Si pasó todas las validaciones, actualizar el estado
+    setFormData({
+      ...formData,
+      duracion_extendida: nuevaDuracionExtendida
+    });
+  };
+
+  // Función para manejar cambio en duración extendida en el formulario de edición
+  const handleEditDuracionExtendidaChange = (e) => {
+    const nuevaDuracionExtendida = e.target.checked;
+    
+    // Si se desactiva el checkbox, simplemente actualizar el estado
+    if (!nuevaDuracionExtendida) {
+      setEditFormData({
+        ...editFormData,
+        duracion_extendida: nuevaDuracionExtendida
+      });
+      return;
+    }
+    
+    // Si se activa el checkbox, hay que verificar varias condiciones
+    if (nuevaDuracionExtendida && editFormData.hora) {
+      // 1. Obtener la siguiente hora para verificar disponibilidad
+      const [horaH, horaM] = editFormData.hora.split(':').map(Number);
+      const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+      
+      // 2. Verificar si ya hay alguna cita en esa hora (que no sea la que estamos editando)
+      const citaEnSiguienteHora = citas.find(cita => {
+        // Omitir la cita actual que estamos editando
+        if (cita.id === editFormData.id) return false;
+        
+        // Verificar si hay una cita en la misma fecha y hora siguiente
+        return cita.fecha === editFormData.fecha && 
+               cita.hora === siguienteHora;
+      });
+      
+      // Si hay una cita en la siguiente hora, no podemos extender la duración
+      if (citaEnSiguienteHora) {
+        mostrarNotificacion(
+          `No es posible extender la duración porque ya existe una cita a las ${siguienteHora} (${citaEnSiguienteHora.paciente_nombre})`, 
+          'warning'
+        );
+        return;
+      }
+      
+      // 3. Verificar si la siguiente hora está dentro de los horarios disponibles o es la hora original
+      const siguienteHoraDisponible = horariosDisponibles.includes(siguienteHora) || 
+                                      siguienteHora === editFormData.original_hora ||
+                                      // También considerar el caso donde la duración ya era extendida
+                                      (editFormData.original_duracion_extendida && 
+                                       siguienteHora === `${(parseInt(editFormData.original_hora.split(':')[0]) + 1).toString().padStart(2, '0')}:${editFormData.original_hora.split(':')[1]}`);
+      
+      if (!siguienteHoraDisponible && siguienteHora !== editFormData.original_hora) {
+        mostrarNotificacion(
+          `La hora siguiente (${siguienteHora}) no está disponible para reservar 2 horas`, 
+          'warning'
+        );
+        return;
+      }
+    }
+    
+    // Si pasó todas las validaciones, actualizar el estado
+    setEditFormData({
+      ...editFormData,
+      duracion_extendida: nuevaDuracionExtendida
+    });
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Cargando...</div>;
   }
@@ -661,9 +997,9 @@ const AdminCitasPage = () => {
       
       const evento = {
         id: cita.id,
-        title: `${cita.paciente_nombre || 'Sin nombre'} - ${cita.tipo_tratamiento || cita.tratamiento_nombre || 'Sin tratamiento'}`,
+        title: `${cita.paciente_nombre || 'Sin nombre'} - ${cita.tipo_tratamiento || cita.tratamiento_nombre || 'Sin tratamiento'}${cita.duracion_extendida ? ' (2h)' : ''}`,
         start: new Date(fechaHora),
-        end: new Date(new Date(fechaHora).getTime() + 60 * 60000), // Duración de 1 hora
+        end: new Date(new Date(fechaHora).getTime() + (cita.duracion_extendida ? 120 : 60) * 60000), // Duración de 2 horas si es extendida, 1 hora por defecto
         resource: cita, // Almacenar la cita completa como recurso para acceder a ella después
         backgroundColor: backgroundColor, // Añadir el color al evento
       };
@@ -1023,22 +1359,105 @@ const AdminCitasPage = () => {
                   </select>
                 </div>
 
+                <div className="mb-4 p-3 border border-indigo-200 rounded-md bg-indigo-50">
+                  <div className="flex items-start">
+                    <div className="flex items-center h-5">
+                      <input
+                        id="duracion_extendida"
+                        name="duracion_extendida"
+                        type="checkbox"
+                        checked={formData.duracion_extendida || false}
+                        onChange={handleDuracionExtendidaChange}
+                        className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      />
+                    </div>
+                    <div className="ml-3 text-sm">
+                      <label htmlFor="duracion_extendida" className="font-bold text-indigo-700">
+                        Reservar 2 horas
+                      </label>
+                      <p className="text-indigo-600">Marque esta opción si la atención requiere tiempo extendido</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Horarios Disponibles</label>
                   <div className="horarios-grid">
                     {horariosDisponibles.length > 0 ? (
-                      horariosDisponibles.map(hora => (
-                        <button
-                          key={hora}
-                          type="button"
-                          className={`horario-btn ${formData.hora === hora ? 'selected' : 'bg-gray-100'}`}
-                          onClick={() => setFormData({ ...formData, hora })}
-                        >
-                          {hora}
-                        </button>
-                      ))
+                      horariosDisponibles.map(hora => {
+                        // Comprobar si esta hora estaría bloqueada por una cita de 2 horas previa
+                        const esBloqueadaPorExtendida = horasOcupadas.some(horaOcupada => {
+                          // Convertir a números para comparar
+                          const [horaOcupadaH, horaOcupadaM] = horaOcupada.split(':').map(Number);
+                          const [horaActualH, horaActualM] = hora.split(':').map(Number);
+                          
+                          // Verificar si la hora actual es 1 hora después de una hora ocupada
+                          // (lo que significa que esa hora ocupada tiene duración extendida)
+                          if (horaOcupadaH === horaActualH - 1 && horaOcupadaM === horaActualM) {
+                            // Buscar la cita que corresponde a esa hora para ver si tiene duración extendida
+                            const citaExtendida = citas.find(c => {
+                              // Normalizar formato hora
+                              let horaC = c.hora;
+                              if (horaC && horaC.includes(':')) {
+                                const partes = horaC.split(':');
+                                if (partes.length >= 2) {
+                                  horaC = `${partes[0]}:${partes[1]}`;
+                                }
+                              }
+                              return horaC === horaOcupada && c.duracion_extendida;
+                            });
+                            return !!citaExtendida;
+                          }
+                          return false;
+                        });
+                        
+                        // Determinar si la siguiente hora está disponible (para cuando se selecciona duración extendida)
+                        const [horaH, horaM] = hora.split(':').map(Number);
+                        const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+                        const siguienteHoraDisponible = horariosDisponibles.includes(siguienteHora);
+                        
+                        const isOcupada = (horasOcupadas.includes(hora) && !esBloqueadaPorExtendida) || esBloqueadaPorExtendida;
+                        const noPermiteDuracionExtendida = formData.duracion_extendida && !siguienteHoraDisponible;
+                        
+                        // Determinar si está deshabilitada
+                        const isDisabled = isOcupada || noPermiteDuracionExtendida;
+                        
+                        // Si la hora está deshabilitada, no la mostramos
+                        if (isDisabled) return null;
+                        
+                        // Clases CSS dinámicas
+                        let btnClass = "horario-btn ";
+                        if (formData.hora === hora) {
+                          btnClass += "selected ";
+                        } else {
+                          btnClass += "bg-gray-100 ";
+                        }
+
+                        // Si la hora está seleccionada y se cambia a duración extendida, verificar
+                        // si debemos desmarcarla porque la siguiente hora no está disponible
+                        if (formData.hora === hora && formData.duracion_extendida && !siguienteHoraDisponible) {
+                          // Desmarcar la selección ya que no es válida con duración extendida
+                          setTimeout(() => {
+                            setFormData(prev => ({ ...prev, hora: '' }));
+                          }, 100);
+                        }
+                        
+                        return (
+                          <button
+                            key={hora}
+                            type="button"
+                            className={btnClass}
+                            onClick={() => {
+                              setFormData({ ...formData, hora });
+                            }}
+                            title="Hora disponible"
+                          >
+                            {hora}
+                          </button>
+                        );
+                      }).filter(button => button !== null) // Filtrar los null (horas deshabilitadas)
                     ) : (
-                      <p className="text-red-500 text-sm">No hay horarios disponibles para esta fecha</p>
+                      <p className="text-indigo-500 text-sm">Cargando horarios disponibles...</p>
                     )}
                   </div>
                 </div>
@@ -1132,101 +1551,162 @@ const AdminCitasPage = () => {
                   </select>
                 </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha (yyyy-mm-dd)</label>
-                <input
-                  type="date"
-                  value={editFormData.fecha}
-                  onChange={(e) => setEditFormData({ ...editFormData, fecha: e.target.value })}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
-                  required
-                />
-              </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha (yyyy-mm-dd)</label>
+                  <input
+                    type="date"
+                    value={editFormData.fecha}
+                    onChange={(e) => setEditFormData({ ...editFormData, fecha: e.target.value })}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
+                    required
+                  />
+                </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Horarios Disponibles</label>
-                <div className="horarios-grid">
-                  {/* Incluir la hora actual de la cita en los horarios disponibles */}
-                  {[...new Set([...horariosDisponibles, editFormData.original_hora])].sort().map(hora => {
-                    // Normalizar el formato de la hora (para comparación)
-                    let horaFormateada = hora;
-                    if (horaFormateada && horaFormateada.includes(':')) {
-                      const partes = horaFormateada.split(':');
-                      if (partes.length >= 2) {
-                        horaFormateada = `${partes[0]}:${partes[1]}`;
-                      }
-                    }
-                    
-                    // Determinar el estado del botón de hora
-                    const isOriginalHora = horaFormateada === editFormData.original_hora;
-                    const isSelected = horaFormateada === editFormData.hora;
-                    const isOcupada = horasOcupadas.some(h => {
-                      if (h && h.includes(':')) {
-                        const partes = h.split(':');
+                <div className="mb-4 p-3 border border-indigo-200 rounded-md bg-indigo-50">
+                  <div className="flex items-start">
+                    <div className="flex items-center h-5">
+                      <input
+                        id="edit_duracion_extendida"
+                        name="duracion_extendida"
+                        type="checkbox"
+                        checked={editFormData.duracion_extendida || false}
+                        onChange={handleEditDuracionExtendidaChange}
+                        className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      />
+                    </div>
+                    <div className="ml-3 text-sm">
+                      <label htmlFor="edit_duracion_extendida" className="font-bold text-indigo-700">
+                        Reservar 2 horas
+                      </label>
+                      <p className="text-indigo-600">Marque esta opción si la atención requiere tiempo extendido</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Horarios Disponibles</label>
+                  <div className="horarios-grid">
+                    {/* Incluir la hora original en los horarios disponibles */}
+                    {[...new Set([...horariosDisponibles, editFormData.original_hora])].sort().map(hora => {
+                      // Normalizar el formato de la hora (para comparación)
+                      let horaFormateada = hora;
+                      if (horaFormateada && horaFormateada.includes(':')) {
+                        const partes = horaFormateada.split(':');
                         if (partes.length >= 2) {
-                          return `${partes[0]}:${partes[1]}` === horaFormateada;
+                          horaFormateada = `${partes[0]}:${partes[1]}`;
                         }
                       }
-                      return h === horaFormateada;
-                    }) && !isOriginalHora;
-                    
-                    // Clases CSS dinámicas
-                    let btnClass = "horario-btn ";
-                    if (isSelected) {
-                      btnClass += "selected ";
-                    } else if (isOcupada) {
-                      btnClass += "ocupada ";
-                    } else {
-                      btnClass += "bg-gray-100 ";
-                    }
-                    
-                    if (isOriginalHora && !isSelected) {
-                      btnClass += "original ";
-                    }
-                    
-                    return (
-                      <button
-                        key={horaFormateada}
-                        type="button"
-                        className={btnClass}
-                        onClick={() => {
-                          if (!isOcupada || isOriginalHora) {
+                      
+                      // Determinar el estado del botón de hora
+                      const isOriginalHora = horaFormateada === editFormData.original_hora;
+                      const isSelected = horaFormateada === editFormData.hora;
+                      
+                      // Verificar si la hora está bloqueada por otra cita con duración extendida
+                      const esBloqueadaPorExtendida = horasOcupadas.some(horaOcupada => {
+                        if (horaOcupada === editFormData.original_hora) return false; // No bloquear por la propia cita
+                        
+                        // Convertir a números para comparar
+                        const [horaOcupadaH, horaOcupadaM] = horaOcupada.split(':').map(Number);
+                        const [horaActualH, horaActualM] = horaFormateada.split(':').map(Number);
+                        
+                        // Verificar si la hora actual es 1 hora después de una hora ocupada
+                        if (horaOcupadaH === horaActualH - 1 && horaOcupadaM === horaActualM) {
+                          // Buscar la cita que corresponde a esa hora para ver si tiene duración extendida
+                          const citaExtendida = citas.find(c => {
+                            let horaC = c.hora;
+                            if (horaC && horaC.includes(':')) {
+                              const partes = horaC.split(':');
+                              if (partes.length >= 2) {
+                                horaC = `${partes[0]}:${partes[1]}`;
+                              }
+                            }
+                            return horaC === horaOcupada && c.duracion_extendida && c.id !== editFormData.id;
+                          });
+                          return !!citaExtendida;
+                        }
+                        return false;
+                      });
+                      
+                      // Verificar si la siguiente hora está disponible (para cuando se selecciona duración extendida)
+                      const [horaH, horaM] = horaFormateada.split(':').map(Number);
+                      const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+                      const siguienteHoraDisponible = horariosDisponibles.includes(siguienteHora) || 
+                                                      siguienteHora === editFormData.original_hora;
+                      
+                      const isOcupada = (horasOcupadas.includes(horaFormateada) && !isOriginalHora) || esBloqueadaPorExtendida;
+                      const noPermiteDuracionExtendida = editFormData.duracion_extendida && !siguienteHoraDisponible && !isOriginalHora;
+                      
+                      // Determinar si está deshabilitada
+                      const isDisabled = isOcupada || noPermiteDuracionExtendida;
+                      
+                      // Si la hora está deshabilitada y no es la hora original, no la mostramos
+                      if (isDisabled && !isOriginalHora) return null;
+                      
+                      // Clases CSS dinámicas
+                      let btnClass = "horario-btn ";
+                      if (isSelected) {
+                        btnClass += "selected ";
+                      } else if (isOriginalHora && !isSelected) {
+                        btnClass += "original ";
+                      } else {
+                        btnClass += "bg-gray-100 ";
+                      }
+                      
+                      if (isOriginalHora && !isSelected) {
+                        btnClass += "original ";
+                      }
+                      
+                      // Si la hora está seleccionada y se cambia a duración extendida, verificar
+                      // si debemos desmarcarla porque la siguiente hora no está disponible
+                      if (editFormData.hora === horaFormateada && 
+                          editFormData.duracion_extendida && 
+                          !siguienteHoraDisponible && 
+                          horaFormateada !== editFormData.original_hora) {
+                        // Desmarcar la selección ya que no es válida con duración extendida
+                        setTimeout(() => {
+                          setEditFormData(prev => ({ ...prev, hora: '' }));
+                        }, 100);
+                      }
+                      
+                      return (
+                        <button
+                          key={horaFormateada}
+                          type="button"
+                          className={btnClass}
+                          onClick={() => {
                             setEditFormData({ ...editFormData, hora: horaFormateada });
-                          } else {
-                            mostrarNotificacion('Esta hora ya está reservada para otra cita', 'warning');
+                          }}
+                          title={
+                            isOriginalHora ? "Hora original de la cita" : 
+                            "Hora disponible"
                           }
-                        }}
-                        title={isOcupada ? "Hora no disponible" : isOriginalHora ? "Hora original de la cita" : "Hora disponible"}
-                        disabled={isOcupada && !isOriginalHora}
-                      >
-                        {/* Mostrar solo el formato HH:MM (sin segundos) */}
-                        {horaFormateada}
-                        {isOriginalHora && !isSelected && (
-                          <span className="original-indicator">♦</span>
-                        )}
-                        {isOcupada && (
-                          <span className="ocupada-indicator">✕</span>
-                        )}
-                      </button>
-                    );
-                  })}
+                        >
+                          {/* Mostrar solo el formato HH:MM (sin segundos) */}
+                          {horaFormateada}
+                          {isOriginalHora && !isSelected && (
+                            <span className="original-indicator">♦</span>
+                          )}
+                        </button>
+                      );
+                    }).filter(button => button !== null) // Filtrar los null (horas deshabilitadas)
+                    }
+                  </div>
                 </div>
-              </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                <select
-                  value={editFormData.estado}
-                  onChange={(e) => setEditFormData({ ...editFormData, estado: e.target.value })}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
-                  required
-                >
-                  <option value="reservada">Reservada</option>
-                  <option value="confirmada">Confirmada</option>
-                  <option value="completada">Completada</option>
-                  <option value="cancelada">Cancelada</option>
-                </select>
-              </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                  <select
+                    value={editFormData.estado}
+                    onChange={(e) => setEditFormData({ ...editFormData, estado: e.target.value })}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
+                    required
+                  >
+                    <option value="reservada">Reservada</option>
+                    <option value="confirmada">Confirmada</option>
+                    <option value="completada">Completada</option>
+                    <option value="cancelada">Cancelada</option>
+                  </select>
+                </div>
 
                 <div className="flex justify-end space-x-3">
                   <button

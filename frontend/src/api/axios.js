@@ -9,6 +9,43 @@ const api = axios.create({
   withCredentials: true, // Habilitar el envío de cookies
 });
 
+// Utilidad para verificar endpoints disponibles (para depuración)
+export const checkEndpoint = async (endpoint, method = 'get') => {
+  try {
+    console.log(`Verificando endpoint: ${endpoint} (método: ${method})`);
+    
+    // Usar método OPTIONS para verificar la disponibilidad
+    const response = await axios({
+      method: method === 'get' ? 'get' : 'options',
+      url: `http://localhost:8000/api${endpoint}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      withCredentials: true
+    });
+    
+    console.log(`Endpoint ${endpoint} disponible:`, response);
+    return {
+      available: true,
+      status: response.status,
+      headers: response.headers,
+      data: response.data
+    };
+  } catch (error) {
+    console.error(`Error al verificar endpoint ${endpoint}:`, error);
+    return {
+      available: false,
+      status: error.response?.status,
+      message: error.message,
+      details: error.response?.data
+    };
+  }
+};
+
+// Hacer la función disponible globalmente para depuración desde la consola
+window.checkEndpoint = checkEndpoint;
+
 // Función para obtener el token CSRF
 const getCSRFToken = () => {
   const name = 'csrftoken';
@@ -23,12 +60,39 @@ const getCSRFToken = () => {
       }
     }
   }
+  
+  // Si no se encuentra en las cookies, buscar si hay un token en el localStorage como fallback
+  if (!cookieValue) {
+    cookieValue = localStorage.getItem('csrfToken');
+  }
+  
   return cookieValue;
+};
+
+// Función para obtener un nuevo token CSRF desde el servidor
+const fetchCSRFToken = async () => {
+  try {
+    // Hacer una solicitud al endpoint que proporciona el token CSRF
+    const response = await axios.get('http://localhost:8000/api/get-csrf-token/', {
+      withCredentials: true
+    });
+    
+    // Si la respuesta tiene un token, guardarlo en localStorage como respaldo
+    if (response.data && response.data.csrfToken) {
+      localStorage.setItem('csrfToken', response.data.csrfToken);
+      return response.data.csrfToken;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error al obtener token CSRF:', error);
+    return null;
+  }
 };
 
 // Interceptor para añadir token de autenticación y CSRF
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     // Añadir token de autenticación si existe
     const token = localStorage.getItem('authToken');
     if (token) {
@@ -37,9 +101,17 @@ api.interceptors.request.use(
     
     // Añadir token CSRF para métodos no seguros
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(config.method.toUpperCase())) {
-      const csrfToken = getCSRFToken();
+      let csrfToken = getCSRFToken();
+      
+      // Si no hay token CSRF, intentar obtenerlo del servidor
+      if (!csrfToken) {
+        csrfToken = await fetchCSRFToken();
+      }
+      
       if (csrfToken) {
         config.headers['X-CSRFToken'] = csrfToken;
+      } else {
+        console.warn('No se encontró token CSRF');
       }
     }
     
@@ -51,7 +123,7 @@ api.interceptors.request.use(
 // Interceptor para manejar errores
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     console.error('Error en la petición:', error);
     
     // Mejora en el manejo de errores para proporcionar más detalles
@@ -60,6 +132,29 @@ api.interceptors.response.use(
       console.error('Datos del error:', error.response.data);
       console.error('Estado HTTP:', error.response.status);
       console.error('Cabeceras:', error.response.headers);
+      
+      // Si el error es 401 o 403, podría ser un problema de CSRF
+      if (error.response.status === 401 || error.response.status === 403) {
+        // Intentar obtener un nuevo token CSRF y reintentar la solicitud
+        const originalRequest = error.config;
+        
+        // Evitar bucles infinitos
+        if (!originalRequest._retry) {
+          originalRequest._retry = true;
+          try {
+            // Obtener un nuevo token CSRF
+            const newCSRFToken = await fetchCSRFToken();
+            if (newCSRFToken) {
+              // Configurar el nuevo token y reintentar
+              console.log('Reintentando solicitud con nuevo token CSRF');
+              originalRequest.headers['X-CSRFToken'] = newCSRFToken;
+              return api(originalRequest);
+            }
+          } catch (retryError) {
+            console.error('Error al reintentar la solicitud:', retryError);
+          }
+        }
+      }
     } else if (error.request) {
       // La solicitud fue hecha pero no se recibió respuesta
       console.error('No se recibió respuesta del servidor');

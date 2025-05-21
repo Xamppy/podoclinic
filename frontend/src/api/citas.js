@@ -19,10 +19,12 @@ export const citasService = {
       fecha: formData.fecha,
       hora: formData.hora,
       estado: 'reservada',  // Estado por defecto
-      tipo_cita: formData.tipo_cita // Tipo de cita (podologia o manicura)
+      tipo_cita: formData.tipo_cita, // Tipo de cita (podologia o manicura)
+      duracion_extendida: formData.duracion_extendida || false // Incluir la duración extendida
     };
     
     console.log('DATOS DE CITA A CREAR:', formData);
+    console.log('CAMPO duracion_extendida (antes de enviar):', typeof formData.duracion_extendida, formData.duracion_extendida);
     console.log('Enviando datos a /citas/crear_cita_admin/:', backendData);
     
     // Usar la ruta correcta
@@ -38,14 +40,17 @@ export const citasService = {
       fecha: formData.fecha,
       hora: formData.hora,
       estado: formData.estado,
-      tipo_cita: formData.tipo_cita || 'podologia' // Incluir tipo de cita, con valor por defecto
+      tipo_cita: formData.tipo_cita || 'podologia', // Incluir tipo de cita, con valor por defecto
+      duracion_extendida: formData.duracion_extendida || false // Incluir la duración extendida
     };
     
     console.log('DATOS DE CITA A ACTUALIZAR:', formData);
     console.log('CAMPO tipo_cita (antes de enviar):', typeof formData.tipo_cita, formData.tipo_cita);
+    console.log('CAMPO duracion_extendida (antes de enviar):', typeof formData.duracion_extendida, formData.duracion_extendida);
     console.log(`Actualizando cita ${id} con datos:`, backendData);
     
-    return api.put(`/citas/actualizar/${id}/`, backendData);
+    // Usar la URL estándar para actualizaciones
+    return api.put(`/citas/${id}/`, backendData);
   },
   
   // Eliminar una cita - Usar el endpoint específico con AllowAny permissions

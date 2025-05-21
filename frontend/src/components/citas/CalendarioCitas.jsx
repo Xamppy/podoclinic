@@ -62,7 +62,8 @@ const CalendarioCitas = () => {
     tipo_tratamiento: '',
     estado: '',
     tipo_cita: 'podologia', // Agregar tipo de cita
-    original_hora: ''
+    original_hora: '',
+    duracion_extendida: false
   });
   
   // Estados para la actualización automática
@@ -89,7 +90,8 @@ const CalendarioCitas = () => {
     fecha: '',
     hora: '',
     tipo_tratamiento: '',
-    tipo_cita: 'podologia' // Agregar tipo de cita
+    tipo_cita: 'podologia', // Agregar tipo de cita
+    duracion_extendida: false
   });
 
   useEffect(() => {
@@ -141,16 +143,24 @@ const CalendarioCitas = () => {
             
             console.log('Cita procesada para calendario:', citaConTipo);
             
+            // Verificar si la cita tiene duración extendida (2 horas)
+            const duracionEnMinutos = cita.duracion_extendida 
+              ? 120 // 2 horas si es extendida
+              : (cita.tratamiento?.duracion_minutos || 60); // Usar la duración del tratamiento o 60 minutos por defecto
+            
             return {
                 id: cita.id,
-                title: `${cita.paciente_nombre} - ${cita.tipo_tratamiento || cita.tratamiento_nombre}`,
+                title: `${cita.paciente_nombre} - ${cita.tipo_tratamiento || cita.tratamiento_nombre}${cita.duracion_extendida ? ' (2h)' : ''}`,
                 start: new Date(`${cita.fecha}T${cita.hora}`),
-                end: new Date(new Date(`${cita.fecha}T${cita.hora}`).getTime() + (cita.tratamiento?.duracion_minutos || 60) * 60000),
+                end: new Date(new Date(`${cita.fecha}T${cita.hora}`).getTime() + duracionEnMinutos * 60000),
                 paciente: cita.paciente_nombre,
                 paciente_rut: cita.paciente_rut,
                 tratamiento: cita.tipo_tratamiento || cita.tratamiento_nombre,
                 estado: cita.estado,
-                resource: citaConTipo, // Usar la copia con tipo_cita asegurado
+                resource: {
+                  ...citaConTipo,
+                  duracion_extendida: cita.duracion_extendida || false // Asegurar que tiene el campo duracion_extendida
+                }, 
             }
         })
         : [];
@@ -290,7 +300,8 @@ const CalendarioCitas = () => {
         fecha: '',
         hora: '',
         tipo_tratamiento: '',
-        tipo_cita: 'podologia' // Agregar tipo de cita
+        tipo_cita: 'podologia', // Agregar tipo de cita
+        duracion_extendida: false
       });
       
       alert('Cita creada con éxito');
@@ -393,7 +404,8 @@ const CalendarioCitas = () => {
       tipo_tratamiento: esManicura ? 'Manicura' : (selectedEvent.tratamiento || ''),
       estado: selectedEvent.estado || 'reservada',
       tipo_cita: selectedEvent.resource.tipo_cita || 'podologia',
-      original_hora: hora
+      original_hora: hora,
+      duracion_extendida: selectedEvent.resource.duracion_extendida || false
     });
     
     // Cargar horarios disponibles para la fecha seleccionada
@@ -457,7 +469,8 @@ const CalendarioCitas = () => {
         fecha: editFormData.fecha,
         hora: editFormData.hora,
         estado: editFormData.estado,
-        tipo_cita: editFormData.tipo_cita
+        tipo_cita: editFormData.tipo_cita,
+        duracion_extendida: editFormData.duracion_extendida
       });
       
       // Actualizar la lista de citas
@@ -723,6 +736,27 @@ const CalendarioCitas = () => {
                 />
               </div>
               
+              <div className="mb-4 p-3 border border-indigo-200 rounded-md bg-indigo-50">
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="edit_duracion_extendida"
+                      name="duracion_extendida"
+                      type="checkbox"
+                      checked={editFormData.duracion_extendida || false}
+                      onChange={(e) => setEditFormData({ ...editFormData, duracion_extendida: e.target.checked })}
+                      className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <label htmlFor="edit_duracion_extendida" className="font-bold text-indigo-700">
+                      Reservar 2 horas
+                    </label>
+                    <p className="text-indigo-600">Marque esta opción si la atención requiere tiempo extendido</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Estado de la Cita</label>
                 <select
@@ -844,7 +878,13 @@ const CalendarioCitas = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cita</label>
                 <select
                   value={formData.tipo_cita}
-                  onChange={handleChangeTipoCita}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData, 
+                      tipo_cita: e.target.value,
+                      tipo_tratamiento: '' // Resetear el tratamiento al cambiar tipo
+                    });
+                  }}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
                   required
                 >
@@ -883,6 +923,27 @@ const CalendarioCitas = () => {
                     <option key={tipo} value={tipo}>{tipo}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="mb-4 p-3 border border-indigo-200 rounded-md bg-indigo-50">
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      id="duracion_extendida"
+                      name="duracion_extendida"
+                      type="checkbox"
+                      checked={formData.duracion_extendida || false}
+                      onChange={(e) => setFormData({ ...formData, duracion_extendida: e.target.checked })}
+                      className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <label htmlFor="duracion_extendida" className="font-bold text-indigo-700">
+                      Reservar 2 horas
+                    </label>
+                    <p className="text-indigo-600">Marque esta opción si la atención requiere tiempo extendido</p>
+                  </div>
+                </div>
               </div>
 
               <div className="mb-6">

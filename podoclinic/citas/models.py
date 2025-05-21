@@ -42,6 +42,7 @@ class Cita(models.Model):
     tipo_cita = models.CharField(max_length=20, choices=TIPOS_CITA, default='podologia')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     recordatorio_enviado = models.BooleanField(default=False)
+    duracion_extendida = models.BooleanField(default=False)  # Para citas que requieren 2 horas
     
     class Meta:
         unique_together = ['fecha', 'hora']  # No puede haber dos citas al mismo tiempo

@@ -91,7 +91,8 @@ def crear_cita_admin(request):
             fecha=data['fecha'],
             hora=data['hora'],
             estado=data.get('estado', 'reservada'),
-            tipo_cita=data.get('tipo_cita', 'podologia')  # Guardar el tipo de cita
+            tipo_cita=data.get('tipo_cita', 'podologia'),  # Guardar el tipo de cita
+            duracion_extendida=data.get('duracion_extendida', False)  # Guardar si la cita requiere 2 horas
         )
         
         # Devolver la respuesta
@@ -185,7 +186,8 @@ class CitaViewSet(viewsets.ModelViewSet):
                 fecha=data['fecha'],
                 hora=data['hora'],
                 estado=data.get('estado', 'reservada'),
-                tipo_cita=data.get('tipo_cita', 'podologia')  # Guardar el tipo de cita
+                tipo_cita=data.get('tipo_cita', 'podologia'),  # Guardar el tipo de cita
+                duracion_extendida=data.get('duracion_extendida', False)  # Guardar si la cita requiere 2 horas
             )
             
             # Devolver la respuesta
