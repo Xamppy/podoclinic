@@ -18,7 +18,7 @@ const Sidebar = () => {
         <img 
           src={`${process.env.PUBLIC_URL}/logo-podoclinic.png`}
           alt="Logo Clínica Podológica Esmeralda" 
-          className="w-32 h-auto mb-1"
+          className="w-55 h-auto mb-1"
         />
         <h1 className="text-2xl font-bold text-white text-center mb-2">Clínica Podológica Esmeralda</h1>
         <p className="text-gray-400 text-sm text-center">Panel de Administración</p>
