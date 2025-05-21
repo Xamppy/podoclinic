@@ -2,80 +2,43 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333333;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #3949ab;
-        }
-        .content {
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-        }
-        .footer {
-            margin-top: 20px;
-            font-size: 12px;
-            text-align: center;
-            color: #666666;
-        }
-        .info {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #e3f2fd;
-            border-radius: 5px;
-        }
-        .button {
-            display: inline-block;
-            background-color: #3949ab;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Cita</title>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>{{ nombre_clinica }}</h2>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px; color: #2f7e2b;">
+            <!-- Logo con estilos inline para maximizar compatibilidad -->
+            <img src="cid:logo" alt="{{ nombre_clinica }}" style="display: block; margin: 0 auto; max-width: 250px; height: auto; border: 0;" width="250" />
+            <h2 style="color: #2f7e2b; margin-top: 10px;">{{ nombre_clinica }}</h2>
         </div>
         
-        <div class="content">
-            <p>Estimada/o <strong>{{ nombre_paciente }}</strong>,</p>
+        <div style="padding: 20px; background-color: #f8f9fa; border-radius: 5px;">
+            <p style="margin-bottom: 15px;">Estimada/o <strong>{{ nombre_paciente }}</strong>,</p>
             
-            <p>Le informamos que su cita de <strong>{{ tipo_cita }}</strong> para el <strong>{{ fecha_cita }}</strong> a las <strong>{{ hora_cita }}</strong> ha sido agendada exitosamente.</p>
+            <p style="margin-bottom: 15px;">Le informamos que su cita de <strong>{{ tipo_cita }}</strong> para el <strong>{{ fecha_cita }}</strong> a las <strong>{{ hora_cita }}</strong> ha sido agendada exitosamente.</p>
             
-            <div class="info">
-                <p>Para asegurar su horario, le agradecemos confirmar su asistencia por alguno de estos medios:</p>
-                <ul>
-                    <li>Respondiendo a este correo electrónico</li>
-                    <li>Enviando un WhatsApp al <strong>{{ whatsapp_clinica }}</strong></li>
-                    <li>Llamando al <strong>{{ telefono_clinica }}</strong></li>
+            <div style="margin-top: 15px; padding: 10px; background-color: #e3f2fd; border-radius: 5px;">
+                <p style="margin-bottom: 10px;">Para asegurar su horario, le agradecemos confirmar su asistencia por alguno de estos medios:</p>
+                <ul style="padding-left: 20px;">
+                    <li style="margin-bottom: 5px;">Respondiendo a este correo electrónico</li>
+                    <li style="margin-bottom: 5px;">Enviando un WhatsApp al <strong>{{ whatsapp_clinica }}</strong></li>
+                    <li style="margin-bottom: 5px;">Llamando al <strong>{{ telefono_clinica }}</strong></li>
                 </ul>
             </div>
             
-            <p>En caso de no poder asistir, le solicitamos avisar con al menos 24 horas de anticipación para poder reasignar su horario.</p>
+            <p style="margin-top: 15px;">En caso de no poder asistir, le solicitamos avisar con al menos 24 horas de anticipación para poder reasignar su horario.</p>
             
-            <p>Estaremos encantados de atenderle y proporcionarle el mejor servicio profesional.</p>
+            <p style="margin-top: 15px;">Estaremos encantados de atenderle y proporcionarle el mejor servicio profesional.</p>
             
-            <p>Atentamente,<br>
-            <strong>Equipo {{ nombre_clinica }}</strong><br>
-            {{ direccion_clinica }}</p>
+            <p style="margin-top: 20px;">
+                Atentamente,<br>
+                <strong>Equipo {{ nombre_clinica }}</strong><br>
+                {{ direccion_clinica }}
+            </p>
         </div>
         
-        <div class="footer">
+        <div style="margin-top: 20px; font-size: 12px; text-align: center; color: #666666;">
             <p>Este es un correo automático. Por favor no responda directamente a esta dirección.</p>
         </div>
     </div>

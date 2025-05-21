@@ -1,12 +1,14 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.template.loader import render_to_string
 from .models import Cita
 import logging
 import threading
+import os
 from datetime import datetime
+from email.mime.image import MIMEImage
 
 # Configurar el logger
 logger = logging.getLogger(__name__)
@@ -39,7 +41,7 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             hora_formateada = str(cita.hora)
         
         # Asunto del correo
-        asunto = "Confirmación de su Cita - PodoClinic"
+        asunto = "Confirmación de su Cita - Clínica Podológica Esmeralda"
         
         # Contexto para la plantilla
         contexto = {
@@ -47,15 +49,11 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             'fecha_cita': fecha_formateada,
             'hora_cita': hora_formateada,
             'tipo_cita': cita.get_tipo_cita_display(),
-            'nombre_clinica': 'PodoClinic',
-            'telefono_clinica': '+56 9 1234 5678',
-            'whatsapp_clinica': '+56 9 1234 5678',
+            'nombre_clinica': 'Clínica Podológica Esmeralda',
+            'telefono_clinica': '+56 9 8543 3364',
+            'whatsapp_clinica': '+56 9 8543 3364',
             'direccion_clinica': 'Villa El Bosque - Alcalde Sergio Jorquera N°65, La Cruz'
         }
-        
-        # Renderizar plantillas
-        mensaje_html = render_to_string('emails/confirmacion_cita.html', contexto)
-        mensaje_texto = render_to_string('emails/confirmacion_cita_texto.txt', contexto)
         
         # Verificar si el correo del paciente existe
         if not paciente.correo:
@@ -63,17 +61,75 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             return
             
         logger.info(f"Enviando correo a: {paciente.correo}")
+
+        # Buscar el logo en varias ubicaciones posibles
+        posibles_rutas = [
+            os.path.join(settings.BASE_DIR, 'frontend', 'public', 'logo-podoclinic.png'),
+            os.path.join(settings.BASE_DIR, 'staticfiles', 'logo-podoclinic.png'),
+            os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-podoclinic.png'),
+            os.path.join(settings.BASE_DIR, 'static', 'logo-podoclinic.png'),
+            # Ruta absoluta como opción adicional
+            r'C:\Users\Usuario\Desktop\Podoclinic\frontend\public\logo-podoclinic.png'
+        ]
         
-        # Envío directo
-        send_mail(
+        logo_path = None
+        for ruta in posibles_rutas:
+            if os.path.exists(ruta):
+                logo_path = ruta
+                logger.info(f"Logo encontrado en: {logo_path}")
+                break
+                
+        if not logo_path:
+            logger.error("No se encontró el logo en ninguna ubicación conocida")
+        
+        # Leer contenido del logo si existe
+        logo_data = None
+        if logo_path:
+            try:
+                with open(logo_path, 'rb') as img_file:
+                    logo_data = img_file.read()
+                    logger.info(f"Logo leído correctamente desde {logo_path}")
+            except Exception as e:
+                logger.error(f"Error al leer el logo: {str(e)}")
+        
+        # Crear el mensaje de correo electrónico base
+        email = EmailMultiAlternatives(
             subject=asunto,
-            message=mensaje_texto,
+            body=render_to_string('emails/confirmacion_cita_texto.txt', contexto),
             from_email=settings.EMAIL_FROM,
-            recipient_list=[paciente.correo],
-            html_message=mensaje_html,
-            fail_silently=False,
+            to=[paciente.correo]
         )
         
+        # Crear la versión HTML
+        html_content = render_to_string('emails/confirmacion_cita.html', contexto)
+        
+        # Generar un Content-ID único para el logo
+        logo_content_id = 'logo@podoclinic.clinica.esmeralda'
+        
+        # Si se pudo leer el logo, adjuntarlo con el ID correcto
+        if logo_data:
+            # Crear la imagen MIME
+            img = MIMEImage(logo_data)
+            # El Content-ID debe estar entre < > para cumplir con RFC 2392
+            img.add_header('Content-ID', f'<{logo_content_id}>')
+            # Es importante configurar el content-disposition como inline
+            img.add_header('Content-Disposition', 'inline', filename='logo-podoclinic.png')
+            
+            # Reemplazar la referencia en el HTML para asegurar compatibilidad
+            html_content = html_content.replace('cid:logo', f'cid:{logo_content_id}')
+            
+            # Adjuntar primero la imagen antes del HTML
+            email.attach(img)
+            logger.info("Logo adjuntado correctamente al correo")
+        
+        # Adjuntar la versión HTML
+        email.attach_alternative(html_content, "text/html")
+        
+        # Asegurar que se use la subclase correcta para contenido mixto
+        email.mixed_subtype = 'related'
+        
+        # Enviar el correo
+        email.send(fail_silently=False)
         logger.info(f"Correo de confirmación enviado a {paciente.correo}")
         
     except Exception as e:
