@@ -571,12 +571,6 @@ const AdminCitasPage = () => {
         }
       }
       
-      // Guardar la información original de la cita para compararla después
-      const citaOriginal = {
-        hora: editFormData.original_hora,
-        duracion_extendida: editFormData.original_duracion_extendida
-      };
-      
       // Hacer una copia de los datos para enviar al backend
       const datosCita = {
         ...editFormData,
@@ -593,141 +587,32 @@ const AdminCitasPage = () => {
       console.log("Datos enviados al API:", datosCita);
       
       // Hacer la petición de actualización
-      try {
-        const response = await citasService.update(editFormData.id, datosCita);
-        console.log("Respuesta de actualización:", response.data);
-        
-        // Cerrar el modal y recargar los datos
-        setShowEditModal(false);
-        
-        // Actualizar la información en la lista local de citas
-        setCitas(prevCitas => prevCitas.map(cita => 
-          cita.id === editFormData.id 
-            ? { 
-                ...cita, 
-                ...editFormData,
-                paciente_nombre: pacientes.find(p => p.rut === editFormData.paciente_rut)?.nombre || cita.paciente_nombre
-              } 
-            : cita
-        ));
-        
-        // Actualizar las horas ocupadas y disponibles según los cambios
-        if (editFormData.hora !== citaOriginal.hora || editFormData.duracion_extendida !== citaOriginal.duracion_extendida) {
-          // Si cambió la hora o la duración, actualizar las listas de horas
-          
-          // 1. Liberar las horas de la cita original
-          let horasALiberar = [citaOriginal.hora];
-          if (citaOriginal.duracion_extendida) {
-            const [horaH, horaM] = citaOriginal.hora.split(':').map(Number);
-            const siguienteHoraOriginal = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
-            horasALiberar.push(siguienteHoraOriginal);
-          }
-          
-          // 2. Bloquear las horas de la nueva configuración
-          let horasAOcupar = [editFormData.hora];
-          if (editFormData.duracion_extendida) {
-            const [horaH, horaM] = editFormData.hora.split(':').map(Number);
-            const siguienteHoraNueva = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
-            horasAOcupar.push(siguienteHoraNueva);
-          }
-          
-          // 3. Actualizar el estado de horas ocupadas
-          setHorasOcupadas(prevHoras => {
-            // Eliminar las horas que se liberaron
-            const horasFiltradas = prevHoras.filter(h => !horasALiberar.includes(h));
-            // Añadir las nuevas horas ocupadas
-            return [...horasFiltradas, ...horasAOcupar];
-          });
-          
-          // 4. Actualizar los horarios disponibles
-          setHorariosDisponibles(prevHorarios => {
-            // Añadir las horas liberadas
-            const horariosConLiberadas = [...prevHorarios, ...horasALiberar];
-            // Eliminar las horas ocupadas nuevamente
-            return horariosConLiberadas.filter(h => !horasAOcupar.includes(h));
-          });
-        }
-        
-        // Actualizar datos completos
-        await cargarDatos();
-        
-        if (document.body.contains(notificacion)) {
-          document.body.removeChild(notificacion);
-        }
-        
-        mostrarNotificacion('Cita actualizada correctamente', 'success');
-      } catch (updateError) {
-        console.error('Error específico en la actualización:', updateError);
-        
-        // Incluir error 404 en la lista de códigos que activan el método alternativo
-        if (updateError.response && (updateError.response.status === 401 || 
-                                     updateError.response.status === 403 || 
-                                     updateError.response.status === 404)) {
-          // Intentar un enfoque alternativo: crear una nueva cita y eliminar la original
-          mostrarNotificacion('Intentando método alternativo de actualización...', 'info');
-          
-          try {
-            // Verificar nuevamente si hay conflictos con otras citas
-            if (datosCita.duracion_extendida && 
-                (datosCita.hora !== editFormData.original_hora || !editFormData.original_duracion_extendida)) {
-              
-              // Obtener la siguiente hora para verificar disponibilidad
-              const [horaH, horaM] = datosCita.hora.split(':').map(Number);
-              const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
-              
-              // Verificar si ya hay alguna cita en esa hora (que no sea la que estamos editando)
-              const citaEnSiguienteHora = citas.find(cita => {
-                // Omitir la cita actual que estamos editando
-                if (cita.id === editFormData.id) return false;
-                
-                // Verificar si hay una cita en la misma fecha y hora siguiente
-                return cita.fecha === datosCita.fecha && 
-                       cita.hora === siguienteHora;
-              });
-              
-              // Si hay una cita en la siguiente hora, no podemos extender la duración
-              if (citaEnSiguienteHora) {
-                mostrarNotificacion(
-                  `No es posible extender la duración porque ya existe una cita a las ${siguienteHora} (${citaEnSiguienteHora.paciente_nombre})`, 
-                  'error'
-                );
-                return; // Detener la actualización
-              }
-            }
-            
-            // 1. Crear una nueva cita con los datos actualizados
-            // Adaptar los datos para el método create (que espera un formato diferente)
-            const datosParaCrear = {
-              paciente_rut: datosCita.paciente_rut,
-              tipo_tratamiento: datosCita.tipo_tratamiento,
-              fecha: datosCita.fecha,
-              hora: datosCita.hora,
-              tipo_cita: datosCita.tipo_cita,
-              duracion_extendida: datosCita.duracion_extendida
-            };
-            
-            console.log("Intentando crear nueva cita con datos:", datosParaCrear);
-            const nuevaCitaResponse = await citasService.create(datosParaCrear);
-            console.log("Nueva cita creada:", nuevaCitaResponse.data);
-            
-            // 2. Eliminar la cita original
-            await citasService.delete(editFormData.id);
-            
-            // 3. Recargar los datos
-            await cargarDatos();
-            
-            // Cerrar el modal
-            setShowEditModal(false);
-            
-            mostrarNotificacion('Cita actualizada mediante recreación', 'success');
-          } catch (altError) {
-            console.error('Error en el método alternativo:', altError);
-            mostrarNotificacion('Error al actualizar la cita incluso con el método alternativo', 'error');
-          }
-        } else {
-          throw updateError; // Propagar el error para manejarlo en el catch general
-        }
+      const response = await citasService.update(editFormData.id, datosCita);
+      console.log("Respuesta de actualización:", response.data);
+      
+      // Cerrar el modal y recargar los datos
+      setShowEditModal(false);
+      
+      // Actualizar la información en la lista local de citas
+      setCitas(prevCitas => prevCitas.map(cita => 
+        cita.id === editFormData.id 
+          ? { 
+              ...cita, 
+              ...editFormData,
+              paciente_nombre: pacientes.find(p => p.rut === editFormData.paciente_rut)?.nombre || cita.paciente_nombre
+            } 
+          : cita
+      ));
+      
+      // Actualizar datos completos
+      await cargarDatos();
+      
+      if (document.body.contains(notificacion)) {
+        document.body.removeChild(notificacion);
       }
+      
+      mostrarNotificacion('Cita actualizada correctamente', 'success');
+      
     } catch (error) {
       console.error('Error al actualizar cita:', error);
       
@@ -755,17 +640,7 @@ const AdminCitasPage = () => {
               .join(', ');
             mensaje += ` (${errores})`;
           }
-        } else if (error.response.data) {
-          if (error.response.data.error) {
-            mensaje = error.response.data.error;
-          } else if (typeof error.response.data === 'string') {
-            mensaje = error.response.data;
-          } else if (error.response.data.detail) {
-            mensaje = error.response.data.detail;
-          }
         }
-      } else if (error.message) {
-        mensaje = `Error: ${error.message}`;
       }
       
       mostrarNotificacion(mensaje, 'error');

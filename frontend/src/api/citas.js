@@ -18,7 +18,7 @@ export const citasService = {
       tratamiento: formData.tipo_tratamiento, // Tipo de tratamiento
       fecha: formData.fecha,
       hora: formData.hora,
-      estado: 'reservada',  // Estado por defecto
+      estado: formData.estado || 'reservada',  // Estado por defecto si no se proporciona
       tipo_cita: formData.tipo_cita, // Tipo de cita (podologia o manicura)
       duracion_extendida: formData.duracion_extendida || false // Incluir la duración extendida
     };
@@ -31,7 +31,7 @@ export const citasService = {
     return api.post('/citas/crear_cita_admin/', backendData);
   },
   
-  // Actualizar una cita - Usar el endpoint específico con AllowAny permissions
+  // Actualizar una cita - Usar el endpoint específico para admin
   update: (id, formData) => {
     // Convertir los datos del formulario al formato que espera el backend
     const backendData = {
@@ -39,7 +39,7 @@ export const citasService = {
       tratamiento: formData.tipo_tratamiento, // Tipo de tratamiento
       fecha: formData.fecha,
       hora: formData.hora,
-      estado: formData.estado,
+      estado: formData.estado || 'reservada', // Asegurar que siempre hay un estado
       tipo_cita: formData.tipo_cita || 'podologia', // Incluir tipo de cita, con valor por defecto
       duracion_extendida: formData.duracion_extendida || false // Incluir la duración extendida
     };
@@ -49,8 +49,8 @@ export const citasService = {
     console.log('CAMPO duracion_extendida (antes de enviar):', typeof formData.duracion_extendida, formData.duracion_extendida);
     console.log(`Actualizando cita ${id} con datos:`, backendData);
     
-    // Usar la URL estándar para actualizaciones
-    return api.put(`/citas/${id}/`, backendData);
+    // Usar el endpoint específico para actualizar citas
+    return api.put(`/citas/actualizar/${id}/`, backendData);
   },
   
   // Eliminar una cita - Usar el endpoint específico con AllowAny permissions
