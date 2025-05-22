@@ -167,75 +167,76 @@ const AdminCitasPage = () => {
     }));
     
     try {
-      // Primero establecer un estado de carga para evitar parpadeo
+      // Primero establecer un estado de carga
       setHorariosDisponibles([]);
+      setHorasOcupadas([]);
       setShowForm(true);
       
-      // Obtener los horarios desde el backend
-      try {
-        const response = await axiosInstance.get(`/citas/disponibles/?fecha=${fechaFormateada}`);
-        console.log("Respuesta de horarios:", response.data);
-        
-        if (response.data && response.data.horas_disponibles) {
-          setHorariosDisponibles(response.data.horas_disponibles);
-          
-          // Obtener también las citas existentes para esa fecha
-          try {
-            const citasResponse = await citasService.getByFecha(fechaFormateada);
-            console.log("Citas en la fecha seleccionada:", citasResponse.data);
-            
-            if (citasResponse.data && Array.isArray(citasResponse.data)) {
-              // Inicializar un array para todas las horas ocupadas
-              let todasHorasOcupadas = [];
-              
-              // Procesar las citas para obtener todas las horas ocupadas
-              citasResponse.data.forEach(c => {
-                let hora = c.hora;
-                if (hora && hora.includes(':')) {
-                  const partes = hora.split(':');
-                  if (partes.length >= 2) {
-                    hora = `${partes[0]}:${partes[1]}`;
-                  }
-                }
-                
-                // Añadir la hora principal
-                todasHorasOcupadas.push(hora);
-                
-                // Si la cita tiene duración extendida, añadir también la hora siguiente
-                if (c.duracion_extendida) {
-                  const [horaH, horaM] = hora.split(':').map(Number);
-                  const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
-                  todasHorasOcupadas.push(siguienteHora);
-                }
-              });
-              
-              console.log("Todas las horas ocupadas (incluyendo duración extendida):", todasHorasOcupadas);
-              setHorasOcupadas(todasHorasOcupadas);
-              
-              // Filtrar los horarios disponibles eliminando todas las horas ocupadas
-              if (response.data.horas_disponibles.length > 0) {
-                const horariosActualizados = response.data.horas_disponibles.filter(
-                  hora => !todasHorasOcupadas.includes(hora)
-                );
-                setHorariosDisponibles(horariosActualizados);
-              }
+      // Obtener los horarios disponibles y las citas existentes en paralelo
+      const [horariosResponse, citasResponse] = await Promise.all([
+        axiosInstance.get(`/citas/disponibles/?fecha=${fechaFormateada}`),
+        citasService.getByFecha(fechaFormateada)
+      ]);
+      
+      console.log("Respuesta de horarios:", horariosResponse.data);
+      console.log("Respuesta de citas:", citasResponse.data);
+      
+      // Procesar las citas para obtener las horas ocupadas
+      let todasHorasOcupadas = [];
+      if (citasResponse.data && Array.isArray(citasResponse.data)) {
+        citasResponse.data.forEach(cita => {
+          // Normalizar el formato de hora
+          let hora = cita.hora;
+          if (hora && hora.includes(':')) {
+            const partes = hora.split(':');
+            if (partes.length >= 2) {
+              hora = `${partes[0]}:${partes[1]}`;
             }
-          } catch (error) {
-            console.error("Error al cargar citas para la fecha:", error);
           }
-        }
-      } catch (apiError) {
-        console.error('Error al obtener horarios desde la API:', apiError);
-        // Si hay error, generamos horarios fijos como fallback
+          
+          // Añadir la hora principal
+          todasHorasOcupadas.push(hora);
+          
+          // Si la cita tiene duración extendida, añadir la hora siguiente
+          if (cita.duracion_extendida) {
+            const [horaH, horaM] = hora.split(':').map(Number);
+            const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+            todasHorasOcupadas.push(siguienteHora);
+          }
+        });
+      }
+      
+      // Actualizar el estado de horas ocupadas
+      setHorasOcupadas(todasHorasOcupadas);
+      
+      // Procesar los horarios disponibles
+      if (horariosResponse.data && horariosResponse.data.horas_disponibles) {
+        const horariosDisponiblesFiltrados = horariosResponse.data.horas_disponibles.filter(
+          hora => !todasHorasOcupadas.includes(hora)
+        );
+        setHorariosDisponibles(horariosDisponiblesFiltrados);
+      } else {
+        // Si no hay respuesta del backend, usar horarios por defecto
         const horariosGenerados = [];
         for (let hora = 9; hora <= 18; hora++) {
-          horariosGenerados.push(`${hora.toString().padStart(2, '0')}:00`);
+          const horaStr = `${hora.toString().padStart(2, '0')}:00`;
+          if (!todasHorasOcupadas.includes(horaStr)) {
+            horariosGenerados.push(horaStr);
+          }
         }
         setHorariosDisponibles(horariosGenerados);
       }
+      
     } catch (error) {
-      console.error('Error general al procesar la selección de fecha:', error);
-      alert('Error al preparar el formulario de cita');
+      console.error('Error al cargar horarios:', error);
+      mostrarNotificacion('Error al cargar los horarios disponibles', 'error');
+      
+      // En caso de error, mostrar horarios por defecto
+      const horariosGenerados = [];
+      for (let hora = 9; hora <= 18; hora++) {
+        horariosGenerados.push(`${hora.toString().padStart(2, '0')}:00`);
+      }
+      setHorariosDisponibles(horariosGenerados);
     }
   };
 
@@ -293,6 +294,7 @@ const AdminCitasPage = () => {
           console.error('Error al enviar confirmación por WhatsApp:', whatsappError);
         }
         
+        // Cerrar el formulario
         setShowForm(false);
         
         // Formatear la nueva cita antes de agregarla al estado
@@ -309,26 +311,26 @@ const AdminCitasPage = () => {
         // Agregar la nueva cita al estado local
         setCitas(prevCitas => [...prevCitas, nuevaCita]);
         
-        // Si la cita tiene duración extendida, añadir la hora siguiente a las horas ocupadas
+        // Actualizar las horas ocupadas y disponibles
+        const horaSeleccionada = formData.hora;
+        let horasAOcupar = [horaSeleccionada];
+        
+        // Si la cita tiene duración extendida, añadir la hora siguiente
         if (formData.duracion_extendida) {
-          const [horaH, horaM] = formData.hora.split(':').map(Number);
+          const [horaH, horaM] = horaSeleccionada.split(':').map(Number);
           const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
-          
-          // Actualizar la lista de horas ocupadas
-          setHorasOcupadas(prevHoras => [...prevHoras, formData.hora, siguienteHora]);
-          
-          // Actualizar la lista de horarios disponibles
-          setHorariosDisponibles(prevHorarios => 
-            prevHorarios.filter(h => h !== formData.hora && h !== siguienteHora)
-          );
-        } else {
-          // Si no tiene duración extendida, solo bloquear la hora seleccionada
-          setHorasOcupadas(prevHoras => [...prevHoras, formData.hora]);
-          setHorariosDisponibles(prevHorarios => 
-            prevHorarios.filter(h => h !== formData.hora)
-          );
+          horasAOcupar.push(siguienteHora);
         }
         
+        // Actualizar horas ocupadas
+        setHorasOcupadas(prevHoras => [...prevHoras, ...horasAOcupar]);
+        
+        // Actualizar horarios disponibles
+        setHorariosDisponibles(prevHorarios => 
+          prevHorarios.filter(h => !horasAOcupar.includes(h))
+        );
+        
+        // Limpiar el formulario
         setFormData({
           paciente_rut: '',
           fecha: '',
@@ -338,8 +340,13 @@ const AdminCitasPage = () => {
           duracion_extendida: false
         });
         
+        // Recargar los datos completos para asegurar sincronización
+        await cargarDatos();
+        
         // Eliminar mensaje de carga
-        document.body.removeChild(loadingMsg);
+        if (document.body.contains(loadingMsg)) {
+          document.body.removeChild(loadingMsg);
+        }
         
         // Mostrar mensaje de éxito
         mostrarNotificacion('Cita creada con éxito', 'success');
