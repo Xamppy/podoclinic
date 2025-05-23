@@ -274,10 +274,12 @@ LOGGING = {
 
 # Configuración de correo electrónico
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_FROM = os.environ.get('EMAIL_FROM', EMAIL_HOST_USER)
-EMAIL_DEBUG = False  # Cambiar a False en producción
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'tu_correo@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Usar contraseña de aplicación de Gmail
+EMAIL_FROM = os.environ.get('EMAIL_FROM', 'tu_correo@gmail.com')
+EMAIL_DEBUG = True  # Activar temporalmente para depuración
+DEFAULT_FROM_EMAIL = EMAIL_FROM  # Asegurar que se use el mismo remitente por defecto

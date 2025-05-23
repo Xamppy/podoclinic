@@ -48,7 +48,7 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             'nombre_paciente': paciente.nombre,
             'fecha_cita': fecha_formateada,
             'hora_cita': hora_formateada,
-            'tipo_cita': cita.tratamiento.get_nombre_display() if 'manicura' in cita.tratamiento.nombre.lower() else cita.get_tipo_cita_display(),
+            'tipo_cita': cita.tratamiento.get_nombre_display() if hasattr(cita, 'tratamiento') and cita.tratamiento else cita.get_tipo_cita_display(),
             'nombre_clinica': 'Clínica Podológica Esmeralda',
             'telefono_clinica': '+56 9 8543 3364',
             'whatsapp_clinica': '+56 9 8543 3364',
@@ -68,6 +68,7 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             os.path.join(settings.BASE_DIR, 'staticfiles', 'logo-podoclinic.png'),
             os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-podoclinic.png'),
             os.path.join(settings.BASE_DIR, 'static', 'logo-podoclinic.png'),
+            os.path.join(settings.BASE_DIR, 'media', 'logo-podoclinic.png'),
             # Ruta absoluta como opción adicional
             r'C:\Users\Usuario\Desktop\Podoclinic\frontend\public\logo-podoclinic.png'
         ]
@@ -80,7 +81,7 @@ def enviar_correo_en_segundo_plano(paciente, cita):
                 break
                 
         if not logo_path:
-            logger.error("No se encontró el logo en ninguna ubicación conocida")
+            logger.warning("No se encontró el logo en ninguna ubicación conocida")
         
         # Leer contenido del logo si existe
         logo_data = None
@@ -108,19 +109,22 @@ def enviar_correo_en_segundo_plano(paciente, cita):
         
         # Si se pudo leer el logo, adjuntarlo con el ID correcto
         if logo_data:
-            # Crear la imagen MIME
-            img = MIMEImage(logo_data)
-            # El Content-ID debe estar entre < > para cumplir con RFC 2392
-            img.add_header('Content-ID', f'<{logo_content_id}>')
-            # Es importante configurar el content-disposition como inline
-            img.add_header('Content-Disposition', 'inline', filename='logo-podoclinic.png')
-            
-            # Reemplazar la referencia en el HTML para asegurar compatibilidad
-            html_content = html_content.replace('cid:logo', f'cid:{logo_content_id}')
-            
-            # Adjuntar primero la imagen antes del HTML
-            email.attach(img)
-            logger.info("Logo adjuntado correctamente al correo")
+            try:
+                # Crear la imagen MIME
+                img = MIMEImage(logo_data)
+                # El Content-ID debe estar entre < > para cumplir con RFC 2392
+                img.add_header('Content-ID', f'<{logo_content_id}>')
+                # Es importante configurar el content-disposition como inline
+                img.add_header('Content-Disposition', 'inline', filename='logo-podoclinic.png')
+                
+                # Reemplazar la referencia en el HTML para asegurar compatibilidad
+                html_content = html_content.replace('cid:logo', f'cid:{logo_content_id}')
+                
+                # Adjuntar primero la imagen antes del HTML
+                email.attach(img)
+                logger.info("Logo adjuntado correctamente al correo")
+            except Exception as e:
+                logger.error(f"Error al adjuntar el logo: {str(e)}")
         
         # Adjuntar la versión HTML
         email.attach_alternative(html_content, "text/html")
@@ -129,11 +133,28 @@ def enviar_correo_en_segundo_plano(paciente, cita):
         email.mixed_subtype = 'related'
         
         # Enviar el correo
-        email.send(fail_silently=False)
-        logger.info(f"Correo de confirmación enviado a {paciente.correo}")
+        try:
+            email.send(fail_silently=False)
+            logger.info(f"Correo de confirmación enviado a {paciente.correo}")
+        except Exception as e:
+            logger.error(f"Error al enviar el correo: {str(e)}")
+            # Intentar enviar sin HTML si falla
+            try:
+                send_mail(
+                    subject=asunto,
+                    message=render_to_string('emails/confirmacion_cita_texto.txt', contexto),
+                    from_email=settings.EMAIL_FROM,
+                    recipient_list=[paciente.correo],
+                    fail_silently=False,
+                )
+                logger.info(f"Correo de texto plano enviado a {paciente.correo}")
+            except Exception as e2:
+                logger.error(f"Error al enviar correo de texto plano: {str(e2)}")
+                raise
         
     except Exception as e:
         logger.error(f"Error al enviar correo: {str(e)}")
+        raise
 
 @receiver(post_save, sender=Cita)
 def enviar_correo_confirmacion(sender, instance, created, **kwargs):

@@ -602,3 +602,52 @@ def actualizar_cita(request, cita_id):
             {'error': f'Error al actualizar la cita: {str(e)}'},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def test_email_config(request):
+    """
+    Vista para probar la configuración del correo electrónico
+    """
+    logger = logging.getLogger('citas')
+    
+    try:
+        # Obtener el correo de destino
+        email = request.query_params.get('email', 'contacto@esmeraldapodoclinica.cl')
+        
+        # Enviar correo de prueba simple
+        send_mail(
+            subject="Prueba de Configuración - Clínica Podológica Esmeralda",
+            message="Este es un correo de prueba para verificar la configuración del servidor de correo.",
+            from_email=settings.EMAIL_FROM,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        
+        logger.info(f"Correo de prueba enviado a {email}")
+        
+        return Response({
+            'status': 'success',
+            'message': f'Correo enviado a {email}',
+            'config': {
+                'EMAIL_HOST': settings.EMAIL_HOST,
+                'EMAIL_PORT': settings.EMAIL_PORT,
+                'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
+                'EMAIL_USE_SSL': settings.EMAIL_USE_SSL,
+                'EMAIL_FROM': settings.EMAIL_FROM
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error al enviar correo de prueba: {str(e)}")
+        return Response({
+            'status': 'error',
+            'message': str(e),
+            'config': {
+                'EMAIL_HOST': settings.EMAIL_HOST,
+                'EMAIL_PORT': settings.EMAIL_PORT,
+                'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
+                'EMAIL_USE_SSL': settings.EMAIL_USE_SSL,
+                'EMAIL_FROM': settings.EMAIL_FROM
+            }
+        }, status=500)

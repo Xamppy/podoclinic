@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CitaViewSet, TratamientoViewSet, test_email, test_email_paciente
+from .views import CitaViewSet, TratamientoViewSet, test_email, test_email_paciente, test_email_config
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -280,4 +280,5 @@ urlpatterns = [
     path('actualizar/<int:cita_id>/', actualizar_cita, name='actualizar_cita'),
     path('test-email/', test_email, name='test_email'),
     path('test-email-paciente/', test_email_paciente, name='test_email_paciente'),
+    path('test-email-config/', test_email_config, name='test_email_config'),
 ] 
