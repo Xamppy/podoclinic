@@ -14,20 +14,18 @@ export const citasService = {
   create: (formData) => {
     // Convertir los datos del formulario al formato que espera el backend
     const backendData = {
-      paciente: formData.paciente_rut,  // ID del paciente (el backend espera 'paciente', no 'paciente_rut')
-      tratamiento: formData.tipo_tratamiento, // Tipo de tratamiento
+      paciente: formData.paciente_rut,
+      tratamiento: formData.tipo_tratamiento,
       fecha: formData.fecha,
       hora: formData.hora,
-      estado: formData.estado || 'reservada',  // Estado por defecto si no se proporciona
-      tipo_cita: formData.tipo_cita, // Tipo de cita (podologia o manicura)
-      duracion_extendida: formData.duracion_extendida || false // Incluir la duración extendida
+      estado: formData.estado || 'reservada',
+      tipo_cita: formData.tipo_cita || 'podologia',
+      duracion_cita: 60
     };
     
     console.log('DATOS DE CITA A CREAR:', formData);
-    console.log('CAMPO duracion_extendida (antes de enviar):', typeof formData.duracion_extendida, formData.duracion_extendida);
-    console.log('Enviando datos a /citas/crear_cita_admin/:', backendData);
+    console.log('Datos preparados para el backend:', backendData);
     
-    // Usar la ruta correcta
     return api.post('/citas/crear_cita_admin/', backendData);
   },
   
@@ -35,21 +33,18 @@ export const citasService = {
   update: (id, formData) => {
     // Convertir los datos del formulario al formato que espera el backend
     const backendData = {
-      paciente: formData.paciente_rut,  // ID del paciente 
-      tratamiento: formData.tipo_tratamiento, // Tipo de tratamiento
+      paciente: formData.paciente_rut,
+      tratamiento: formData.tipo_tratamiento,
       fecha: formData.fecha,
       hora: formData.hora,
-      estado: formData.estado || 'reservada', // Asegurar que siempre hay un estado
-      tipo_cita: formData.tipo_cita || 'podologia', // Incluir tipo de cita, con valor por defecto
-      duracion_extendida: formData.duracion_extendida || false // Incluir la duración extendida
+      estado: formData.estado || 'reservada',
+      tipo_cita: formData.tipo_cita || 'podologia',
+      duracion_cita: 60
     };
     
     console.log('DATOS DE CITA A ACTUALIZAR:', formData);
-    console.log('CAMPO tipo_cita (antes de enviar):', typeof formData.tipo_cita, formData.tipo_cita);
-    console.log('CAMPO duracion_extendida (antes de enviar):', typeof formData.duracion_extendida, formData.duracion_extendida);
-    console.log(`Actualizando cita ${id} con datos:`, backendData);
+    console.log('Datos preparados para el backend:', backendData);
     
-    // Usar el endpoint específico para actualizar citas
     return api.put(`/citas/actualizar/${id}/`, backendData);
   },
   

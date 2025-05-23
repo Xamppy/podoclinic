@@ -61,9 +61,8 @@ const CalendarioCitas = () => {
     hora: '',
     tipo_tratamiento: '',
     estado: '',
-    tipo_cita: 'podologia', // Agregar tipo de cita
-    original_hora: '',
-    duracion_extendida: false
+    tipo_cita: 'podologia',
+    original_hora: ''
   });
   
   // Estados para la actualización automática
@@ -90,8 +89,7 @@ const CalendarioCitas = () => {
     fecha: '',
     hora: '',
     tipo_tratamiento: '',
-    tipo_cita: 'podologia', // Agregar tipo de cita
-    duracion_extendida: false
+    tipo_cita: 'podologia'
   });
 
   useEffect(() => {
@@ -300,8 +298,7 @@ const CalendarioCitas = () => {
         fecha: '',
         hora: '',
         tipo_tratamiento: '',
-        tipo_cita: 'podologia', // Agregar tipo de cita
-        duracion_extendida: false
+        tipo_cita: 'podologia'
       });
       
       alert('Cita creada con éxito');
@@ -404,8 +401,7 @@ const CalendarioCitas = () => {
       tipo_tratamiento: esManicura ? 'Manicura' : (selectedEvent.tratamiento || ''),
       estado: selectedEvent.estado || 'reservada',
       tipo_cita: selectedEvent.resource.tipo_cita || 'podologia',
-      original_hora: hora,
-      duracion_extendida: selectedEvent.resource.duracion_extendida || false
+      original_hora: hora
     });
     
     // Cargar horarios disponibles para la fecha seleccionada
@@ -470,7 +466,6 @@ const CalendarioCitas = () => {
         hora: editFormData.hora,
         estado: editFormData.estado,
         tipo_cita: editFormData.tipo_cita,
-        duracion_extendida: editFormData.duracion_extendida
       });
       
       // Actualizar la lista de citas
@@ -736,29 +731,8 @@ const CalendarioCitas = () => {
                 />
               </div>
               
-              <div className="mb-4 p-3 border border-indigo-200 rounded-md bg-indigo-50">
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="edit_duracion_extendida"
-                      name="duracion_extendida"
-                      type="checkbox"
-                      checked={editFormData.duracion_extendida || false}
-                      onChange={(e) => setEditFormData({ ...editFormData, duracion_extendida: e.target.checked })}
-                      className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="ml-3 text-sm">
-                    <label htmlFor="edit_duracion_extendida" className="font-bold text-indigo-700">
-                      Reservar 2 horas
-                    </label>
-                    <p className="text-indigo-600">Marque esta opción si la atención requiere tiempo extendido</p>
-                  </div>
-                </div>
-              </div>
-
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estado de la Cita</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
                 <select
                   value={editFormData.estado}
                   onChange={(e) => setEditFormData({ ...editFormData, estado: e.target.value })}
@@ -923,27 +897,6 @@ const CalendarioCitas = () => {
                     <option key={tipo} value={tipo}>{tipo}</option>
                   ))}
                 </select>
-              </div>
-
-              <div className="mb-4 p-3 border border-indigo-200 rounded-md bg-indigo-50">
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="duracion_extendida"
-                      name="duracion_extendida"
-                      type="checkbox"
-                      checked={formData.duracion_extendida || false}
-                      onChange={(e) => setFormData({ ...formData, duracion_extendida: e.target.checked })}
-                      className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="ml-3 text-sm">
-                    <label htmlFor="duracion_extendida" className="font-bold text-indigo-700">
-                      Reservar 2 horas
-                    </label>
-                    <p className="text-indigo-600">Marque esta opción si la atención requiere tiempo extendido</p>
-                  </div>
-                </div>
               </div>
 
               <div className="mb-6">

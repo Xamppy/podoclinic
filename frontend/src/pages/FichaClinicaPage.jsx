@@ -147,7 +147,7 @@ const FichaClinicaPage = () => {
         procedimiento: formData.procedimiento,
         indicaciones: formData.indicaciones,
         proxima_sesion_estimada: formData.tiene_proxima_cita ? formData.proxima_sesion_estimada : null,
-        productos_usados: productosFormateados,
+        productos_usados_data: productosFormateados,
         paciente: selectedPaciente.id
       };
 

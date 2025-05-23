@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api', // URL base del backend
+  baseURL: '/api', // URL base del backend
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -17,7 +17,7 @@ export const checkEndpoint = async (endpoint, method = 'get') => {
     // Usar método OPTIONS para verificar la disponibilidad
     const response = await axios({
       method: method === 'get' ? 'get' : 'options',
-      url: `http://localhost:8000/api${endpoint}`,
+      url: `/api${endpoint}`,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -73,7 +73,7 @@ const getCSRFToken = () => {
 const fetchCSRFToken = async () => {
   try {
     // Hacer una solicitud al endpoint que proporciona el token CSRF
-    const response = await axios.get('http://localhost:8000/api/get-csrf-token/', {
+    const response = await axios.get('/api/get-csrf-token/', {
       withCredentials: true
     });
     

@@ -50,7 +50,8 @@ class UsoProductoEnFichaSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 class FichaClinicaSerializer(serializers.ModelSerializer):
-    productos_usados = UsoProductoEnFichaSerializer(many=True)
+    productos_usados = UsoProductoEnFichaSerializer(many=True, read_only=True)
+    productos_usados_data = UsoProductoEnFichaSerializer(many=True, write_only=True, required=False)
     
     class Meta:
         model = FichaClinica
@@ -94,7 +95,7 @@ class FichaClinicaSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         print("Iniciando creación de ficha clínica")
-        productos_usados_data = []
+        productos_usados_data = validated_data.pop('productos_usados_data', [])
         
         # Extraer productos usados de los datos iniciales
         if 'productos_usados' in self.initial_data:
@@ -126,6 +127,7 @@ class FichaClinicaSerializer(serializers.ModelSerializer):
             print("No hay usuario autenticado en el contexto")
         
         print("Procesando productos usados")
+        usos_creados = []
         for producto_data in productos_usados_data:
             try:
                 insumo_id = producto_data.get('insumo')
@@ -160,18 +162,19 @@ class FichaClinicaSerializer(serializers.ModelSerializer):
                     insumo_id=insumo_id,
                     cantidad=cantidad
                 )
+                usos_creados.append(uso)
                 print(f"Registro de uso creado con ID: {uso.id}")
                 
                 # Registrar el movimiento (el signal se encargará de actualizar el stock)
                 print(f"Registrando movimiento de stock para {insumo.nombre}")
-                movimiento = MovimientoInsumo.objects.create(
+                MovimientoInsumo.objects.create(
                     insumo=insumo,
                     cantidad=cantidad,
                     tipo_movimiento='salida',
                     motivo=f"Uso en ficha clínica #{ficha.id}",
                     usuario=usuario
                 )
-                print(f"Movimiento registrado con ID: {movimiento.id}")
+                print(f"Movimiento registrado para insumo: {insumo.nombre}")
                 
             except (ValueError, TypeError) as e:
                 print(f"Error procesando producto: {e} - Datos: {producto_data}")
@@ -179,13 +182,15 @@ class FichaClinicaSerializer(serializers.ModelSerializer):
             except Insumo.DoesNotExist:
                 print(f"Insumo con ID {insumo_id} no encontrado")
                 continue
-        
+        # Asocia los productos usados a la ficha clínica usando .set()
+        #ficha.productos_usados.set(usos_creados)
+
         print("Creación de ficha clínica completada")
         return ficha
 
     def update(self, instance, validated_data):
         print("Iniciando actualización de ficha clínica")
-        productos_usados_data = []
+        productos_usados_data = validated_data.pop('productos_usados_data', [])
         
         # Extraer productos usados de los datos iniciales
         if 'productos_usados' in self.initial_data:
@@ -317,6 +322,11 @@ class FichaClinicaSerializer(serializers.ModelSerializer):
         if nuevos_usos:
             UsoProductoEnFicha.objects.bulk_create(nuevos_usos)
             print(f"Creados {len(nuevos_usos)} registros de uso de productos")
+            # Asocia los nuevos usos a la ficha clínica usando .set()
+            #instance.productos_usados.set(nuevos_usos)
+        else:
+            # Si no hay nuevos usos, limpia la relación
+            instance.productos_usados.clear()
         
         print("Actualización de ficha clínica completada")
         return instance

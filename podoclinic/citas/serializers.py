@@ -8,13 +8,18 @@ class TratamientoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CitaSerializer(serializers.ModelSerializer):
-    paciente_nombre = serializers.ReadOnlyField(source='paciente.nombre')
-    paciente_rut = serializers.ReadOnlyField(source='paciente.rut')
-    tratamiento_nombre = serializers.ReadOnlyField(source='tratamiento.get_nombre_display')
+    paciente_rut = serializers.CharField(source='paciente.rut', read_only=True)
+    paciente_nombre = serializers.CharField(source='paciente.nombre', read_only=True)
+    paciente_apellido = serializers.CharField(source='paciente.apellido', read_only=True)
+    tipo_tratamiento = serializers.CharField(source='tratamiento.descripcion', read_only=True)
     
     class Meta:
         model = Cita
-        fields = '__all__'
+        fields = [
+            'id', 'paciente_rut', 'paciente_nombre', 'paciente_apellido',
+            'tipo_tratamiento', 'fecha', 'hora', 'estado', 'tipo_cita',
+            'duracion_extendida', 'duracion_cita', 'fecha_creacion'
+        ]
 
 class ReservaCitaSerializer(serializers.Serializer):
     nombre = serializers.CharField(max_length=100)

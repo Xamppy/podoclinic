@@ -1,83 +1,61 @@
-# Podoclinic - Sistema de Gestión Podológica
+# Podoclinic - Sistema de Gestión Clínica
 
-Sistema integral de gestión para clínicas podológicas que incluye gestión de pacientes, citas, inventario y usuarios.
+## Requisitos Previos
 
-## Características Principales
-
-- Gestión de pacientes y fichas clínicas
-- Sistema de citas y tratamientos
-- Control de inventario de insumos
-- Gestión de usuarios y roles
-- API RESTful para integración con frontend
-- Sistema de autenticación JWT
-- Recordatorios automáticos de citas
-
-## Requisitos
-
-- Python 3.8+
-- PostgreSQL
-- Redis (para tareas asíncronas)
-- Node.js y npm (para el frontend)
+Antes de comenzar, asegúrese de tener instalado:
+1. Docker Desktop (https://www.docker.com/products/docker-desktop)
+2. Git (opcional, solo si desea actualizar la aplicación)
 
 ## Instalación
 
-1. Clonar el repositorio:
-```bash
-git clone https://github.com/tu-usuario/podoclinic.git
-cd podoclinic
-```
+1. Descargue la carpeta `Podoclinic` en su computadora
+2. Asegúrese de que Docker Desktop esté en ejecución
+3. Haga doble clic en el archivo `start.bat`
+4. Espere a que la aplicación se inicie (esto puede tomar unos minutos la primera vez)
 
-2. Crear y activar entorno virtual:
-```bash
-python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
-```
+## Acceso a la Aplicación
 
-3. Instalar dependencias:
-```bash
-pip install -r requirements.txt
-```
+Una vez que la aplicación esté en ejecución:
+- Abra su navegador web
+- Visite: http://localhost
+- Inicie sesión con las siguientes credenciales:
+  - Usuario: admin
+  - Contraseña: admin123
 
-4. Configurar base de datos:
-```bash
-python manage.py migrate
-```
+## Detener la Aplicación
 
-5. Crear superusuario:
-```bash
-python manage.py createsuperuser
-```
+Para detener la aplicación:
+1. Haga doble clic en el archivo `stop.bat`
+2. Espere a que se complete el proceso
 
-6. Iniciar el servidor:
-```bash
-python manage.py runserver
-```
+## Solución de Problemas
 
-## Estructura del Proyecto
+Si encuentra algún problema:
 
-- `podoclinic/`: Configuración principal de Django
-- `pacientes/`: Gestión de pacientes y fichas clínicas
-- `citas/`: Sistema de citas y tratamientos
-- `insumos/`: Control de inventario
-- `usuarios/`: Gestión de usuarios y autenticación
-- `frontend/`: Aplicación React
+1. **La aplicación no inicia**
+   - Verifique que Docker Desktop esté en ejecución
+   - Asegúrese de que no haya otra aplicación usando el puerto 80
+   - Intente reiniciar Docker Desktop
 
-## API Endpoints
+2. **No puedo acceder a la aplicación**
+   - Verifique que la URL sea correcta: http://localhost
+   - Asegúrese de que el navegador no esté bloqueando el acceso
+   - Intente usar otro navegador
 
-- `/api/pacientes/`: Gestión de pacientes
-- `/api/citas/`: Gestión de citas
-- `/api/insumos/`: Control de inventario
-- `/api/usuarios/`: Gestión de usuarios
-- `/api/auth/login/`: Autenticación
+3. **Problemas con la base de datos**
+   - Detenga la aplicación usando `stop.bat`
+   - Elimine la carpeta `postgres_data` (si existe)
+   - Inicie la aplicación nuevamente con `start.bat`
 
-## Contribución
+## Soporte Técnico
 
-1. Fork el proyecto
-2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abrir un Pull Request
+Si necesita ayuda adicional, por favor contacte al soporte técnico:
+- Email: soporte@podoclinic.com
+- Teléfono: (123) 456-7890
 
-## Licencia
+## Notas Importantes
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles. 
+- No cierre la ventana de Docker Desktop mientras la aplicación esté en uso
+- Realice copias de seguridad regulares de sus datos
+- Mantenga su sistema operativo y Docker Desktop actualizados
+- No modifique los archivos de configuración a menos que se le indique específicamente 

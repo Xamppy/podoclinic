@@ -29,12 +29,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-ij)^kt($dka^zp46%ot)4(#jy4!442^a9d5))k+ynn%$&0tte6')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-ij)^kt($dka^zp46%ot)4(#jy4!442^a9d5))k+ynn%$&0tte6')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split()
 
 
 # Application definition
@@ -63,6 +63,7 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # CORS middleware debe ser lo primero
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Para servir archivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,7 +73,10 @@ MIDDLEWARE = [
 ]
 
 # Configuración CORS más específica
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -95,11 +99,14 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # Configuración CSRF
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
-CSRF_COOKIE_SECURE = False  # Cambiar a True en producción
-CSRF_COOKIE_HTTPONLY = False
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+]
+CSRF_COOKIE_SECURE = False  # Cambiar a True si usas HTTPS
+CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_USE_SESSIONS = False
+CSRF_USE_SESSIONS = True
 CSRF_COOKIE_NAME = 'csrftoken'
 
 ROOT_URLCONF = 'podoclinic.urls'
@@ -109,7 +116,6 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / 'templates',
-            BASE_DIR / 'frontend' / 'build',  # Para servir el build de React
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -132,9 +138,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'podoclinic_db'),
-        'USER': os.environ.get('DB_USER', 'podoclinic'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'Felipe98!'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'USER': os.environ.get('DB_USER', 'podoclinic_user'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'db'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
@@ -157,8 +163,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
 
 CELERY_BEAT_SCHEDULE = {
     'enviar-recordatorios-diarios': {
@@ -171,9 +177,9 @@ CELERY_BEAT_SCHEDULE = {
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-cl'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
 
@@ -183,11 +189,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Directorio para collectstatic
+STATIC_URL = '/django_static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles_collected'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # Directorio principal de archivos estáticos
+    BASE_DIR / 'static',
 ]
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'mediafiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -200,7 +210,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # Permitir acceso sin autenticación por ahora
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -262,12 +272,12 @@ LOGGING = {
     },
 }
 
-# Configuración de correo electrónico con Gmail
+# Configuración de correo electrónico
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'tu_correo@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'tu_contraseña_de_aplicacion')
-EMAIL_FROM = os.environ.get('EMAIL_FROM', EMAIL_HOST_USER)  # Usar el mismo que HOST_USER
-EMAIL_DEBUG = True  # Para ver más información de depuración en los logs
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_FROM = os.environ.get('EMAIL_FROM', EMAIL_HOST_USER)
+EMAIL_DEBUG = False  # Cambiar a False en producción

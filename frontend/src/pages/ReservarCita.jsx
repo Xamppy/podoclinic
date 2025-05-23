@@ -11,7 +11,6 @@ const ReservarCita = () => {
     hora: '',
     servicio: '',
     tipoCita: 'podologica',
-    duracionExtendida: false,
     notas: ''
   });
 
@@ -34,7 +33,7 @@ const ReservarCita = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
     setFormData(prevState => ({
       ...prevState,
       [name]: type === 'checkbox' ? checked : value,
@@ -48,8 +47,7 @@ const ReservarCita = () => {
       // Mapear tipoCita a tipo_cita para el backend
       const datosParaEnviar = {
         ...formData,
-        tipo_cita: formData.tipoCita === 'podologica' ? 'podologia' : 'manicura',
-        duracion_extendida: formData.duracionExtendida
+        tipo_cita: formData.tipoCita === 'podologica' ? 'podologia' : 'manicura'
       };
       
       console.log('Enviando datos al backend:', datosParaEnviar);
@@ -198,25 +196,6 @@ const ReservarCita = () => {
               value={formData.hora}
               onChange={handleChange}
             />
-          </div>
-
-          <div className="flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id="duracionExtendida"
-                name="duracionExtendida"
-                type="checkbox"
-                checked={formData.duracionExtendida}
-                onChange={handleChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-            </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor="duracionExtendida" className="font-medium text-gray-700">
-                Reservar 2 horas
-              </label>
-              <p className="text-gray-500">Marque esta opción si la atención requiere tiempo extendido</p>
-            </div>
           </div>
 
           <div>

@@ -14,6 +14,7 @@ from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives
 from django.conf import settings
 from django.template.loader import render_to_string
 import logging
+import shutil
 
 # Vista separada para crear citas desde el admin (sin ViewSet)
 @api_view(['POST'])
@@ -29,10 +30,9 @@ def crear_cita_admin(request):
             {'error': 'Método no permitido. Esta vista solo acepta solicitudes POST.'},
             status=status.HTTP_405_METHOD_NOT_ALLOWED
         )
-        
+    
     try:
         data = request.data
-        print(f"Datos recibidos en crear_cita_admin: {data}")
         
         # Validar los datos necesarios
         required_fields = ['paciente', 'tratamiento', 'fecha', 'hora']
@@ -43,7 +43,7 @@ def crear_cita_admin(request):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
-        # Obtener el paciente por RUT
+        # Buscar el paciente por RUT
         try:
             paciente = Paciente.objects.get(rut=data['paciente'])
         except Paciente.DoesNotExist:
@@ -84,21 +84,30 @@ def crear_cita_admin(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Crear la cita
+        # Verificar si ya existe una cita en esta fecha y hora
+        existing_cita = Cita.objects.filter(fecha=data['fecha'], hora=data['hora']).first()
+        if existing_cita:
+            return Response(
+                {'error': f'Ya existe una cita programada para la fecha {data["fecha"]} a las {data["hora"]}. Por favor seleccione otro horario.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Crear la cita con el nuevo campo duracion_cita
         cita = Cita.objects.create(
             paciente=paciente,
             tratamiento=tratamiento,
             fecha=data['fecha'],
             hora=data['hora'],
             estado=data.get('estado', 'reservada'),
-            tipo_cita=data.get('tipo_cita', 'podologia'),  # Guardar el tipo de cita
-            duracion_extendida=data.get('duracion_extendida', False)  # Guardar si la cita requiere 2 horas
+            tipo_cita=data.get('tipo_cita', 'podologia'),
+            duracion_extendida=data.get('duracion_extendida', False),
+            duracion_cita=data.get('duracion_cita', 60)  # Por defecto 60 minutos
         )
         
         # Devolver la respuesta
         serializer = CitaSerializer(cita)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+        
     except Exception as e:
         return Response(
             {'error': f'Error al crear la cita: {str(e)}'},
@@ -222,20 +231,28 @@ class CitaViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def disponibles(self, request):
         try:
-            # Obtener la fecha del request o usar la fecha actual como valor predeterminado
             fecha_str = request.query_params.get('fecha')
             
             if fecha_str:
-                # Convertir string a objeto date
                 fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
             else:
                 fecha = timezone.now().date()
                 
             # Filtrar citas por la fecha
             citas = Cita.objects.filter(fecha=fecha)
-            horas_ocupadas = set(citas.values_list('hora', flat=True))
+            horas_ocupadas = set()
             
-            # Horas disponibles (de 9:00 a 18:00)
+            # Procesar cada cita para marcar las horas ocupadas
+            for cita in citas:
+                hora_str = f"{cita.hora.hour:02d}:00"
+                horas_ocupadas.add(hora_str)
+                
+                # Si la cita tiene duración extendida, también marcar la siguiente hora como ocupada
+                if cita.duracion_extendida:
+                    siguiente_hora = f"{(cita.hora.hour + 1):02d}:00"
+                    horas_ocupadas.add(siguiente_hora)
+            
+            # Generar horas disponibles (de 9:00 a 18:00)
             horas_disponibles = []
             for hora in range(9, 19):
                 hora_str = f"{hora:02d}:00"
@@ -469,3 +486,119 @@ def test_email_paciente(request):
                 'EMAIL_FROM': settings.EMAIL_FROM
             }
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['PUT'])
+@permission_classes([AllowAny])
+def actualizar_cita(request, cita_id):
+    try:
+        # Obtener la cita a actualizar
+        try:
+            cita = Cita.objects.get(id=cita_id)
+        except Cita.DoesNotExist:
+            return Response(
+                {'error': f'No se encontró una cita con ID {cita_id}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        data = request.data
+        
+        # Normalizar formato de hora si está presente (eliminar segundos)
+        if 'hora' in data and data['hora']:
+            hora_str = data['hora']
+            if ':' in hora_str:
+                partes = hora_str.split(':')
+                if len(partes) >= 2:
+                    # Usar solo horas y minutos
+                    data['hora'] = f"{partes[0]}:{partes[1]}"
+        
+        # Verificar si hay cambio de fecha/hora y validar disponibilidad
+        if ('fecha' in data and 'hora' in data):
+            # Solo verificamos si ha cambiado la fecha o la hora
+            if (data['fecha'] != str(cita.fecha) or data['hora'] != str(cita.hora).split(':')[:2]):
+                # Verificar si ya existe una cita en esta fecha y hora (excluyendo la actual)
+                existing_cita = Cita.objects.filter(fecha=data['fecha']).exclude(id=cita_id)
+                
+                # Comparar horas normalizadas
+                for existing in existing_cita:
+                    existing_hora = str(existing.hora)
+                    if ':' in existing_hora:
+                        existing_hora_parts = existing_hora.split(':')
+                        existing_hora_norm = f"{existing_hora_parts[0]}:{existing_hora_parts[1]}"
+                        
+                        if existing_hora_norm == data['hora']:
+                            return Response(
+                                {'error': f'Ya existe una cita programada para la fecha {data["fecha"]} a las {data["hora"]}. Por favor seleccione otro horario.'},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+        
+        # Actualizar los campos de la cita
+        if 'paciente' in data:
+            try:
+                paciente = Paciente.objects.get(rut=data['paciente'])
+                cita.paciente = paciente
+            except Paciente.DoesNotExist:
+                return Response(
+                    {'error': f'Paciente con RUT {data["paciente"]} no encontrado'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        if 'tratamiento' in data:
+            try:
+                nombre_tratamiento = data['tratamiento']
+                tipo_cita = data.get('tipo_cita', cita.tipo_cita)
+                
+                # Buscar primero una coincidencia exacta
+                tratamiento = None
+                for tipo, nombre in Tratamiento.TIPOS_TRATAMIENTO:
+                    if nombre == nombre_tratamiento:
+                        tratamiento = Tratamiento.objects.filter(nombre=tipo).first()
+                        break
+                
+                # Si no se encontró, crear uno nuevo
+                if not tratamiento:
+                    tipo_tratamiento = 'manicura' if tipo_cita == 'manicura' else 'general'
+                    for tipo, nombre in Tratamiento.TIPOS_TRATAMIENTO:
+                        if nombre == nombre_tratamiento:
+                            tipo_tratamiento = tipo
+                            break
+                    
+                    tratamiento = Tratamiento.objects.create(
+                        nombre=tipo_tratamiento,
+                        descripcion=nombre_tratamiento,
+                        duracion_minutos=60,
+                        precio=0
+                    )
+                
+                cita.tratamiento = tratamiento
+            except Exception as e:
+                return Response(
+                    {'error': f'Error al procesar el tratamiento: {str(e)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Actualizar campos simples
+        if 'fecha' in data:
+            cita.fecha = data['fecha']
+        if 'hora' in data:
+            cita.hora = data['hora']
+        if 'estado' in data:
+            cita.estado = data['estado']
+        if 'tipo_cita' in data:
+            cita.tipo_cita = data['tipo_cita']
+        if 'duracion_extendida' in data:
+            cita.duracion_extendida = data['duracion_extendida']
+        if 'duracion_cita' in data:
+            cita.duracion_cita = data['duracion_cita']
+        
+        # Guardar los cambios
+        cita.save()
+        
+        # Devolver la respuesta
+        serializer = CitaSerializer(cita)
+        return Response(serializer.data)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Error al actualizar la cita: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
