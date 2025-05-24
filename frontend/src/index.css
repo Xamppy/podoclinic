@@ -15,3 +15,18 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+@media print {
+  .logo-certificado {
+    display: block !important;
+    position: absolute !important;
+    top: 24px !important;
+    left: 24px !important;
+    width: 120px !important;
+    z-index: 100 !important;
+  }
+  /* Asegúrate que el contenedor padre tenga position: relative */
+  .certificado-contenedor {
+    padding-top: 80px !important;
+  }
+}

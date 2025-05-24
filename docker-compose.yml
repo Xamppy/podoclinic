@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   backend:
-    build: ./podoclinic
+    build: 
+      context: .
+      dockerfile: podoclinic/Dockerfile
     volumes:
       - ./podoclinic:/app
       - static_volume:/app/staticfiles

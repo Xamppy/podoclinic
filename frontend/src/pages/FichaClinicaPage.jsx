@@ -20,9 +20,7 @@ const FichaClinicaPage = () => {
     descripcion_atencion: '',
     procedimiento: '',
     indicaciones: '',
-    proxima_sesion_estimada: '',
-    productos_usados: [],
-    tiene_proxima_cita: false
+    productos_usados: []
   });
 
   const [certificadoData, setCertificadoData] = useState({
@@ -101,9 +99,7 @@ const FichaClinicaPage = () => {
       descripcion_atencion: ficha.descripcion_atencion,
       procedimiento: ficha.procedimiento,
       indicaciones: ficha.indicaciones,
-      proxima_sesion_estimada: ficha.proxima_sesion_estimada || '',
-      productos_usados: productosFormateados,
-      tiene_proxima_cita: !!ficha.proxima_sesion_estimada
+      productos_usados: productosFormateados
     });
     setViewMode('edit');
   };
@@ -121,9 +117,7 @@ const FichaClinicaPage = () => {
       descripcion_atencion: '',
       procedimiento: '',
       indicaciones: '',
-      proxima_sesion_estimada: '',
-      productos_usados: [],
-      tiene_proxima_cita: false
+      productos_usados: []
     });
   };
 
@@ -146,7 +140,6 @@ const FichaClinicaPage = () => {
         descripcion_atencion: formData.descripcion_atencion,
         procedimiento: formData.procedimiento,
         indicaciones: formData.indicaciones,
-        proxima_sesion_estimada: formData.tiene_proxima_cita ? formData.proxima_sesion_estimada : null,
         productos_usados_data: productosFormateados,
         paciente: selectedPaciente.id
       };
@@ -192,9 +185,7 @@ const FichaClinicaPage = () => {
         descripcion_atencion: '',
         procedimiento: '',
         indicaciones: '',
-        proxima_sesion_estimada: '',
-        productos_usados: [],
-        tiene_proxima_cita: false
+        productos_usados: []
       });
     } catch (error) {
       console.error('Error al guardar ficha:', error);
@@ -382,11 +373,6 @@ const FichaClinicaPage = () => {
                   >
                     <div className="flex justify-between items-center">
                       <h3 className="font-medium">Ficha del {formatDate(ficha.fecha)}</h3>
-                      <span className="text-sm text-gray-500">
-                        {ficha.proxima_sesion_estimada ? 
-                          `Próxima sesión: ${formatDate(ficha.proxima_sesion_estimada)}` : 
-                          'Sin próxima sesión programada'}
-                      </span>
                     </div>
                     <p className="text-gray-600 mt-2 line-clamp-2">{ficha.descripcion_atencion}</p>
                   </button>
@@ -425,9 +411,7 @@ const FichaClinicaPage = () => {
                       descripcion_atencion: '',
                       procedimiento: '',
                       indicaciones: '',
-                      proxima_sesion_estimada: '',
-                      productos_usados: [],
-                      tiene_proxima_cita: false
+                      productos_usados: []
                     });
                   }}
                   className="text-gray-400 hover:text-gray-500"
@@ -450,47 +434,6 @@ const FichaClinicaPage = () => {
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                       required
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">¿Habrá próxima cita?</label>
-                    <div className="space-x-4">
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="tiene_proxima_cita"
-                          checked={formData.tiene_proxima_cita}
-                          onChange={() => setFormData({ ...formData, tiene_proxima_cita: true })}
-                          className="form-radio h-4 w-4 text-indigo-600"
-                        />
-                        <span className="ml-2">Sí</span>
-                      </label>
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="tiene_proxima_cita"
-                          checked={!formData.tiene_proxima_cita}
-                          onChange={() => setFormData({ 
-                            ...formData, 
-                            tiene_proxima_cita: false,
-                            proxima_sesion_estimada: '' // Limpiar la fecha si se selecciona "No"
-                          })}
-                          className="form-radio h-4 w-4 text-indigo-600"
-                        />
-                        <span className="ml-2">No</span>
-                      </label>
-                    </div>
-                    {formData.tiene_proxima_cita && (
-                      <div className="mt-2">
-                        <label className="block text-sm font-medium text-gray-700">Fecha Próxima Cita</label>
-                        <input
-                          type="date"
-                          value={formData.proxima_sesion_estimada}
-                          onChange={(e) => setFormData({ ...formData, proxima_sesion_estimada: e.target.value })}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          required={formData.tiene_proxima_cita}
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -740,13 +683,6 @@ const FichaClinicaPage = () => {
                     </div>
                   </div>
                 )}
-
-                {selectedFicha.proxima_sesion_estimada && (
-                  <div className="bg-white p-4 rounded-lg border">
-                    <h4 className="font-medium text-gray-700 mb-2">Próxima Sesión Estimada</h4>
-                    <p className="text-gray-600">{formatDate(selectedFicha.proxima_sesion_estimada)}</p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -790,47 +726,6 @@ const FichaClinicaPage = () => {
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                       required
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">¿Habrá próxima cita?</label>
-                    <div className="space-x-4">
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="tiene_proxima_cita"
-                          checked={formData.tiene_proxima_cita}
-                          onChange={() => setFormData({ ...formData, tiene_proxima_cita: true })}
-                          className="form-radio h-4 w-4 text-indigo-600"
-                        />
-                        <span className="ml-2">Sí</span>
-                      </label>
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          name="tiene_proxima_cita"
-                          checked={!formData.tiene_proxima_cita}
-                          onChange={() => setFormData({ 
-                            ...formData, 
-                            tiene_proxima_cita: false,
-                            proxima_sesion_estimada: '' // Limpiar la fecha si se selecciona "No"
-                          })}
-                          className="form-radio h-4 w-4 text-indigo-600"
-                        />
-                        <span className="ml-2">No</span>
-                      </label>
-                    </div>
-                    {formData.tiene_proxima_cita && (
-                      <div className="mt-2">
-                        <label className="block text-sm font-medium text-gray-700">Fecha Próxima Cita</label>
-                        <input
-                          type="date"
-                          value={formData.proxima_sesion_estimada}
-                          onChange={(e) => setFormData({ ...formData, proxima_sesion_estimada: e.target.value })}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          required={formData.tiene_proxima_cita}
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -1058,7 +953,13 @@ const FichaClinicaPage = () => {
             </div>
 
             {/* Certificado Médico (visible en pantalla e impresión) */}
-            <div className="bg-white p-8 max-w-4xl mx-auto print:p-0 print:shadow-none">
+            <div className="bg-white p-8 max-w-4xl mx-auto print:p-0 print:shadow-none certificado-contenedor" style={{ position: 'relative' }}>
+              <img
+                src={`${process.env.PUBLIC_URL}/logo-podoclinic.png`}
+                alt="Logo Podoclinic"
+                style={{ width: 120, position: 'absolute', top: 24, left: 24, zIndex: 10, display: 'block' }}
+              />
+              <div style={{ marginLeft: 0, marginTop: 0 }}>
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold mb-2">CERTIFICADO MÉDICO PODOLÓGICO</h1>
                 <p className="text-gray-600">{
@@ -1116,6 +1017,7 @@ const FichaClinicaPage = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       )}
     </div>

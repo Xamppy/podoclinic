@@ -1286,26 +1286,7 @@ const AdminCitasPage = () => {
                   />
                 </div>
 
-                <div className="mb-4 p-3 border border-indigo-200 rounded-md bg-indigo-50">
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5">
-                      <input
-                        id="edit_duracion_extendida"
-                        name="duracion_extendida"
-                        type="checkbox"
-                        checked={editFormData.duracion_extendida || false}
-                        onChange={handleEditDuracionExtendidaChange}
-                        className="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      />
-                    </div>
-                    <div className="ml-3 text-sm">
-                      <label htmlFor="edit_duracion_extendida" className="font-bold text-indigo-700">
-                        Reservar 2 horas
-                      </label>
-                      <p className="text-indigo-600">Marque esta opción si la atención requiere tiempo extendido</p>
-                    </div>
-                  </div>
-                </div>
+               
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>

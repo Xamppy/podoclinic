@@ -20,6 +20,9 @@ ENV PYTHONUNBUFFERED 1
 # Crear directorio de trabajo
 WORKDIR /app
 
+RUN mkdir -p /app/frontend/public
+COPY frontend/public/logo-podoclinic.png /app/frontend/public/logo-podoclinic.png
+
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -32,14 +35,14 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar script de entrypoint
-COPY ./entrypoint.sh /entrypoint.sh
+COPY podoclinic/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Copiar el resto del código de la aplicación Django
 COPY . .
 
 # Recolectar archivos estáticos de Django
-RUN python manage.py collectstatic --noinput --clear
+RUN python podoclinic/manage.py collectstatic --noinput --clear
 
 # Exponer el puerto en el que Gunicorn se ejecutará
 EXPOSE 8000
@@ -49,3 +52,4 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 # Comando por defecto para iniciar Gunicorn
 CMD ["gunicorn", "podoclinic.wsgi:application", "--bind", "0.0.0.0:8000"] 
+
