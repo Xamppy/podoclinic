@@ -31,6 +31,28 @@ class FichaClinica(models.Model):
     procedimiento = models.TextField()
     indicaciones = models.TextField()
     proxima_sesion_estimada = models.DateField(null=True, blank=True)
+    costo_total = models.DecimalField(max_digits=10, decimal_places=0, default=0, help_text="Costo total de los productos utilizados")
+    
+    def calcular_costo_total(self):
+        try:
+            total = 0
+            for uso in self.productos_usados.all():
+                try:
+                    if uso.insumo and uso.insumo.valor_unitario is not None:
+                        total += uso.insumo.valor_unitario * uso.cantidad
+                except Exception as e:
+                    print(f"Error al calcular costo para producto {uso.insumo_id if uso.insumo_id else 'desconocido'}: {str(e)}")
+                    continue
+            
+            self.costo_total = total
+            self.save(update_fields=['costo_total'])
+            return total
+        except Exception as e:
+            print(f"Error al calcular costo total: {str(e)}")
+            if not self.costo_total:
+                self.costo_total = 0
+                self.save(update_fields=['costo_total'])
+            return self.costo_total
     
     def __str__(self):
         return f"Ficha de {self.paciente.nombre} - {self.fecha}"

@@ -680,6 +680,11 @@ const FichaClinicaPage = () => {
                           ))}
                         </tbody>
                       </table>
+                      <div className="mt-4 text-right">
+                        <p className="text-lg font-semibold text-gray-700">
+                          Costo Total: {selectedFicha.costo_total_formato || '$0'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}

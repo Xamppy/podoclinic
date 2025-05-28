@@ -252,9 +252,9 @@ class CitaViewSet(viewsets.ModelViewSet):
                     siguiente_hora = f"{(cita.hora.hour + 1):02d}:00"
                     horas_ocupadas.add(siguiente_hora)
             
-            # Generar horas disponibles (de 9:00 a 18:00)
+            # Generar horas disponibles (de 8:00 a 22:00)
             horas_disponibles = []
-            for hora in range(9, 19):
+            for hora in range(8, 23):  # Cambiado para incluir desde las 8:00 hasta las 22:00
                 hora_str = f"{hora:02d}:00"
                 if hora_str not in horas_ocupadas:
                     horas_disponibles.append(hora_str)

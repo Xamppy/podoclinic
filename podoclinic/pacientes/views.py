@@ -4,6 +4,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from .models import Paciente, FichaClinica, UsoProductoEnFicha
 from .serializers import PacienteSerializer, FichaClinicaSerializer, UsoProductoEnFichaSerializer
+import logging
+from django.db import transaction
+
+logger = logging.getLogger(__name__)
 
 @api_view(['POST', 'OPTIONS'])
 @permission_classes([AllowAny])
@@ -165,87 +169,120 @@ class FichaClinicaViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     
     def get_queryset(self):
-        queryset = FichaClinica.objects.all()
-        paciente_id = self.request.query_params.get('paciente', None)
-        
-        if paciente_id is not None:
-            try:
-                paciente_id = int(paciente_id)
-                queryset = queryset.filter(paciente_id=paciente_id)
-            except ValueError:
-                return FichaClinica.objects.none()
-                
-        return queryset
-    
-    def create(self, request, *args, **kwargs):
-        print("-------------- CREACIÓN DE FICHA CLÍNICA --------------")
-        print("Datos recibidos:", request.data)
-        if 'productos_usados' in request.data:
-            print(f"Productos usados recibidos ({len(request.data['productos_usados'])}):", request.data['productos_usados'])
-        else:
-            print("No se recibieron productos usados")
-            
-        serializer = self.get_serializer(data=request.data, context={'request': request})
-        
-        print("Validando datos...")
-        if not serializer.is_valid():
-            print("Errores de validación:", serializer.errors)
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        print("Datos válidos, creando ficha...")
         try:
-            self.perform_create(serializer)
-            print("Ficha clínica creada correctamente")
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            logger.info("Iniciando get_queryset en FichaClinicaViewSet")
+            queryset = FichaClinica.objects.all()
+            
+            # Primero obtenemos las fichas sin los productos
+            paciente_id = self.request.query_params.get('paciente', None)
+            logger.info(f"Parámetro paciente_id recibido: {paciente_id}")
+            
+            if paciente_id is not None:
+                try:
+                    paciente_id = int(paciente_id)
+                    queryset = queryset.filter(paciente_id=paciente_id)
+                    logger.info(f"Filtrado por paciente_id: {paciente_id}")
+                except ValueError:
+                    logger.error(f"ID de paciente inválido: {paciente_id}")
+                    return FichaClinica.objects.none()
+            
+            # Luego hacemos el prefetch_related
+            queryset = queryset.prefetch_related(
+                'productos_usados',
+                'productos_usados__insumo'
+            )
+            
+            logger.info(f"Número de fichas encontradas: {queryset.count()}")
+            return queryset
+            
         except Exception as e:
-            import traceback
-            print("Error al crear ficha:", str(e))
-            traceback.print_exc()
+            logger.error(f"Error en get_queryset: {str(e)}", exc_info=True)
+            return FichaClinica.objects.none()
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            logger.info("Iniciando list en FichaClinicaViewSet")
+            queryset = self.get_queryset()
+            
+            # Verificar si el queryset está vacío
+            if not queryset.exists():
+                logger.info("No se encontraron fichas clínicas")
+                return Response([], status=status.HTTP_200_OK)
+            
+            # Serializar los datos con manejo de errores
+            try:
+                serializer = self.get_serializer(queryset, many=True)
+                data = serializer.data
+                logger.info(f"Datos serializados correctamente. Número de fichas: {len(data)}")
+                return Response(data)
+            except Exception as e:
+                logger.error(f"Error al serializar datos: {str(e)}", exc_info=True)
+                raise
+                
+        except Exception as e:
+            logger.error(f"Error en list: {str(e)}", exc_info=True)
             return Response(
-                {"error": str(e)},
+                {'error': 'Error al obtener las fichas clínicas', 'detail': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-    def update(self, request, *args, **kwargs):
-        print("-------------- ACTUALIZACIÓN DE FICHA CLÍNICA --------------")
-        print("Datos de actualización recibidos:", request.data)
-        if 'productos_usados' in request.data:
-            print(f"Productos usados recibidos ({len(request.data['productos_usados'])}):", request.data['productos_usados'])
-        else:
-            print("No se recibieron productos usados")
-        
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        
-        serializer = self.get_serializer(
-            instance, 
-            data=request.data, 
-            partial=partial,
-            context={'request': request}
-        )
-        
-        print("Validando datos...")
-        if not serializer.is_valid():
-            print("Errores de validación:", serializer.errors)
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        print("Datos válidos, actualizando ficha...")
+    
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
         try:
-            self.perform_update(serializer)
-            print("Ficha clínica actualizada correctamente")
-            return Response(serializer.data)
-        except Exception as e:
-            import traceback
-            print("Error al actualizar ficha:", str(e))
-            traceback.print_exc()
+            logger.info("Iniciando create en FichaClinicaViewSet")
+            logger.info(f"Datos recibidos: {request.data}")
+            
+            serializer = self.get_serializer(data=request.data, context={'request': request})
+            
+            if not serializer.is_valid():
+                logger.error(f"Errores de validación: {serializer.errors}")
+                return Response(
+                    serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            with transaction.atomic():
+                ficha = serializer.save()
+                ficha.calcular_costo_total()
+                logger.info(f"Ficha creada correctamente. ID: {ficha.id}")
+            
             return Response(
-                {"error": str(e)},
+                self.get_serializer(ficha).data,
+                status=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            logger.error(f"Error en create: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Error al crear la ficha clínica', 'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        try:
+            logger.info("Iniciando update en FichaClinicaViewSet")
+            logger.info(f"Datos recibidos: {request.data}")
+            
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+            
+            if not serializer.is_valid():
+                logger.error(f"Errores de validación: {serializer.errors}")
+                return Response(
+                    serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            with transaction.atomic():
+                ficha = serializer.save()
+                ficha.calcular_costo_total()
+                logger.info(f"Ficha actualizada correctamente. ID: {ficha.id}")
+            
+            return Response(self.get_serializer(ficha).data)
+        except Exception as e:
+            logger.error(f"Error en update: {str(e)}", exc_info=True)
+            return Response(
+                {'error': 'Error al actualizar la ficha clínica', 'detail': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

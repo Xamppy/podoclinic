@@ -205,12 +205,16 @@ def horarios_disponibles(request):
                 partes = hora_str.split(':')
                 if len(partes) >= 2:
                     horas_ocupadas.add(f"{partes[0]}:{partes[1]}")
+                    # Si la cita tiene duración extendida, también marcar la siguiente hora como ocupada
+                    if cita.duracion_extendida:
+                        siguiente_hora = (int(partes[0]) + 1) % 24
+                        horas_ocupadas.add(f"{siguiente_hora:02d}:{partes[1]}")
             else:
                 horas_ocupadas.add(hora_str)
         
-        # Horas disponibles (de 9:00 a 18:00)
+        # Horas disponibles (de 8:00 a 22:00)
         horas_disponibles = []
-        for hora in range(9, 19):
+        for hora in range(8, 23):  # Cambiado para incluir desde las 8:00 hasta las 22:00
             hora_str = f"{hora:02d}:00"
             if hora_str not in horas_ocupadas:
                 horas_disponibles.append(hora_str)

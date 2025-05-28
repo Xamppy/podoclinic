@@ -24,7 +24,9 @@ const InventarioPage = () => {
     descripcion: '',
     unidad_medida: '',
     stock_actual: '',
-    stock_critico: ''
+    stock_critico: '',
+    valor_unitario: '',
+    fecha_vencimiento: ''
   });
 
   useEffect(() => {
@@ -171,6 +173,8 @@ const InventarioPage = () => {
                 <th>Unidad</th>
                 <th>Stock Actual</th>
                 <th>Stock Crítico</th>
+                <th>Valor Unitario</th>
+                <th>Fecha Vencimiento</th>
                 <th>Faltante</th>
               </tr>
             </thead>
@@ -183,10 +187,12 @@ const InventarioPage = () => {
                     <td>${insumo.unidad_medida}</td>
                     <td>${insumo.stock_actual}</td>
                     <td>${insumo.stock_critico}</td>
+                    <td>${insumo.valor_unitario_formato}</td>
+                    <td>${insumo.fecha_vencimiento ? new Date(insumo.fecha_vencimiento).toLocaleDateString() : '-'}</td>
                     <td class="faltante">${insumo.stock_actual < insumo.stock_critico ? (insumo.stock_critico - insumo.stock_actual) : 0}</td>
                   </tr>
                 `).join('')
-                : '<tr><td colspan="6" style="text-align: center;">No hay insumos en stock crítico</td></tr>'
+                : '<tr><td colspan="8" style="text-align: center;">No hay insumos en stock crítico</td></tr>'
               }
             </tbody>
           </table>
@@ -222,7 +228,9 @@ const InventarioPage = () => {
       const insumoData = {
         ...formData,
         stock_actual: parseInt(formData.stock_actual),
-        stock_critico: parseInt(formData.stock_critico)
+        stock_critico: parseInt(formData.stock_critico),
+        valor_unitario: parseInt(formData.valor_unitario),
+        fecha_vencimiento: formData.fecha_vencimiento || null
       };
 
       if (editingInsumo) {
@@ -239,7 +247,9 @@ const InventarioPage = () => {
         descripcion: '',
         unidad_medida: '',
         stock_actual: '',
-        stock_critico: ''
+        stock_critico: '',
+        valor_unitario: '',
+        fecha_vencimiento: ''
       });
       
       // Mostrar mensaje de éxito
@@ -260,7 +270,9 @@ const InventarioPage = () => {
       descripcion: insumo.descripcion || '',
       unidad_medida: insumo.unidad_medida,
       stock_actual: insumo.stock_actual.toString(),
-      stock_critico: insumo.stock_critico.toString()
+      stock_critico: insumo.stock_critico.toString(),
+      valor_unitario: insumo.valor_unitario || '',
+      fecha_vencimiento: insumo.fecha_vencimiento || ''
     });
     setShowForm(true);
   };
@@ -268,15 +280,18 @@ const InventarioPage = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Está seguro de eliminar este insumo?')) {
       try {
-        await insumosService.delete(id);
-        await cargarInsumos();
-        setAlertMessage('Insumo eliminado correctamente');
-        setShowAlert(true);
-        setTimeout(() => setShowAlert(false), 3000);
+        const response = await insumosService.delete(id);
+        if (response.status === 204 || response.status === 200) {
+          await cargarInsumos();
+          setAlertMessage('Insumo eliminado correctamente');
+          setShowAlert(true);
+          setTimeout(() => setShowAlert(false), 3000);
+        }
       } catch (error) {
         console.error('Error al eliminar insumo:', error);
-        setAlertMessage('Error al eliminar el insumo');
+        setAlertMessage('No se puede eliminar el insumo porque está siendo utilizado en alguna ficha clínica');
         setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 5000);
       }
     }
   };
@@ -333,7 +348,9 @@ const InventarioPage = () => {
                 descripcion: '',
                 unidad_medida: '',
                 stock_actual: '',
-                stock_critico: ''
+                stock_critico: '',
+                valor_unitario: '',
+                fecha_vencimiento: ''
               });
               setFormError('');
               setShowForm(true);
@@ -444,6 +461,12 @@ const InventarioPage = () => {
                 Stock Crítico
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Valor Unitario
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Fecha Vencimiento
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Faltante
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -474,18 +497,26 @@ const InventarioPage = () => {
                     {insumo.stock_critico}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {insumo.valor_unitario_formato}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {insumo.fecha_vencimiento ? new Date(insumo.fecha_vencimiento).toLocaleDateString() : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {insumo.stock_actual < insumo.stock_critico ? (insumo.stock_critico - insumo.stock_actual) : 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleEdit(insumo)}
                       className="text-indigo-600 hover:text-indigo-900 mr-4"
+                      aria-label="Editar insumo"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => handleDelete(insumo.id)}
                       className="text-red-600 hover:text-red-900"
+                      aria-label="Eliminar insumo"
                     >
                       Eliminar
                     </button>
@@ -573,6 +604,35 @@ const InventarioPage = () => {
                       onChange={(e) => setFormData({ ...formData, stock_critico: e.target.value })}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                       required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Valor Unitario (CLP)</label>
+                    <div className="relative mt-1">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.valor_unitario}
+                        onChange={(e) => setFormData({ ...formData, valor_unitario: e.target.value })}
+                        className="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Fecha de Vencimiento (opcional)</label>
+                    <input
+                      type="date"
+                      value={formData.fecha_vencimiento}
+                      onChange={(e) => setFormData({ ...formData, fecha_vencimiento: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     />
                   </div>
                 </div>

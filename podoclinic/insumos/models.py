@@ -8,6 +8,8 @@ class Insumo(models.Model):
     unidad_medida = models.CharField(max_length=20)
     stock_actual = models.IntegerField(default=0)
     stock_critico = models.IntegerField(default=5)
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=0, default=0, help_text="Valor unitario en CLP")
+    fecha_vencimiento = models.DateField(null=True, blank=True, help_text="Fecha de vencimiento del insumo (opcional)")
     ultima_actualizacion = models.DateTimeField(auto_now=True)
     
     def __str__(self):
@@ -16,6 +18,10 @@ class Insumo(models.Model):
     @property
     def en_stock_critico(self):
         return self.stock_actual <= self.stock_critico
+    
+    @property
+    def valor_unitario_formato(self):
+        return f"${self.valor_unitario:,.0f}"
 
 class MovimientoInsumo(models.Model):
     TIPOS = [

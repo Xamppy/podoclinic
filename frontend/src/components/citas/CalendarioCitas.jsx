@@ -74,10 +74,10 @@ const CalendarioCitas = () => {
 
   // Configuración de horarios
   const minTime = new Date();
-  minTime.setHours(9, 0, 0); // 9:00 AM
+  minTime.setHours(8, 0, 0); // 8:00 AM
 
   const maxTime = new Date();
-  maxTime.setHours(19, 0, 0); // 7:00 PM
+  maxTime.setHours(22, 0, 0); // 10:00 PM
 
   // Configuración de días laborables (0 = domingo, 1 = lunes, ..., 6 = sábado)
   const dayLayoutAlgorithm = 'no-overlap';
@@ -252,7 +252,7 @@ const CalendarioCitas = () => {
       // Usamos un enfoque más simple para depurar el problema
       // Generamos horarios fijos entre 9:00 y 18:00 para evitar errores del backend
       const horariosGenerados = [];
-      for (let hora = 9; hora <= 18; hora++) {
+      for (let hora = 8; hora <= 22; hora++) {
         horariosGenerados.push(`${hora.toString().padStart(2, '0')}:00`);
       }
       

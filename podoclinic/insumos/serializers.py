@@ -3,6 +3,7 @@ from .models import Insumo, MovimientoInsumo
 
 class InsumoSerializer(serializers.ModelSerializer):
     en_stock_critico = serializers.ReadOnlyField()
+    valor_unitario_formato = serializers.ReadOnlyField()
     
     class Meta:
         model = Insumo
