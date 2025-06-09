@@ -51,7 +51,7 @@ class Cita(models.Model):
     duracion_cita = models.IntegerField(choices=DURACIONES, default=60)  # Nueva duración en minutos
     
     class Meta:
-        unique_together = ['fecha', 'hora']  # No puede haber dos citas al mismo tiempo
+        unique_together = ['fecha', 'hora', 'tipo_cita']  # No puede haber dos citas del mismo tipo al mismo tiempo
         
     def __str__(self):
         return f"{self.paciente.nombre} - {self.fecha} {self.hora}"

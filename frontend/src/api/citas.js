@@ -52,5 +52,8 @@ export const citasService = {
   delete: (id) => api.delete(`/citas/eliminar/${id}/`),
   
   // Obtener horarios disponibles - Usando el nuevo endpoint
-  getHorariosDisponibles: (fecha) => api.get(`/citas/disponibles/?fecha=${fecha}`),
+  getHorariosDisponibles: (fecha, tipoCita = 'podologia') => {
+    console.log(`🔍 SOLICITANDO HORARIOS: fecha=${fecha}, tipo_cita=${tipoCita}`);
+    return api.get(`/citas/disponibles/?fecha=${fecha}&tipo_cita=${tipoCita}`);
+  },
 }; 

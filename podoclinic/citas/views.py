@@ -232,14 +232,15 @@ class CitaViewSet(viewsets.ModelViewSet):
     def disponibles(self, request):
         try:
             fecha_str = request.query_params.get('fecha')
+            tipo_cita = request.query_params.get('tipo_cita', 'podologia')  # Obtener tipo de cita
             
             if fecha_str:
                 fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
             else:
                 fecha = timezone.now().date()
                 
-            # Filtrar citas por la fecha
-            citas = Cita.objects.filter(fecha=fecha)
+            # Filtrar citas por la fecha Y tipo de cita
+            citas = Cita.objects.filter(fecha=fecha, tipo_cita=tipo_cita)
             horas_ocupadas = set()
             
             # Procesar cada cita para marcar las horas ocupadas

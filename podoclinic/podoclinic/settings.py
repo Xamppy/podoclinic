@@ -13,6 +13,16 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
+import sys
+
+# Configurar codificación UTF-8 para Windows
+if sys.platform.startswith('win'):
+    try:
+        import codecs
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except:
+        pass
 
 # Intentar cargar variables de entorno desde .env si existe
 try:
@@ -140,7 +150,7 @@ DATABASES = {
         'NAME': os.environ.get('DB_NAME', 'podoclinic_db'),
         'USER': os.environ.get('DB_USER', 'podoclinic_user'),
         'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'db'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }

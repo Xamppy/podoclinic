@@ -20,7 +20,10 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse, HttpResponse
-from .views import database_backup
+from django.middleware.csrf import get_token
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods
+from .views import database_backup, database_restore
 
 # Vista para manejar 404 en rutas de API
 def api_not_found(request):
@@ -30,13 +33,22 @@ def api_not_found(request):
 def favicon_view(request):
     return HttpResponse(status=204)  # No content response
 
+# Vista para obtener el token CSRF
+@ensure_csrf_cookie
+@require_http_methods(["GET"])
+def get_csrf_token(request):
+    token = get_token(request)
+    return JsonResponse({'csrfToken': token})
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/get-csrf-token/', get_csrf_token, name='get_csrf_token'),
     path('api/pacientes/', include('pacientes.urls')),
     path('api/citas/', include('citas.urls')),
     path('api/insumos/', include('insumos.urls')),
     path('api/usuarios/', include('usuarios.urls')),
     path('api/database/backup/', database_backup, name='database_backup'),
+    path('api/database/restore/', database_restore, name='database_restore'),
     path('favicon.ico', favicon_view),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

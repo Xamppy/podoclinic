@@ -163,7 +163,8 @@ const AdminCitasPage = () => {
     
     setFormData(prev => ({ 
       ...prev, 
-      fecha: fechaFormateada
+      fecha: fechaFormateada,
+      tipo_cita: prev.tipo_cita || 'podologia' // Asegurar que tenga un valor por defecto
     }));
     
     try {
@@ -173,8 +174,10 @@ const AdminCitasPage = () => {
       setShowForm(true);
       
       // Obtener los horarios disponibles y las citas existentes en paralelo
+      const tipoCita = formData.tipo_cita || 'podologia';
+      console.log(`🔍 ADMIN - Obteniendo horarios para tipo: ${tipoCita}`);
       const [horariosResponse, citasResponse] = await Promise.all([
-        axiosInstance.get(`/citas/disponibles/?fecha=${fechaFormateada}`),
+        citasService.getHorariosDisponibles(fechaFormateada, tipoCita),
         citasService.getByFecha(fechaFormateada)
       ]);
       
@@ -395,7 +398,9 @@ const AdminCitasPage = () => {
       
       // Luego intentamos obtener los horarios reales del backend
       try {
-        const response = await axiosInstance.get(`/citas/disponibles/?fecha=${fechaFormateada}`);
+        const tipoCita = editFormData.tipo_cita || 'podologia';
+        console.log(`🔍 ADMIN EDIT - Obteniendo horarios para tipo: ${tipoCita}`);
+        const response = await citasService.getHorariosDisponibles(fechaFormateada, tipoCita);
         console.log("Respuesta de horarios para edición:", response.data);
         
         if (response.data && response.data.horas_disponibles) {
@@ -620,12 +625,56 @@ const AdminCitasPage = () => {
   };
 
   // Agregar la función handleChangeTipoCita
-  const handleChangeTipoCita = (e) => {
+  const handleChangeTipoCita = async (e) => {
+    const nuevoTipoCita = e.target.value;
     setFormData({
       ...formData,
-      tipo_cita: e.target.value,
+      tipo_cita: nuevoTipoCita,
       tipo_tratamiento: '' // Resetear el tratamiento al cambiar el tipo de cita
     });
+
+    // Recargar horarios disponibles con el nuevo tipo de cita
+    if (formData.fecha) {
+      try {
+        console.log(`🔍 RECARGANDO HORARIOS para tipo: ${nuevoTipoCita}`);
+        const response = await citasService.getHorariosDisponibles(formData.fecha, nuevoTipoCita);
+        console.log("Nuevos horarios disponibles:", response.data);
+        
+        if (response.data && response.data.horas_disponibles) {
+          setHorariosDisponibles(response.data.horas_disponibles);
+        }
+        
+        // También recargar las citas para obtener las horas ocupadas actualizadas
+        const citasResponse = await citasService.getByFecha(formData.fecha);
+        if (citasResponse.data && Array.isArray(citasResponse.data)) {
+          let todasHorasOcupadas = [];
+          citasResponse.data.forEach(cita => {
+            // Normalizar el formato de hora
+            let hora = cita.hora;
+            if (hora && hora.includes(':')) {
+              const partes = hora.split(':');
+              if (partes.length >= 2) {
+                hora = `${partes[0]}:${partes[1]}`;
+              }
+            }
+            
+            // Añadir la hora principal
+            todasHorasOcupadas.push(hora);
+            
+            // Si la cita tiene duración extendida, añadir la hora siguiente
+            if (cita.duracion_extendida) {
+              const [horaH, horaM] = hora.split(':').map(Number);
+              const siguienteHora = `${(horaH + 1).toString().padStart(2, '0')}:${horaM.toString().padStart(2, '0')}`;
+              todasHorasOcupadas.push(siguienteHora);
+            }
+          });
+          
+          setHorasOcupadas(todasHorasOcupadas);
+        }
+      } catch (error) {
+        console.error('Error al recargar horarios:', error);
+      }
+    }
   };
 
   // Función para manejar cambio en duración extendida en el formulario de edición
@@ -1230,11 +1279,19 @@ const AdminCitasPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cita</label>
                   <select
                     value={editFormData.tipo_cita || 'podologia'}
-                    onChange={(e) => setEditFormData({ 
-                      ...editFormData, 
-                      tipo_cita: e.target.value,
-                      tipo_tratamiento: '' // Resetear el tratamiento al cambiar el tipo
-                    })}
+                    onChange={async (e) => {
+                      const nuevoTipoCita = e.target.value;
+                      setEditFormData({ 
+                        ...editFormData, 
+                        tipo_cita: nuevoTipoCita,
+                        tipo_tratamiento: '' // Resetear el tratamiento al cambiar el tipo
+                      });
+                      
+                      // Recargar horarios disponibles para el nuevo tipo de cita
+                      if (editFormData.fecha) {
+                        await cargarHorariosDisponibles(editFormData.fecha, editFormData.id);
+                      }
+                    }}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
                     required
                   >

@@ -261,7 +261,8 @@ const CalendarioCitas = () => {
       
       // Luego intentamos obtener los horarios reales del backend
       try {
-        const response = await axiosInstance.get(`/citas/disponibles/?fecha=${fechaFormateada}`);
+        const tipoCita = formData.tipo_cita || 'podologia';
+        const response = await citasService.getHorariosDisponibles(fechaFormateada, tipoCita);
         console.log("Respuesta de horarios:", response.data);
         
         if (response.data && response.data.horas_disponibles) {
@@ -415,7 +416,9 @@ const CalendarioCitas = () => {
   // Función para cargar horarios disponibles para edición
   const cargarHorariosDisponibles = async (fecha, citaId = null) => {
     try {
-      const response = await citasService.getHorariosDisponibles(fecha);
+      // Obtener el tipo de cita del formData o editFormData
+      const tipoCita = editFormData.tipo_cita || formData.tipo_cita || 'podologia';
+      const response = await citasService.getHorariosDisponibles(fecha, tipoCita);
       
       if (response.data && response.data.horas_disponibles) {
         // Si estamos editando, incluir la hora actual de la cita en los horarios disponibles
@@ -674,7 +677,13 @@ const CalendarioCitas = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cita</label>
                 <select
                   value={editFormData.tipo_cita}
-                  onChange={(e) => setEditFormData({ ...editFormData, tipo_cita: e.target.value })}
+                  onChange={(e) => {
+                    setEditFormData({ ...editFormData, tipo_cita: e.target.value });
+                    // Recargar horarios disponibles cuando cambia el tipo de cita
+                    if (editFormData.fecha) {
+                      cargarHorariosDisponibles(editFormData.fecha, editFormData.id);
+                    }
+                  }}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
                   required
                   disabled={editFormData.tipo_cita === 'manicura'}
@@ -852,12 +861,23 @@ const CalendarioCitas = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Cita</label>
                 <select
                   value={formData.tipo_cita}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     setFormData({
                       ...formData, 
                       tipo_cita: e.target.value,
                       tipo_tratamiento: '' // Resetear el tratamiento al cambiar tipo
                     });
+                    // Recargar horarios disponibles cuando cambia el tipo de cita
+                    if (formData.fecha) {
+                      try {
+                        const response = await citasService.getHorariosDisponibles(formData.fecha, e.target.value);
+                        if (response.data && response.data.horas_disponibles) {
+                          setHorariosDisponibles(response.data.horas_disponibles);
+                        }
+                      } catch (error) {
+                        console.error('Error al recargar horarios:', error);
+                      }
+                    }
                   }}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3"
                   required

@@ -1,0 +1,16 @@
+# Configuración temporal para desarrollo local sin Docker
+# Copia este contenido a un archivo llamado .env en el directorio raíz
+
+DJANGO_SECRET_KEY=django-insecure-desarrollo-temporal-no-usar-en-produccion-12345
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Base de datos SQLite temporal (para desarrollo local)
+# Comentamos PostgreSQL por ahora
+# DB_NAME=podoclinic_db
+# DB_USER=podoclinic_user
+# DB_PASSWORD=
+# DB_HOST=localhost
+# DB_PORT=5432
+
+# Para el hosting, descomenta y configura PostgreSQL arriba 

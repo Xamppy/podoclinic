@@ -62,10 +62,11 @@ def crear_cita_admin_inline(request):
                 precio=0
             )
         
-        # Verificar si ya existe una cita en esta fecha y hora
-        existing_cita = Cita.objects.filter(fecha=data['fecha'], hora=data['hora']).first()
+        # Verificar si ya existe una cita en esta fecha, hora Y tipo de cita
+        tipo_cita = data.get('tipo_cita', 'podologia')
+        existing_cita = Cita.objects.filter(fecha=data['fecha'], hora=data['hora'], tipo_cita=tipo_cita).first()
         if existing_cita:
-            return Response({'error': f'Ya existe una cita programada para la fecha {data["fecha"]} a las {data["hora"]}. Por favor seleccione otro horario.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': f'Ya existe una cita de {tipo_cita} programada para la fecha {data["fecha"]} a las {data["hora"]}. Por favor seleccione otro horario.'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Crear la cita
         cita = Cita.objects.create(
@@ -73,7 +74,9 @@ def crear_cita_admin_inline(request):
             tratamiento=tratamiento,
             fecha=data['fecha'],
             hora=data['hora'],
-            estado=data.get('estado', 'reservada')
+            estado=data.get('estado', 'reservada'),
+            tipo_cita=tipo_cita,
+            duracion_cita=data.get('duracion_cita', 60)
         )
         
         # Devolver la respuesta
@@ -108,18 +111,16 @@ def actualizar_cita(request, cita_id):
         if ('fecha' in data and 'hora' in data):
             # Solo verificamos si ha cambiado la fecha o la hora
             if (data['fecha'] != str(cita.fecha) or data['hora'] != str(cita.hora).split(':')[:2]):
-                # Verificar si ya existe una cita en esta fecha y hora (excluyendo la actual)
-                existing_cita = Cita.objects.filter(fecha=data['fecha']).exclude(id=cita_id)
+                # Verificar si ya existe una cita en esta fecha, hora Y tipo de cita (excluyendo la actual)
+                tipo_cita_actualizar = data.get('tipo_cita', cita.tipo_cita)
+                existing_cita = Cita.objects.filter(
+                    fecha=data['fecha'], 
+                    hora=data['hora'],
+                    tipo_cita=tipo_cita_actualizar
+                ).exclude(id=cita_id)
                 
-                # Comparar horas normalizadas
-                for existing in existing_cita:
-                    existing_hora = str(existing.hora)
-                    if ':' in existing_hora:
-                        existing_hora_parts = existing_hora.split(':')
-                        existing_hora_norm = f"{existing_hora_parts[0]}:{existing_hora_parts[1]}"
-                        
-                        if existing_hora_norm == data['hora']:
-                            return Response({'error': f'Ya existe una cita programada para la fecha {data["fecha"]} a las {data["hora"]}. Por favor seleccione otro horario.'}, status=status.HTTP_400_BAD_REQUEST)
+                if existing_cita.exists():
+                    return Response({'error': f'Ya existe una cita de {tipo_cita_actualizar} programada para la fecha {data["fecha"]} a las {data["hora"]}. Por favor seleccione otro horario.'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Actualizar paciente si está presente en la solicitud
         if 'paciente' in data:
@@ -186,31 +187,56 @@ def horarios_disponibles(request):
     try:
         # Obtener la fecha del request o usar la fecha actual como valor predeterminado
         fecha_str = request.query_params.get('fecha')
+        tipo_cita = request.query_params.get('tipo_cita', 'podologia')  # Obtener tipo de cita
+        
+        # Debug removido para evitar problemas de codificación en Windows
         
         if fecha_str:
-            # Convertir string a objeto date
-            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            try:
+                # Convertir string a objeto date
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            except ValueError as date_error:
+                return Response({
+                    'error': f'Formato de fecha inválido: {fecha_str}. Use YYYY-MM-DD'
+                }, status=status.HTTP_400_BAD_REQUEST)
         else:
             fecha = datetime.now().date()
             
-        # Filtrar citas por la fecha
-        citas = Cita.objects.filter(fecha=fecha)
+        # Filtrar citas por la fecha Y tipo de cita
+        try:
+            # Primero probar una consulta simple
+            todas_las_citas = Cita.objects.filter(fecha=fecha)
+            citas = todas_las_citas.filter(tipo_cita=tipo_cita)
+        except Exception as db_error:
+            # Si hay error de base de datos, devolver un error más específico
+            return Response({
+                'error': f'Error al consultar la base de datos: {str(db_error)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         # Normalizar las horas ocupadas (HH:MM formato)
         horas_ocupadas = set()
-        for cita in citas:
-            hora_str = str(cita.hora)
-            # Extraer solo horas y minutos
-            if ':' in hora_str:
-                partes = hora_str.split(':')
-                if len(partes) >= 2:
-                    horas_ocupadas.add(f"{partes[0]}:{partes[1]}")
-                    # Si la cita tiene duración extendida, también marcar la siguiente hora como ocupada
-                    if cita.duracion_extendida:
-                        siguiente_hora = (int(partes[0]) + 1) % 24
-                        horas_ocupadas.add(f"{siguiente_hora:02d}:{partes[1]}")
-            else:
-                horas_ocupadas.add(hora_str)
+        try:
+            for cita in citas:
+                try:
+                    hora_str = str(cita.hora)
+                    # Extraer solo horas y minutos
+                    if ':' in hora_str:
+                        partes = hora_str.split(':')
+                        if len(partes) >= 2:
+                            horas_ocupadas.add(f"{partes[0]}:{partes[1]}")
+                            # Si la cita tiene duración extendida, también marcar la siguiente hora como ocupada
+                            if cita.duracion_extendida:
+                                siguiente_hora = (int(partes[0]) + 1) % 24
+                                horas_ocupadas.add(f"{siguiente_hora:02d}:{partes[1]}")
+                    else:
+                        horas_ocupadas.add(hora_str)
+                except Exception as cita_error:
+                    # Si hay error con una cita específica, continuar con las demás
+                    continue
+        except Exception as iter_error:
+            return Response({
+                'error': f'Error al procesar las citas: {str(iter_error)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         # Horas disponibles (de 8:00 a 22:00)
         horas_disponibles = []
