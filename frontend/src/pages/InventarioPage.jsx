@@ -439,37 +439,38 @@ const InventarioPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden" id="tabla-insumos">
-        <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 table-fixed">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-16 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ID
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-40 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Nombre
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-60 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Descripción
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-24 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Unidad
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stock Actual
+              <th className="w-20 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Stock
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stock Crítico
+              <th className="w-20 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Crítico
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Valor Unitario
+              <th className="w-24 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Valor
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Fecha Vencimiento
+              <th className="w-28 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Vencimiento
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-20 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Faltante
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-32 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
@@ -478,62 +479,77 @@ const InventarioPage = () => {
             {insumosFiltered.length > 0 ? (
               insumosFiltered.map((insumo) => (
                 <tr key={insumo.id} className={insumo.stock_actual <= insumo.stock_critico ? 'bg-red-50' : ''}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
                     {insumo.id}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{insumo.nombre}</div>
+                  <td className="px-4 py-4">
+                    <div className="text-sm font-medium text-gray-900 truncate" title={insumo.nombre}>
+                      {insumo.nombre}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {insumo.descripcion || '-'}
+                  <td className="px-4 py-4 text-sm text-gray-500">
+                    <div className="truncate" title={insumo.descripcion || '-'}>
+                      {insumo.descripcion || '-'}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
                     {insumo.unidad_medida}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {insumo.stock_actual}
+                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
+                    <span className={insumo.stock_actual <= insumo.stock_critico ? 'font-bold text-red-600' : ''}>
+                      {insumo.stock_actual}
+                    </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
                     {insumo.stock_critico}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 text-sm text-gray-500 text-right">
                     {insumo.valor_unitario_formato}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {insumo.fecha_vencimiento ? new Date(insumo.fecha_vencimiento).toLocaleDateString() : '-'}
+                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
+                    <div className="truncate">
+                      {insumo.fecha_vencimiento ? new Date(insumo.fecha_vencimiento).toLocaleDateString() : '-'}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {insumo.stock_actual < insumo.stock_critico ? (insumo.stock_critico - insumo.stock_actual) : 0}
+                  <td className="px-4 py-4 text-sm text-center">
+                    <span className={insumo.stock_actual < insumo.stock_critico ? 'font-bold text-red-600' : 'text-gray-500'}>
+                      {insumo.stock_actual < insumo.stock_critico ? (insumo.stock_critico - insumo.stock_actual) : 0}
+                    </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(insumo)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                      aria-label="Editar insumo"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(insumo.id)}
-                      className="text-red-600 hover:text-red-900"
-                      aria-label="Eliminar insumo"
-                    >
-                      Eliminar
-                    </button>
+                  <td className="px-4 py-4 text-right">
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => handleEdit(insumo)}
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 bg-indigo-100 rounded hover:bg-indigo-200 transition-colors"
+                        aria-label="Editar insumo"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(insumo.id)}
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-100 rounded hover:bg-red-200 transition-colors"
+                        aria-label="Eliminar insumo"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="px-6 py-4 text-center text-gray-500">
-                  {filterOptions.soloStockCritico 
-                    ? 'No hay insumos en stock crítico' 
-                    : 'No hay insumos disponibles'}
+                <td colSpan="10" className="px-4 py-8 text-center text-gray-500">
+                  <div className="text-sm">
+                    {filterOptions.soloStockCritico 
+                      ? 'No hay insumos en stock crítico' 
+                      : 'No hay insumos disponibles'}
+                  </div>
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal de Formulario */}
