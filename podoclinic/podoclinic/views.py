@@ -372,6 +372,26 @@ def restore_from_backup_data(data, clear_database=False):
         resultado['errores'].append(f'Error general en la restauración: {str(e)}')
         return resultado
 
+def _should_process_command(command, resultado):
+    """
+    Determina si un comando SQL debe ser procesado.
+    """
+    command_upper = command.upper()
+    
+    # Procesar INSERT para las tablas de nuestra aplicación
+    if command_upper.startswith('INSERT INTO'):
+        if any(table in command_upper for table in ['PACIENTES_', 'CITAS_', 'INSUMOS_']):
+            return True
+        else:
+            resultado['advertencias'].append(f'INSERT omitido: {command[:50]}...')
+            return False
+    
+    # Procesar SELECT para secuencias
+    elif command_upper.startswith('SELECT SETVAL'):
+        return True
+    
+    return False
+
 def restore_from_sql(sql_content, clear_database=False):
     """
     Restaura la base de datos desde un archivo SQL.
@@ -397,42 +417,85 @@ def restore_from_sql(sql_content, clear_database=False):
                     # 'usuarios_usuario'
                 ]
                 
-                # Deshabilitar restricciones de foreign key temporalmente
-                if 'postgresql' in connection.settings_dict['ENGINE']:
-                    cursor.execute('SET foreign_key_checks = 0;')
-                elif 'sqlite' in connection.settings_dict['ENGINE']:
-                    cursor.execute('PRAGMA foreign_keys = OFF;')
+                # Limpiar tablas en orden correcto para evitar problemas de foreign key
+                # Para PostgreSQL no necesitamos deshabilitar foreign keys si eliminamos en orden correcto
+                tables_to_clear_ordered = [
+                    'pacientes_usoproductoenficha',  # Primero las tablas que referencian
+                    'insumos_movimientoinsumo',      # Tablas que referencian insumos
+                    'pacientes_fichaclinica',        # Fichas clínicas
+                    'citas_cita',                    # Citas
+                    'citas_tratamiento',             # Tratamientos 
+                    'pacientes_paciente',            # Pacientes
+                    'insumos_insumo',               # Insumos al final
+                    # No limpiamos usuarios por seguridad
+                    # 'usuarios_usuario'
+                ]
                 
-                # Limpiar tablas
-                for table in tables_to_clear:
+                # Limpiar tablas en orden
+                for table in tables_to_clear_ordered:
                     try:
                         cursor.execute(f'DELETE FROM {table};')
+                        # Reiniciar secuencias de ID en PostgreSQL
+                        if 'postgresql' in connection.settings_dict['ENGINE']:
+                            cursor.execute(f'ALTER SEQUENCE {table}_id_seq RESTART WITH 1;')
                         resultado['advertencias'].append(f'Tabla {table} limpiada')
                     except Exception as e:
                         resultado['errores'].append(f'Error al limpiar tabla {table}: {str(e)}')
-                
-                # Rehabilitar restricciones
-                if 'postgresql' in connection.settings_dict['ENGINE']:
-                    cursor.execute('SET foreign_key_checks = 1;')
-                elif 'sqlite' in connection.settings_dict['ENGINE']:
-                    cursor.execute('PRAGMA foreign_keys = ON;')
                     
             except Exception as e:
                 resultado['errores'].append(f'Error al limpiar base de datos: {str(e)}')
         
         # Preparar el contenido SQL
-        # Filtrar comentarios y líneas vacías
-        sql_lines = []
+        # Procesar línea por línea manteniendo comandos completos
+        sql_commands = []
+        current_command = []
+        
         for line in sql_content.split('\n'):
             line = line.strip()
-            if line and not line.startswith('--') and not line.startswith('#'):
-                sql_lines.append(line)
+            
+            # Omitir comentarios y líneas vacías
+            if not line or line.startswith('--') or line.startswith('#'):
+                continue
+                
+            line_upper = line.upper()
+            
+            # Si es inicio de un nuevo comando
+            if (line_upper.startswith('INSERT INTO') or 
+                line_upper.startswith('SELECT SETVAL')):
+                
+                # Si tenemos un comando pendiente, agregarlo
+                if current_command:
+                    command_text = ' '.join(current_command)
+                    if _should_process_command(command_text, resultado):
+                        sql_commands.append(command_text)
+                    current_command = []
+                
+                # Verificar si debemos procesar este comando
+                if _should_process_command(line, resultado):
+                    current_command = [line]
+            
+            # Si estamos dentro de un comando (continuación)
+            elif current_command:
+                current_command.append(line)
         
-        # Juntar líneas y dividir por punto y coma
-        full_sql = ' '.join(sql_lines)
-        sql_commands = [cmd.strip() for cmd in full_sql.split(';') if cmd.strip()]
+        # Agregar el último comando si existe
+        if current_command:
+            command_text = ' '.join(current_command)
+            if _should_process_command(command_text, resultado):
+                sql_commands.append(command_text)
         
-        # Ejecutar cada comando SQL
+        # Dividir comandos por punto y coma si es necesario
+        final_commands = []
+        for cmd in sql_commands:
+            if ';' in cmd:
+                parts = [p.strip() for p in cmd.split(';') if p.strip()]
+                final_commands.extend(parts)
+            else:
+                final_commands.append(cmd)
+        
+        sql_commands = final_commands
+        
+        # Ejecutar cada comando SQL en transacciones individuales
         for i, command in enumerate(sql_commands):
             try:
                 # Filtrar comandos problemáticos o innecesarios
@@ -446,18 +509,49 @@ def restore_from_sql(sql_content, clear_database=False):
                     'CREATE USER',
                     'GRANT',
                     'SET FOREIGN_KEY_CHECKS',
-                    'PRAGMA FOREIGN_KEYS'
+                    'PRAGMA FOREIGN_KEYS',
+                    'SET SESSION SQL_MODE',
+                    'SET SQL_MODE',
+                    'SET TIME_ZONE',
+                    'SET NAMES',
+                    'SET CHARACTER_SET',
+                    'CREATE TABLE AUTH_',
+                    'CREATE TABLE DJANGO_',
+                    'CREATE SEQUENCE AUTH_',
+                    'CREATE SEQUENCE DJANGO_'
                 ]
                 
                 should_skip = any(skip_cmd in command_upper for skip_cmd in skip_commands)
+                
+                # También omitir comandos CREATE TABLE para tablas del sistema
+                if 'CREATE TABLE' in command_upper:
+                    table_name = command_upper.split('CREATE TABLE')[1].split('(')[0].strip()
+                    system_tables = ['AUTH_', 'DJANGO_', 'CONTENTTYPES_', 'SESSIONS_']
+                    if any(table_name.startswith(sys_table) for sys_table in system_tables):
+                        resultado['advertencias'].append(f'Tabla del sistema omitida: {table_name}')
+                        continue
                 
                 if should_skip:
                     resultado['advertencias'].append(f'Comando omitido por seguridad: {command[:50]}...')
                     continue
                 
-                # Ejecutar el comando
-                cursor.execute(command)
-                resultado['comandos_ejecutados'] += 1
+                # Usar transacción individual para cada comando
+                try:
+                    with connection.cursor() as individual_cursor:
+                        # Para comandos INSERT, usar ON CONFLICT para manejar duplicados
+                        if command_upper.startswith('INSERT INTO'):
+                            # Ejecutar el comando tal como está
+                            individual_cursor.execute(command)
+                        else:
+                            # Para SELECT setval y otros
+                            individual_cursor.execute(command)
+                        resultado['comandos_ejecutados'] += 1
+                except Exception as cmd_error:
+                    # Si es error de clave duplicada, convertir en advertencia
+                    if 'llave duplicada' in str(cmd_error) or 'duplicate key' in str(cmd_error):
+                        resultado['advertencias'].append(f'Registro duplicado omitido: {command[:50]}...')
+                    else:
+                        raise cmd_error
                 
                 # Log de progreso cada 100 comandos
                 if (i + 1) % 100 == 0:
@@ -466,6 +560,10 @@ def restore_from_sql(sql_content, clear_database=False):
             except Exception as e:
                 error_msg = f'Error en comando {i + 1}: {str(e)}'
                 resultado['errores'].append(error_msg)
+                
+                # Para comandos CREATE TABLE que fallan, solo advertir
+                if 'CREATE TABLE' in command.upper() and 'ya existe' in str(e):
+                    resultado['advertencias'].append(f'Tabla ya existente: {command[:50]}...')
                 
                 # Si hay muchos errores, detener para evitar spam
                 if len(resultado['errores']) > 50:
@@ -484,11 +582,19 @@ def restore_from_sql(sql_content, clear_database=False):
             cursor.execute("SELECT COUNT(*) FROM citas_cita")
             resultado['citas_restauradas'] = cursor.fetchone()[0]
             
+            cursor.execute("SELECT COUNT(*) FROM insumos_insumo")
+            resultado['insumos_restaurados'] = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM pacientes_fichaclinica")
+            resultado['fichas_restauradas'] = cursor.fetchone()[0]
+            
         except Exception as e:
             resultado['errores'].append(f'Error al contar registros: {str(e)}')
             resultado['pacientes_restaurados'] = 0
             resultado['tratamientos_restaurados'] = 0
             resultado['citas_restauradas'] = 0
+            resultado['insumos_restaurados'] = 0
+            resultado['fichas_restauradas'] = 0
         
         cursor.close()
         

@@ -13,16 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
-import sys
-
-# Configurar codificación UTF-8 para Windows
-if sys.platform.startswith('win'):
-    try:
-        import codecs
-        sys.stdout.reconfigure(encoding='utf-8')
-        sys.stderr.reconfigure(encoding='utf-8')
-    except:
-        pass
 
 # Intentar cargar variables de entorno desde .env si existe
 try:
@@ -84,8 +74,8 @@ MIDDLEWARE = [
 
 # Configuración CORS más específica
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
@@ -110,8 +100,8 @@ CORS_ALLOW_HEADERS = [
 
 # Configuración CSRF
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8080',
-    'http://127.0.0.1:8080',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
 ]
 CSRF_COOKIE_SECURE = False  # Cambiar a True si usas HTTPS
 CSRF_COOKIE_HTTPONLY = True
