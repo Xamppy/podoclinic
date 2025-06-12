@@ -1,0 +1,1964 @@
+{
+    "auth_group": [],
+    "auth_group_permissions": [],
+    "auth_permission": [
+      {
+        "id": 1,
+        "name": "Can add log entry",
+        "content_type_id": 1,
+        "codename": "add_logentry"
+      },
+      {
+        "id": 2,
+        "name": "Can change log entry",
+        "content_type_id": 1,
+        "codename": "change_logentry"
+      },
+      {
+        "id": 3,
+        "name": "Can delete log entry",
+        "content_type_id": 1,
+        "codename": "delete_logentry"
+      },
+      {
+        "id": 4,
+        "name": "Can view log entry",
+        "content_type_id": 1,
+        "codename": "view_logentry"
+      },
+      {
+        "id": 5,
+        "name": "Can add permission",
+        "content_type_id": 2,
+        "codename": "add_permission"
+      },
+      {
+        "id": 6,
+        "name": "Can change permission",
+        "content_type_id": 2,
+        "codename": "change_permission"
+      },
+      {
+        "id": 7,
+        "name": "Can delete permission",
+        "content_type_id": 2,
+        "codename": "delete_permission"
+      },
+      {
+        "id": 8,
+        "name": "Can view permission",
+        "content_type_id": 2,
+        "codename": "view_permission"
+      },
+      {
+        "id": 9,
+        "name": "Can add group",
+        "content_type_id": 3,
+        "codename": "add_group"
+      },
+      {
+        "id": 10,
+        "name": "Can change group",
+        "content_type_id": 3,
+        "codename": "change_group"
+      },
+      {
+        "id": 11,
+        "name": "Can delete group",
+        "content_type_id": 3,
+        "codename": "delete_group"
+      },
+      {
+        "id": 12,
+        "name": "Can view group",
+        "content_type_id": 3,
+        "codename": "view_group"
+      },
+      {
+        "id": 13,
+        "name": "Can add content type",
+        "content_type_id": 4,
+        "codename": "add_contenttype"
+      },
+      {
+        "id": 14,
+        "name": "Can change content type",
+        "content_type_id": 4,
+        "codename": "change_contenttype"
+      },
+      {
+        "id": 15,
+        "name": "Can delete content type",
+        "content_type_id": 4,
+        "codename": "delete_contenttype"
+      },
+      {
+        "id": 16,
+        "name": "Can view content type",
+        "content_type_id": 4,
+        "codename": "view_contenttype"
+      },
+      {
+        "id": 17,
+        "name": "Can add session",
+        "content_type_id": 5,
+        "codename": "add_session"
+      },
+      {
+        "id": 18,
+        "name": "Can change session",
+        "content_type_id": 5,
+        "codename": "change_session"
+      },
+      {
+        "id": 19,
+        "name": "Can delete session",
+        "content_type_id": 5,
+        "codename": "delete_session"
+      },
+      {
+        "id": 20,
+        "name": "Can view session",
+        "content_type_id": 5,
+        "codename": "view_session"
+      },
+      {
+        "id": 21,
+        "name": "Can add task result",
+        "content_type_id": 6,
+        "codename": "add_taskresult"
+      },
+      {
+        "id": 22,
+        "name": "Can change task result",
+        "content_type_id": 6,
+        "codename": "change_taskresult"
+      },
+      {
+        "id": 23,
+        "name": "Can delete task result",
+        "content_type_id": 6,
+        "codename": "delete_taskresult"
+      },
+      {
+        "id": 24,
+        "name": "Can view task result",
+        "content_type_id": 6,
+        "codename": "view_taskresult"
+      },
+      {
+        "id": 25,
+        "name": "Can add chord counter",
+        "content_type_id": 7,
+        "codename": "add_chordcounter"
+      },
+      {
+        "id": 26,
+        "name": "Can change chord counter",
+        "content_type_id": 7,
+        "codename": "change_chordcounter"
+      },
+      {
+        "id": 27,
+        "name": "Can delete chord counter",
+        "content_type_id": 7,
+        "codename": "delete_chordcounter"
+      },
+      {
+        "id": 28,
+        "name": "Can view chord counter",
+        "content_type_id": 7,
+        "codename": "view_chordcounter"
+      },
+      {
+        "id": 29,
+        "name": "Can add group result",
+        "content_type_id": 8,
+        "codename": "add_groupresult"
+      },
+      {
+        "id": 30,
+        "name": "Can change group result",
+        "content_type_id": 8,
+        "codename": "change_groupresult"
+      },
+      {
+        "id": 31,
+        "name": "Can delete group result",
+        "content_type_id": 8,
+        "codename": "delete_groupresult"
+      },
+      {
+        "id": 32,
+        "name": "Can view group result",
+        "content_type_id": 8,
+        "codename": "view_groupresult"
+      },
+      {
+        "id": 33,
+        "name": "Can add crontab",
+        "content_type_id": 9,
+        "codename": "add_crontabschedule"
+      },
+      {
+        "id": 34,
+        "name": "Can change crontab",
+        "content_type_id": 9,
+        "codename": "change_crontabschedule"
+      },
+      {
+        "id": 35,
+        "name": "Can delete crontab",
+        "content_type_id": 9,
+        "codename": "delete_crontabschedule"
+      },
+      {
+        "id": 36,
+        "name": "Can view crontab",
+        "content_type_id": 9,
+        "codename": "view_crontabschedule"
+      },
+      {
+        "id": 37,
+        "name": "Can add interval",
+        "content_type_id": 10,
+        "codename": "add_intervalschedule"
+      },
+      {
+        "id": 38,
+        "name": "Can change interval",
+        "content_type_id": 10,
+        "codename": "change_intervalschedule"
+      },
+      {
+        "id": 39,
+        "name": "Can delete interval",
+        "content_type_id": 10,
+        "codename": "delete_intervalschedule"
+      },
+      {
+        "id": 40,
+        "name": "Can view interval",
+        "content_type_id": 10,
+        "codename": "view_intervalschedule"
+      },
+      {
+        "id": 41,
+        "name": "Can add periodic task",
+        "content_type_id": 11,
+        "codename": "add_periodictask"
+      },
+      {
+        "id": 42,
+        "name": "Can change periodic task",
+        "content_type_id": 11,
+        "codename": "change_periodictask"
+      },
+      {
+        "id": 43,
+        "name": "Can delete periodic task",
+        "content_type_id": 11,
+        "codename": "delete_periodictask"
+      },
+      {
+        "id": 44,
+        "name": "Can view periodic task",
+        "content_type_id": 11,
+        "codename": "view_periodictask"
+      },
+      {
+        "id": 45,
+        "name": "Can add periodic tasks",
+        "content_type_id": 12,
+        "codename": "add_periodictasks"
+      },
+      {
+        "id": 46,
+        "name": "Can change periodic tasks",
+        "content_type_id": 12,
+        "codename": "change_periodictasks"
+      },
+      {
+        "id": 47,
+        "name": "Can delete periodic tasks",
+        "content_type_id": 12,
+        "codename": "delete_periodictasks"
+      },
+      {
+        "id": 48,
+        "name": "Can view periodic tasks",
+        "content_type_id": 12,
+        "codename": "view_periodictasks"
+      },
+      {
+        "id": 49,
+        "name": "Can add solar event",
+        "content_type_id": 13,
+        "codename": "add_solarschedule"
+      },
+      {
+        "id": 50,
+        "name": "Can change solar event",
+        "content_type_id": 13,
+        "codename": "change_solarschedule"
+      },
+      {
+        "id": 51,
+        "name": "Can delete solar event",
+        "content_type_id": 13,
+        "codename": "delete_solarschedule"
+      },
+      {
+        "id": 52,
+        "name": "Can view solar event",
+        "content_type_id": 13,
+        "codename": "view_solarschedule"
+      },
+      {
+        "id": 53,
+        "name": "Can add clocked",
+        "content_type_id": 14,
+        "codename": "add_clockedschedule"
+      },
+      {
+        "id": 54,
+        "name": "Can change clocked",
+        "content_type_id": 14,
+        "codename": "change_clockedschedule"
+      },
+      {
+        "id": 55,
+        "name": "Can delete clocked",
+        "content_type_id": 14,
+        "codename": "delete_clockedschedule"
+      },
+      {
+        "id": 56,
+        "name": "Can view clocked",
+        "content_type_id": 14,
+        "codename": "view_clockedschedule"
+      },
+      {
+        "id": 57,
+        "name": "Can add paciente",
+        "content_type_id": 15,
+        "codename": "add_paciente"
+      },
+      {
+        "id": 58,
+        "name": "Can change paciente",
+        "content_type_id": 15,
+        "codename": "change_paciente"
+      },
+      {
+        "id": 59,
+        "name": "Can delete paciente",
+        "content_type_id": 15,
+        "codename": "delete_paciente"
+      },
+      {
+        "id": 60,
+        "name": "Can view paciente",
+        "content_type_id": 15,
+        "codename": "view_paciente"
+      },
+      {
+        "id": 61,
+        "name": "Can add ficha clinica",
+        "content_type_id": 16,
+        "codename": "add_fichaclinica"
+      },
+      {
+        "id": 62,
+        "name": "Can change ficha clinica",
+        "content_type_id": 16,
+        "codename": "change_fichaclinica"
+      },
+      {
+        "id": 63,
+        "name": "Can delete ficha clinica",
+        "content_type_id": 16,
+        "codename": "delete_fichaclinica"
+      },
+      {
+        "id": 64,
+        "name": "Can view ficha clinica",
+        "content_type_id": 16,
+        "codename": "view_fichaclinica"
+      },
+      {
+        "id": 65,
+        "name": "Can add Uso de producto en ficha",
+        "content_type_id": 17,
+        "codename": "add_usoproductoenficha"
+      },
+      {
+        "id": 66,
+        "name": "Can change Uso de producto en ficha",
+        "content_type_id": 17,
+        "codename": "change_usoproductoenficha"
+      },
+      {
+        "id": 67,
+        "name": "Can delete Uso de producto en ficha",
+        "content_type_id": 17,
+        "codename": "delete_usoproductoenficha"
+      },
+      {
+        "id": 68,
+        "name": "Can view Uso de producto en ficha",
+        "content_type_id": 17,
+        "codename": "view_usoproductoenficha"
+      },
+      {
+        "id": 69,
+        "name": "Can add cita",
+        "content_type_id": 18,
+        "codename": "add_cita"
+      },
+      {
+        "id": 70,
+        "name": "Can change cita",
+        "content_type_id": 18,
+        "codename": "change_cita"
+      },
+      {
+        "id": 71,
+        "name": "Can delete cita",
+        "content_type_id": 18,
+        "codename": "delete_cita"
+      },
+      {
+        "id": 72,
+        "name": "Can view cita",
+        "content_type_id": 18,
+        "codename": "view_cita"
+      },
+      {
+        "id": 73,
+        "name": "Can add tratamiento",
+        "content_type_id": 19,
+        "codename": "add_tratamiento"
+      },
+      {
+        "id": 74,
+        "name": "Can change tratamiento",
+        "content_type_id": 19,
+        "codename": "change_tratamiento"
+      },
+      {
+        "id": 75,
+        "name": "Can delete tratamiento",
+        "content_type_id": 19,
+        "codename": "delete_tratamiento"
+      },
+      {
+        "id": 76,
+        "name": "Can view tratamiento",
+        "content_type_id": 19,
+        "codename": "view_tratamiento"
+      },
+      {
+        "id": 77,
+        "name": "Can add insumo",
+        "content_type_id": 20,
+        "codename": "add_insumo"
+      },
+      {
+        "id": 78,
+        "name": "Can change insumo",
+        "content_type_id": 20,
+        "codename": "change_insumo"
+      },
+      {
+        "id": 79,
+        "name": "Can delete insumo",
+        "content_type_id": 20,
+        "codename": "delete_insumo"
+      },
+      {
+        "id": 80,
+        "name": "Can view insumo",
+        "content_type_id": 20,
+        "codename": "view_insumo"
+      },
+      {
+        "id": 81,
+        "name": "Can add movimiento insumo",
+        "content_type_id": 21,
+        "codename": "add_movimientoinsumo"
+      },
+      {
+        "id": 82,
+        "name": "Can change movimiento insumo",
+        "content_type_id": 21,
+        "codename": "change_movimientoinsumo"
+      },
+      {
+        "id": 83,
+        "name": "Can delete movimiento insumo",
+        "content_type_id": 21,
+        "codename": "delete_movimientoinsumo"
+      },
+      {
+        "id": 84,
+        "name": "Can view movimiento insumo",
+        "content_type_id": 21,
+        "codename": "view_movimientoinsumo"
+      },
+      {
+        "id": 85,
+        "name": "Can add user",
+        "content_type_id": 22,
+        "codename": "add_usuario"
+      },
+      {
+        "id": 86,
+        "name": "Can change user",
+        "content_type_id": 22,
+        "codename": "change_usuario"
+      },
+      {
+        "id": 87,
+        "name": "Can delete user",
+        "content_type_id": 22,
+        "codename": "delete_usuario"
+      },
+      {
+        "id": 88,
+        "name": "Can view user",
+        "content_type_id": 22,
+        "codename": "view_usuario"
+      }
+    ],
+    "citas_cita": [
+      {
+        "id": 1,
+        "fecha": "2025-05-31",
+        "hora": "20:00:00",
+        "estado": "reservada",
+        "fecha_creacion": "2025-05-31 23:11:42.55874+00",
+        "recordatorio_enviado": false,
+        "paciente_id": 1,
+        "tratamiento_id": 1,
+        "tipo_cita": "podologia",
+        "duracion_extendida": false,
+        "duracion_cita": 60
+      },
+      {
+        "id": 2,
+        "fecha": "2025-05-31",
+        "hora": "19:00:00",
+        "estado": "reservada",
+        "fecha_creacion": "2025-05-31 23:18:19.401347+00",
+        "recordatorio_enviado": false,
+        "paciente_id": 2,
+        "tratamiento_id": 2,
+        "tipo_cita": "podologia",
+        "duracion_extendida": false,
+        "duracion_cita": 60
+      },
+      {
+        "id": 3,
+        "fecha": "2025-06-05",
+        "hora": "08:00:00",
+        "estado": "reservada",
+        "fecha_creacion": "2025-05-31 23:35:01.504601+00",
+        "recordatorio_enviado": false,
+        "paciente_id": 3,
+        "tratamiento_id": 3,
+        "tipo_cita": "podologia",
+        "duracion_extendida": false,
+        "duracion_cita": 60
+      },
+      {
+        "id": 4,
+        "fecha": "2025-05-31",
+        "hora": "15:00:00",
+        "estado": "reservada",
+        "fecha_creacion": "2025-05-31 23:41:38.529429+00",
+        "recordatorio_enviado": false,
+        "paciente_id": 3,
+        "tratamiento_id": 3,
+        "tipo_cita": "podologia",
+        "duracion_extendida": false,
+        "duracion_cita": 60
+      },
+      {
+        "id": 7,
+        "fecha": "2025-06-05",
+        "hora": "08:00:00",
+        "estado": "reservada",
+        "fecha_creacion": "2025-06-01 22:05:33.732786+00",
+        "recordatorio_enviado": false,
+        "paciente_id": 1,
+        "tratamiento_id": 2,
+        "tipo_cita": "manicura",
+        "duracion_extendida": false,
+        "duracion_cita": 60
+      },
+      {
+        "id": 40,
+        "fecha": "2025-06-10",
+        "hora": "16:00:00",
+        "estado": "reservada",
+        "fecha_creacion": "2025-06-10 17:30:12.016002+00",
+        "recordatorio_enviado": false,
+        "paciente_id": 5,
+        "tratamiento_id": 1,
+        "tipo_cita": "podologia",
+        "duracion_extendida": false,
+        "duracion_cita": 60
+      }
+    ],
+    "citas_tratamiento": [
+      {
+        "id": 1,
+        "nombre": "hongos",
+        "descripcion": "Uñas con hongos (Onicomicosis)",
+        "duracion_minutos": 60,
+        "precio": 0.00
+      },
+      {
+        "id": 2,
+        "nombre": "manicura",
+        "descripcion": "Manicura",
+        "duracion_minutos": 60,
+        "precio": 0.00
+      },
+      {
+        "id": 3,
+        "nombre": "encarnada",
+        "descripcion": "Uña encarnada (Onicocriptosis)",
+        "duracion_minutos": 60,
+        "precio": 0.00
+      },
+      {
+        "id": 4,
+        "nombre": "general",
+        "descripcion": "Podología general",
+        "duracion_minutos": 60,
+        "precio": 0.00
+      }
+    ],
+    "django_admin_log": [],
+    "django_celery_beat_clockedschedule": [],
+    "django_celery_beat_crontabschedule": [],
+    "django_celery_beat_intervalschedule": [],
+    "django_celery_beat_periodictask": [],
+    "django_celery_beat_periodictasks": [],
+    "django_celery_beat_solarschedule": [],
+    "django_celery_results_chordcounter": [],
+    "django_celery_results_groupresult": [],
+    "django_celery_results_taskresult": [],
+    "django_content_type": [
+      {
+        "id": 1,
+        "app_label": "admin",
+        "model": "logentry"
+      },
+      {
+        "id": 2,
+        "app_label": "auth",
+        "model": "permission"
+      },
+      {
+        "id": 3,
+        "app_label": "auth",
+        "model": "group"
+      },
+      {
+        "id": 4,
+        "app_label": "contenttypes",
+        "model": "contenttype"
+      },
+      {
+        "id": 5,
+        "app_label": "sessions",
+        "model": "session"
+      },
+      {
+        "id": 6,
+        "app_label": "django_celery_results",
+        "model": "taskresult"
+      },
+      {
+        "id": 7,
+        "app_label": "django_celery_results",
+        "model": "chordcounter"
+      },
+      {
+        "id": 8,
+        "app_label": "django_celery_results",
+        "model": "groupresult"
+      },
+      {
+        "id": 9,
+        "app_label": "django_celery_beat",
+        "model": "crontabschedule"
+      },
+      {
+        "id": 10,
+        "app_label": "django_celery_beat",
+        "model": "intervalschedule"
+      },
+      {
+        "id": 11,
+        "app_label": "django_celery_beat",
+        "model": "periodictask"
+      },
+      {
+        "id": 12,
+        "app_label": "django_celery_beat",
+        "model": "periodictasks"
+      },
+      {
+        "id": 13,
+        "app_label": "django_celery_beat",
+        "model": "solarschedule"
+      },
+      {
+        "id": 14,
+        "app_label": "django_celery_beat",
+        "model": "clockedschedule"
+      },
+      {
+        "id": 15,
+        "app_label": "pacientes",
+        "model": "paciente"
+      },
+      {
+        "id": 16,
+        "app_label": "pacientes",
+        "model": "fichaclinica"
+      },
+      {
+        "id": 17,
+        "app_label": "pacientes",
+        "model": "usoproductoenficha"
+      },
+      {
+        "id": 18,
+        "app_label": "citas",
+        "model": "cita"
+      },
+      {
+        "id": 19,
+        "app_label": "citas",
+        "model": "tratamiento"
+      },
+      {
+        "id": 20,
+        "app_label": "insumos",
+        "model": "insumo"
+      },
+      {
+        "id": 21,
+        "app_label": "insumos",
+        "model": "movimientoinsumo"
+      },
+      {
+        "id": 22,
+        "app_label": "usuarios",
+        "model": "usuario"
+      }
+    ],
+    "django_migrations": [
+      {
+        "id": 1,
+        "app": "contenttypes",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:26.551058+00"
+      },
+      {
+        "id": 2,
+        "app": "contenttypes",
+        "name": "0002_remove_content_type_name",
+        "applied": "2025-05-31 22:57:26.563443+00"
+      },
+      {
+        "id": 3,
+        "app": "auth",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:26.678921+00"
+      },
+      {
+        "id": 4,
+        "app": "auth",
+        "name": "0002_alter_permission_name_max_length",
+        "applied": "2025-05-31 22:57:26.688121+00"
+      },
+      {
+        "id": 5,
+        "app": "auth",
+        "name": "0003_alter_user_email_max_length",
+        "applied": "2025-05-31 22:57:26.698544+00"
+      },
+      {
+        "id": 6,
+        "app": "auth",
+        "name": "0004_alter_user_username_opts",
+        "applied": "2025-05-31 22:57:26.708352+00"
+      },
+      {
+        "id": 7,
+        "app": "auth",
+        "name": "0005_alter_user_last_login_null",
+        "applied": "2025-05-31 22:57:26.718327+00"
+      },
+      {
+        "id": 8,
+        "app": "auth",
+        "name": "0006_require_contenttypes_0002",
+        "applied": "2025-05-31 22:57:26.72402+00"
+      },
+      {
+        "id": 9,
+        "app": "auth",
+        "name": "0007_alter_validators_add_error_messages",
+        "applied": "2025-05-31 22:57:26.733937+00"
+      },
+      {
+        "id": 10,
+        "app": "auth",
+        "name": "0008_alter_user_username_max_length",
+        "applied": "2025-05-31 22:57:26.743472+00"
+      },
+      {
+        "id": 11,
+        "app": "auth",
+        "name": "0009_alter_user_last_name_max_length",
+        "applied": "2025-05-31 22:57:26.754203+00"
+      },
+      {
+        "id": 12,
+        "app": "auth",
+        "name": "0010_alter_group_name_max_length",
+        "applied": "2025-05-31 22:57:26.764843+00"
+      },
+      {
+        "id": 13,
+        "app": "auth",
+        "name": "0011_update_proxy_permissions",
+        "applied": "2025-05-31 22:57:26.774495+00"
+      },
+      {
+        "id": 14,
+        "app": "auth",
+        "name": "0012_alter_user_first_name_max_length",
+        "applied": "2025-05-31 22:57:26.7851+00"
+      },
+      {
+        "id": 15,
+        "app": "usuarios",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:26.913315+00"
+      },
+      {
+        "id": 16,
+        "app": "admin",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:26.967268+00"
+      },
+      {
+        "id": 17,
+        "app": "admin",
+        "name": "0002_logentry_remove_auto_add",
+        "applied": "2025-05-31 22:57:26.978627+00"
+      },
+      {
+        "id": 18,
+        "app": "admin",
+        "name": "0003_logentry_add_action_flag_choices",
+        "applied": "2025-05-31 22:57:26.990536+00"
+      },
+      {
+        "id": 19,
+        "app": "citas",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:27.02404+00"
+      },
+      {
+        "id": 20,
+        "app": "pacientes",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:27.10195+00"
+      },
+      {
+        "id": 21,
+        "app": "citas",
+        "name": "0002_initial",
+        "applied": "2025-05-31 22:57:27.146785+00"
+      },
+      {
+        "id": 22,
+        "app": "citas",
+        "name": "0003_alter_tratamiento_duracion_minutos",
+        "applied": "2025-05-31 22:57:27.155443+00"
+      },
+      {
+        "id": 23,
+        "app": "citas",
+        "name": "0004_cita_tipo_cita_alter_tratamiento_nombre",
+        "applied": "2025-05-31 22:57:27.171175+00"
+      },
+      {
+        "id": 24,
+        "app": "citas",
+        "name": "0005_alter_tratamiento_nombre",
+        "applied": "2025-05-31 22:57:27.181552+00"
+      },
+      {
+        "id": 25,
+        "app": "citas",
+        "name": "0006_cita_duracion_extendida",
+        "applied": "2025-05-31 22:57:27.193699+00"
+      },
+      {
+        "id": 26,
+        "app": "citas",
+        "name": "0007_cita_duracion_cita",
+        "applied": "2025-05-31 22:57:27.206591+00"
+      },
+      {
+        "id": 27,
+        "app": "django_celery_beat",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:27.298249+00"
+      },
+      {
+        "id": 28,
+        "app": "django_celery_beat",
+        "name": "0002_auto_20161118_0346",
+        "applied": "2025-05-31 22:57:27.340625+00"
+      },
+      {
+        "id": 29,
+        "app": "django_celery_beat",
+        "name": "0003_auto_20161209_0049",
+        "applied": "2025-05-31 22:57:27.36223+00"
+      },
+      {
+        "id": 30,
+        "app": "django_celery_beat",
+        "name": "0004_auto_20170221_0000",
+        "applied": "2025-05-31 22:57:27.373018+00"
+      },
+      {
+        "id": 31,
+        "app": "django_celery_beat",
+        "name": "0005_add_solarschedule_events_choices",
+        "applied": "2025-05-31 22:57:27.382236+00"
+      },
+      {
+        "id": 32,
+        "app": "django_celery_beat",
+        "name": "0006_auto_20180322_0932",
+        "applied": "2025-05-31 22:57:27.484675+00"
+      },
+      {
+        "id": 33,
+        "app": "django_celery_beat",
+        "name": "0007_auto_20180521_0826",
+        "applied": "2025-05-31 22:57:27.518766+00"
+      },
+      {
+        "id": 34,
+        "app": "django_celery_beat",
+        "name": "0008_auto_20180914_1922",
+        "applied": "2025-05-31 22:57:27.567335+00"
+      },
+      {
+        "id": 35,
+        "app": "django_celery_beat",
+        "name": "0006_auto_20180210_1226",
+        "applied": "2025-05-31 22:57:27.595628+00"
+      },
+      {
+        "id": 36,
+        "app": "django_celery_beat",
+        "name": "0006_periodictask_priority",
+        "applied": "2025-05-31 22:57:27.614676+00"
+      },
+      {
+        "id": 37,
+        "app": "django_celery_beat",
+        "name": "0009_periodictask_headers",
+        "applied": "2025-05-31 22:57:27.631411+00"
+      },
+      {
+        "id": 38,
+        "app": "django_celery_beat",
+        "name": "0010_auto_20190429_0326",
+        "applied": "2025-05-31 22:57:27.876173+00"
+      },
+      {
+        "id": 39,
+        "app": "django_celery_beat",
+        "name": "0011_auto_20190508_0153",
+        "applied": "2025-05-31 22:57:27.90833+00"
+      },
+      {
+        "id": 40,
+        "app": "django_celery_beat",
+        "name": "0012_periodictask_expire_seconds",
+        "applied": "2025-05-31 22:57:27.923712+00"
+      },
+      {
+        "id": 41,
+        "app": "django_celery_beat",
+        "name": "0013_auto_20200609_0727",
+        "applied": "2025-05-31 22:57:28.001521+00"
+      },
+      {
+        "id": 42,
+        "app": "django_celery_beat",
+        "name": "0014_remove_clockedschedule_enabled",
+        "applied": "2025-05-31 22:57:28.01199+00"
+      },
+      {
+        "id": 43,
+        "app": "django_celery_beat",
+        "name": "0015_edit_solarschedule_events_choices",
+        "applied": "2025-05-31 22:57:28.026298+00"
+      },
+      {
+        "id": 44,
+        "app": "django_celery_beat",
+        "name": "0016_alter_crontabschedule_timezone",
+        "applied": "2025-05-31 22:57:28.043155+00"
+      },
+      {
+        "id": 45,
+        "app": "django_celery_beat",
+        "name": "0017_alter_crontabschedule_month_of_year",
+        "applied": "2025-05-31 22:57:28.102934+00"
+      },
+      {
+        "id": 46,
+        "app": "django_celery_beat",
+        "name": "0018_improve_crontab_helptext",
+        "applied": "2025-05-31 22:57:28.117666+00"
+      },
+      {
+        "id": 47,
+        "app": "django_celery_results",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:28.181245+00"
+      },
+      {
+        "id": 48,
+        "app": "django_celery_results",
+        "name": "0002_add_task_name_args_kwargs",
+        "applied": "2025-05-31 22:57:28.196499+00"
+      },
+      {
+        "id": 49,
+        "app": "django_celery_results",
+        "name": "0003_auto_20181106_1101",
+        "applied": "2025-05-31 22:57:28.205392+00"
+      },
+      {
+        "id": 50,
+        "app": "django_celery_results",
+        "name": "0004_auto_20190516_0412",
+        "applied": "2025-05-31 22:57:28.285175+00"
+      },
+      {
+        "id": 51,
+        "app": "django_celery_results",
+        "name": "0005_taskresult_worker",
+        "applied": "2025-05-31 22:57:28.311327+00"
+      },
+      {
+        "id": 52,
+        "app": "django_celery_results",
+        "name": "0006_taskresult_date_created",
+        "applied": "2025-05-31 22:57:28.360707+00"
+      },
+      {
+        "id": 53,
+        "app": "django_celery_results",
+        "name": "0007_remove_taskresult_hidden",
+        "applied": "2025-05-31 22:57:28.37014+00"
+      },
+      {
+        "id": 54,
+        "app": "django_celery_results",
+        "name": "0008_chordcounter",
+        "applied": "2025-05-31 22:57:28.413113+00"
+      },
+      {
+        "id": 55,
+        "app": "django_celery_results",
+        "name": "0009_groupresult",
+        "applied": "2025-05-31 22:57:28.707133+00"
+      },
+      {
+        "id": 56,
+        "app": "django_celery_results",
+        "name": "0010_remove_duplicate_indices",
+        "applied": "2025-05-31 22:57:28.722444+00"
+      },
+      {
+        "id": 57,
+        "app": "django_celery_results",
+        "name": "0011_taskresult_periodic_task_name",
+        "applied": "2025-05-31 22:57:28.733352+00"
+      },
+      {
+        "id": 58,
+        "app": "insumos",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:28.820945+00"
+      },
+      {
+        "id": 59,
+        "app": "insumos",
+        "name": "0002_alter_movimientoinsumo_usuario",
+        "applied": "2025-05-31 22:57:28.844794+00"
+      },
+      {
+        "id": 60,
+        "app": "insumos",
+        "name": "0003_insumo_fecha_vencimiento_insumo_valor_unitario",
+        "applied": "2025-05-31 22:57:28.862973+00"
+      },
+      {
+        "id": 61,
+        "app": "pacientes",
+        "name": "0002_paciente_direccion_paciente_fecha_nacimiento",
+        "applied": "2025-05-31 22:57:28.882072+00"
+      },
+      {
+        "id": 62,
+        "app": "pacientes",
+        "name": "0003_usoproductoenficha",
+        "applied": "2025-05-31 22:57:28.945336+00"
+      },
+      {
+        "id": 63,
+        "app": "pacientes",
+        "name": "0004_fichaclinica_costo_total",
+        "applied": "2025-05-31 22:57:28.963199+00"
+      },
+      {
+        "id": 64,
+        "app": "sessions",
+        "name": "0001_initial",
+        "applied": "2025-05-31 22:57:29.023048+00"
+      },
+      {
+        "id": 65,
+        "app": "citas",
+        "name": "0008_update_unique_constraint",
+        "applied": "2025-06-01 19:18:16.680496+00"
+      },
+      {
+        "id": 66,
+        "app": "citas",
+        "name": "0009_fix_unique_constraint",
+        "applied": "2025-06-01 19:18:16.757201+00"
+      }
+    ],
+    "django_session": [],
+    "insumos_insumo": [
+      {
+        "id": 2,
+        "nombre": "Alcohol",
+        "descripcion": "Alcohol 95%",
+        "unidad_medida": "Aplicacion",
+        "stock_actual": 97,
+        "stock_critico": 100,
+        "ultima_actualizacion": "2025-06-01 00:26:11.688269+00",
+        "fecha_vencimiento": "2025-12-25",
+        "valor_unitario": 40
+      },
+      {
+        "id": 1,
+        "nombre": "Guante Nitrilo Azul",
+        "descripcion": "Guantes de Nitrilo Azul Caja de 100 unidades",
+        "unidad_medida": "Par",
+        "stock_actual": 145,
+        "stock_critico": 50,
+        "ultima_actualizacion": "2025-06-01 00:45:49.429285+00",
+        "fecha_vencimiento": "2999-09-09",
+        "valor_unitario": 300
+      },
+      {
+        "id": 3,
+        "nombre": "Toallita Isoprol",
+        "descripcion": "Toallita con alcohol",
+        "unidad_medida": "Sachet",
+        "stock_actual": 474,
+        "stock_critico": 100,
+        "ultima_actualizacion": "2025-06-01 00:45:49.434934+00",
+        "fecha_vencimiento": "2027-12-31",
+        "valor_unitario": 19
+      },
+      {
+        "id": 6,
+        "nombre": "Gasa adhesiva 10Cm x 10MTS",
+        "descripcion": "Pharmafix gasa adhesiva",
+        "unidad_medida": "Rollo",
+        "stock_actual": 396,
+        "stock_critico": 200,
+        "ultima_actualizacion": "2025-06-01 00:45:49.4394+00",
+        "fecha_vencimiento": "2999-12-30",
+        "valor_unitario": 30
+      },
+      {
+        "id": 5,
+        "nombre": "Microaplicador",
+        "descripcion": "Aplicador de cauterizador",
+        "unidad_medida": "Unidad",
+        "stock_actual": 188,
+        "stock_critico": 100,
+        "ultima_actualizacion": "2025-06-01 00:45:49.44372+00",
+        "fecha_vencimiento": "2999-12-30",
+        "valor_unitario": 20
+      },
+      {
+        "id": 7,
+        "nombre": "Sabanilla clinica",
+        "descripcion": "Rollo papel para camilla",
+        "unidad_medida": "Rollo",
+        "stock_actual": 718,
+        "stock_critico": 160,
+        "ultima_actualizacion": "2025-06-01 00:45:49.447937+00",
+        "fecha_vencimiento": "2999-12-31",
+        "valor_unitario": 34
+      },
+      {
+        "id": 4,
+        "nombre": "Emostatic",
+        "descripcion": "Cauterizador coagulante 10 ML",
+        "unidad_medida": "Aplicacion",
+        "stock_actual": 88,
+        "stock_critico": 80,
+        "ultima_actualizacion": "2025-06-01 00:45:49.45217+00",
+        "fecha_vencimiento": "2026-10-10",
+        "valor_unitario": 215
+      },
+      {
+        "id": 10,
+        "nombre": "Cemento quirurgico",
+        "descripcion": "Cemento quirurgico",
+        "unidad_medida": "Aplicaciones",
+        "stock_actual": 118,
+        "stock_critico": 100,
+        "ultima_actualizacion": "2025-06-01 00:45:49.457755+00",
+        "fecha_vencimiento": "2027-04-30",
+        "valor_unitario": 150
+      },
+      {
+        "id": 8,
+        "nombre": "Mascarillas facial",
+        "descripcion": "",
+        "unidad_medida": "Unidad",
+        "stock_actual": 149,
+        "stock_critico": 50,
+        "ultima_actualizacion": "2025-06-01 00:45:49.466812+00",
+        "fecha_vencimiento": "2999-12-30",
+        "valor_unitario": 20
+      },
+      {
+        "id": 9,
+        "nombre": "Lidocaina spray",
+        "descripcion": "Anestesia en spray",
+        "unidad_medida": "Aplicacion",
+        "stock_actual": 29,
+        "stock_critico": 60,
+        "ultima_actualizacion": "2025-06-01 01:04:07.458229+00",
+        "fecha_vencimiento": "2025-06-30",
+        "valor_unitario": 200
+      }
+    ],
+    "insumos_movimientoinsumo": [
+      {
+        "id": 1,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #1",
+        "fecha_movimiento": "2025-05-31 23:14:40.258596+00",
+        "insumo_id": 1,
+        "usuario_id": 1
+      },
+      {
+        "id": 2,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-05-31 23:48:30.030646+00",
+        "insumo_id": 1,
+        "usuario_id": 1
+      },
+      {
+        "id": 3,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-05-31 23:48:30.04082+00",
+        "insumo_id": 2,
+        "usuario_id": 1
+      },
+      {
+        "id": 4,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-05-31 23:52:02.710407+00",
+        "insumo_id": 1,
+        "usuario_id": 1
+      },
+      {
+        "id": 5,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-05-31 23:52:02.718119+00",
+        "insumo_id": 2,
+        "usuario_id": 1
+      },
+      {
+        "id": 6,
+        "cantidad": 2,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-05-31 23:52:02.723063+00",
+        "insumo_id": 3,
+        "usuario_id": 1
+      },
+      {
+        "id": 7,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:22:05.727558+00",
+        "insumo_id": 1,
+        "usuario_id": 1
+      },
+      {
+        "id": 8,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:22:05.736504+00",
+        "insumo_id": 2,
+        "usuario_id": 1
+      },
+      {
+        "id": 9,
+        "cantidad": 2,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:22:05.740897+00",
+        "insumo_id": 3,
+        "usuario_id": 1
+      },
+      {
+        "id": 10,
+        "cantidad": 4,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:22:05.744898+00",
+        "insumo_id": 3,
+        "usuario_id": 1
+      },
+      {
+        "id": 11,
+        "cantidad": 2,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:22:05.749327+00",
+        "insumo_id": 6,
+        "usuario_id": 1
+      },
+      {
+        "id": 12,
+        "cantidad": 6,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:22:05.753648+00",
+        "insumo_id": 5,
+        "usuario_id": 1
+      },
+      {
+        "id": 13,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:22:05.758458+00",
+        "insumo_id": 7,
+        "usuario_id": 1
+      },
+      {
+        "id": 14,
+        "cantidad": 6,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:22:05.762681+00",
+        "insumo_id": 4,
+        "usuario_id": 1
+      },
+      {
+        "id": 15,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:45:49.425265+00",
+        "insumo_id": 1,
+        "usuario_id": 1
+      },
+      {
+        "id": 16,
+        "cantidad": 2,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:45:49.434147+00",
+        "insumo_id": 3,
+        "usuario_id": 1
+      },
+      {
+        "id": 17,
+        "cantidad": 2,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:45:49.438573+00",
+        "insumo_id": 6,
+        "usuario_id": 1
+      },
+      {
+        "id": 18,
+        "cantidad": 6,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:45:49.442928+00",
+        "insumo_id": 5,
+        "usuario_id": 1
+      },
+      {
+        "id": 19,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:45:49.447016+00",
+        "insumo_id": 7,
+        "usuario_id": 1
+      },
+      {
+        "id": 20,
+        "cantidad": 6,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:45:49.451424+00",
+        "insumo_id": 4,
+        "usuario_id": 1
+      },
+      {
+        "id": 21,
+        "cantidad": 2,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:45:49.456804+00",
+        "insumo_id": 10,
+        "usuario_id": 1
+      },
+      {
+        "id": 22,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:45:49.461402+00",
+        "insumo_id": 9,
+        "usuario_id": 1
+      },
+      {
+        "id": 23,
+        "cantidad": 1,
+        "tipo_movimiento": "salida",
+        "motivo": "Uso en ficha clínica #2",
+        "fecha_movimiento": "2025-06-01 00:45:49.465778+00",
+        "insumo_id": 8,
+        "usuario_id": 1
+      }
+    ],
+    "pacientes_fichaclinica": [
+      {
+        "id": 1,
+        "fecha": "2025-05-31",
+        "descripcion_atencion": "Onicomicosis",
+        "procedimiento": "Limpieza",
+        "indicaciones": "NP27",
+        "proxima_sesion_estimada": null,
+        "cita_id": null,
+        "paciente_id": 1,
+        "costo_total": 300
+      },
+      {
+        "id": 3,
+        "fecha": "2025-06-10",
+        "descripcion_atencion": "traumatismo por golpe en falangina del 1° ortejo derecho ,que se encontraba en tratamiento por padecer las dos siguientes patologías : Onicocriptosis recurrente \\lamina involutada.",
+        "procedimiento": "se realiza limpieza  y desinfeccion , retiro de lo dañado aplicado de cemento quirurgico en bordes periungueales zona dañada extendiendola tapando toda la lamina",
+        "indicaciones": "Se recomienda mantener reposo sin uso de calzado ajustado por tres dias",
+        "proxima_sesion_estimada": null,
+        "cita_id": null,
+        "paciente_id": 28,
+        "costo_total": 0
+      },
+      {
+        "id": 2,
+        "fecha": "2025-05-31",
+        "descripcion_atencion": "Control de Onicocriptosis",
+        "procedimiento": "Retiro de cemento quirurgico, se observa exsudacion maseracion y material purulento",
+        "indicaciones": "Aplicar NP27  2 veces al dia, realizar revision y hacer presion en laminas dañadas, se recomendo tomar amoxicilina",
+        "proxima_sesion_estimada": null,
+        "cita_id": null,
+        "paciente_id": 3,
+        "costo_total": 2362
+      }
+    ],
+    "pacientes_paciente": [
+      {
+        "id": 1,
+        "rut": "13.214.488-5",
+        "nombre": "Pablo Urra Alvarez",
+        "telefono": "+56944499976",
+        "correo": "pablo.urra@hotamil.com",
+        "enfermedad_base": "Onicomicosis",
+        "contacto_emergencia": "+56996497056",
+        "caso_clinico": "Limpieza por Onicomicosis",
+        "fecha_registro": "2025-05-31 23:08:32.699286+00",
+        "direccion": "Caracoles 122",
+        "fecha_nacimiento": "1977-08-29"
+      },
+      {
+        "id": 2,
+        "rut": "16.287.649-K",
+        "nombre": "Katherine Vasquez Valdivia",
+        "telefono": "+56996497056",
+        "correo": "agro.kathy@gmail.com",
+        "enfermedad_base": "No Aplica",
+        "contacto_emergencia": "+56944499976",
+        "caso_clinico": "No Aplica",
+        "fecha_registro": "2025-05-31 23:17:29.045087+00",
+        "direccion": "Av. Santa Cruz 490 Casa 52, La Cruz",
+        "fecha_nacimiento": "1985-10-28"
+      },
+      {
+        "id": 3,
+        "rut": "20.796.485-9",
+        "nombre": "Cristian Perez",
+        "telefono": "+56995973869",
+        "correo": "perezrojocristian@gmail.com",
+        "enfermedad_base": "Sano",
+        "contacto_emergencia": "+56982034599",
+        "caso_clinico": "Onicocriptosis severa recurrente",
+        "fecha_registro": "2025-05-31 23:33:58.279415+00",
+        "direccion": "12 de Octubre 975, Quillota",
+        "fecha_nacimiento": "2002-03-29"
+      },
+      {
+        "id": 5,
+        "rut": "21.101.757-0",
+        "nombre": "Javier Urra Araya",
+        "telefono": "+569444499976",
+        "correo": "pablo.urra@hotmail.com",
+        "enfermedad_base": "Ninguna",
+        "contacto_emergencia": "+56944499976",
+        "caso_clinico": "Onicomicosis",
+        "fecha_registro": "2025-06-10 17:29:54.188203+00",
+        "direccion": "Caracoles 122, La Cruz",
+        "fecha_nacimiento": "2002-10-10"
+      },
+      {
+        "id": 10,
+        "rut": "12.820.313-3",
+        "nombre": "rosa margarita valenzuela zoto",
+        "telefono": "+56946669491",
+        "correo": "rvalenzuelazoto4@gmail.com",
+        "enfermedad_base": "sana",
+        "contacto_emergencia": "+56946669491",
+        "caso_clinico": "onicocriptosis \\lamina involiutada",
+        "fecha_registro": "2025-06-11 03:30:41.847214+00",
+        "direccion": "av.santa cruz#418 la cruz",
+        "fecha_nacimiento": "1975-03-31"
+      },
+      {
+        "id": 9,
+        "rut": "5.380.331-8",
+        "nombre": "gabriel enrrique ordenes briones",
+        "telefono": "+56992604008",
+        "correo": "walterbustos27@hotmail.com",
+        "enfermedad_base": "hipertension",
+        "contacto_emergencia": "+56966008648",
+        "caso_clinico": "onicomicosis\\dermatomicosis interdigital",
+        "fecha_registro": "2025-06-11 03:25:02.147446+00",
+        "direccion": "camino troncal paradero22 y medio    la cruz",
+        "fecha_nacimiento": "1946-01-22"
+      },
+      {
+        "id": 24,
+        "rut": "16.018.498-1",
+        "nombre": "gonzalo andres lorca zoto",
+        "telefono": "´+56999408275",
+        "correo": "gonzalolorca1985@gmail.com",
+        "enfermedad_base": "sano",
+        "contacto_emergencia": "+56999408275",
+        "caso_clinico": "onicogrifosis\\onicocriptosis",
+        "fecha_registro": "2025-06-11 14:23:00.048125+00",
+        "direccion": "av. 21 de mayo 2049 #54",
+        "fecha_nacimiento": "1985-07-15"
+      },
+      {
+        "id": 25,
+        "rut": "3.765.578-3",
+        "nombre": "silvio alfredo meza gonzales",
+        "telefono": "+56997736370",
+        "correo": "rosa.villalon1954@gmail.com",
+        "enfermedad_base": "insuficiencia cardiaca \\diabetes\\hipertension",
+        "contacto_emergencia": "+56997736370",
+        "caso_clinico": "onicomicosis",
+        "fecha_registro": "2025-06-11 14:46:45.301047+00",
+        "direccion": "calle 3 # 226  bolonia la cruz",
+        "fecha_nacimiento": "1935-08-04"
+      },
+      {
+        "id": 26,
+        "rut": "7.591.561-6",
+        "nombre": "rosa elvira villalon navarro",
+        "telefono": "+56997736370",
+        "correo": "rosa.villalon1954@gmail.com",
+        "enfermedad_base": "hipertension\\ diabetes",
+        "contacto_emergencia": "+56997736370",
+        "caso_clinico": "onicomicosis",
+        "fecha_registro": "2025-06-11 14:52:33.554709+00",
+        "direccion": "calle 3 #226 bolonia  la cruz",
+        "fecha_nacimiento": "1954-06-17"
+      },
+      {
+        "id": 6,
+        "rut": "12.602.275-1",
+        "nombre": "Walter Eduardo Bustos Ordenes",
+        "telefono": "+56966008648",
+        "correo": "walterbustos27@hotmail.com",
+        "enfermedad_base": "TRANSTORNO MOTRISIDAD",
+        "contacto_emergencia": "+56966008648",
+        "caso_clinico": "DERMATOMICOSIS  INTERDIJITAL-PLANTAL\\HIPERQUERATOSIS\\ONICOMICOSIS\\HELOMAS",
+        "fecha_registro": "2025-06-11 01:46:54.451468+00",
+        "direccion": "TRONCAL7806 PARADERO 23  LA CRUZ",
+        "fecha_nacimiento": "1974-10-31"
+      },
+      {
+        "id": 7,
+        "rut": "6.279.113-6",
+        "nombre": "Alejandrina del Trancito Zamora Vargas",
+        "telefono": "+56939378173",
+        "correo": "esmeraldapodoclinica@gmail.com",
+        "enfermedad_base": "diabetes cardiopatia",
+        "contacto_emergencia": "+56939378173",
+        "caso_clinico": "uñas involutas dermatomicosis interdigital",
+        "fecha_registro": "2025-06-11 02:17:59.905682+00",
+        "direccion": "alonso ercilla villa camino el sol 2 #55 la cruz",
+        "fecha_nacimiento": "1943-09-25"
+      },
+      {
+        "id": 8,
+        "rut": "11.451.599-K",
+        "nombre": "Jose Braulio Olivares Mora",
+        "telefono": "+56959884984",
+        "correo": "jolygenchy@gmail.com",
+        "enfermedad_base": "hipertencion",
+        "contacto_emergencia": "+56959884984",
+        "caso_clinico": "onicocriptosis recurrente \\lamina involuta severa dermatomicosis interdigital - planta del pie",
+        "fecha_registro": "2025-06-11 03:15:21.759659+00",
+        "direccion": "caletera 6 oriente parcela 1 santa lucia pocochay la cruz",
+        "fecha_nacimiento": "1969-02-14"
+      },
+      {
+        "id": 11,
+        "rut": "11.387.618-2",
+        "nombre": "Juan Carlos Iglesias Marchant",
+        "telefono": "+56997077185",
+        "correo": "esmeraldapodoclinica@gmail.com",
+        "enfermedad_base": "sano",
+        "contacto_emergencia": "+56997077185",
+        "caso_clinico": "onicomicosis \\hiperqueratosis",
+        "fecha_registro": "2025-06-11 03:46:49.143747+00",
+        "direccion": "francisco bilbao#160 villa el bosque la cruz",
+        "fecha_nacimiento": "1969-03-20"
+      },
+      {
+        "id": 12,
+        "rut": "18.421.292-7",
+        "nombre": "Javier Ignacio Alvares Peña",
+        "telefono": "+56993828587",
+        "correo": "javieralvares1993@gmail.com",
+        "enfermedad_base": "diabetes\\hipertension",
+        "contacto_emergencia": "+56993828587",
+        "caso_clinico": "onicomicosis-onicocriptosis recurrente -laminas involutadas",
+        "fecha_registro": "2025-06-11 03:53:13.298079+00",
+        "direccion": "villa padre enrrique del rio blok b #104 la cruz",
+        "fecha_nacimiento": "1993-11-12"
+      },
+      {
+        "id": 13,
+        "rut": "10.447.115-3",
+        "nombre": "Julia Adriana Gatica Fuentes",
+        "telefono": "+5694855255",
+        "correo": "hector.gallardo.g@hotmail.com",
+        "enfermedad_base": "hipertension\\diabetes\\epilepcia\\asma\\tiroides",
+        "contacto_emergencia": "+5694855255",
+        "caso_clinico": "lamina involuta\\helomas\\dermatomicosis",
+        "fecha_registro": "2025-06-11 04:19:42.773075+00",
+        "direccion": "alonso de ercilla y zuñiga #81 villa camiño el sol la cruz",
+        "fecha_nacimiento": "1965-04-09"
+      },
+      {
+        "id": 14,
+        "rut": "12.508.242-4",
+        "nombre": "Nadia Leonora Rojo Estay",
+        "telefono": "+56982034599",
+        "correo": "nadiarojoestay4394@gmail.com",
+        "enfermedad_base": "sana (cancer)",
+        "contacto_emergencia": "+569822034599",
+        "caso_clinico": "uñas involutas \\helomas \\hiperqueratosis\\dermatomicosis\\allux valgus rigidos",
+        "fecha_registro": "2025-06-11 04:29:19.045819+00",
+        "direccion": "pasaje 12 de octubre #975 poblacion reyes catolicos quillota",
+        "fecha_nacimiento": "1972-04-19"
+      },
+      {
+        "id": 15,
+        "rut": "13.993.329-K",
+        "nombre": "Ramiro Gonsalo Olivares Castro",
+        "telefono": "+56983313415",
+        "correo": "castrofrut@gmail.com",
+        "enfermedad_base": "sano",
+        "contacto_emergencia": "+56983313415",
+        "caso_clinico": "onicocriptosis \\onicomicosis",
+        "fecha_registro": "2025-06-11 04:37:51.977661+00",
+        "direccion": "av.21 de mayo # 2798",
+        "fecha_nacimiento": "1981-04-08"
+      },
+      {
+        "id": 16,
+        "rut": "5.448.728-2",
+        "nombre": "Gladis Covili Ruiz",
+        "telefono": "+56984596377",
+        "correo": "esmeraldapodoclinica@gmail.com",
+        "enfermedad_base": "tiroides",
+        "contacto_emergencia": "+56984596377",
+        "caso_clinico": "onicocriptosis\\laminas involutas",
+        "fecha_registro": "2025-06-11 04:44:35.039731+00",
+        "direccion": "caracoles #50 condominio  puerta de alcala  #1",
+        "fecha_nacimiento": "1943-08-29"
+      },
+      {
+        "id": 17,
+        "rut": "23.207.788-3",
+        "nombre": "Nelson Alexander Cisternas Rojas",
+        "telefono": "+56932254663",
+        "correo": "nelsoncisternas116@gmail.com",
+        "enfermedad_base": "cardiopatia congenita \\riñon poliquistico",
+        "contacto_emergencia": "+56932254663",
+        "caso_clinico": "onicocriptosis recurrente \\dermatomicosis interdigital",
+        "fecha_registro": "2025-06-11 04:58:11.498+00",
+        "direccion": "poblacion santa rosa calle 5 oriente #501 la cruz",
+        "fecha_nacimiento": "2009-12-22"
+      },
+      {
+        "id": 18,
+        "rut": "13.186.849-9",
+        "nombre": "monica isabel contreras pino",
+        "telefono": "+56997106194",
+        "correo": "esmeraldapodoclinica@gimail.com",
+        "enfermedad_base": "sana",
+        "contacto_emergencia": "+56997106194",
+        "caso_clinico": "onicomicosis \\uñas involutas",
+        "fecha_registro": "2025-06-11 13:27:25.900788+00",
+        "direccion": "los geraneos #5 villa jardines de la cruz comuna la cruz",
+        "fecha_nacimiento": "1977-01-07"
+      },
+      {
+        "id": 19,
+        "rut": "5.001.405-3",
+        "nombre": "teresa de jesus contreras lopes",
+        "telefono": "+56984006568",
+        "correo": "esmeraldapodoclinica@gmail.com",
+        "enfermedad_base": "hipertencion\\insuficiencia renal\\insuficiencia cardiaca",
+        "contacto_emergencia": "+56984006568",
+        "caso_clinico": "onicomicosis \\uñas involutas",
+        "fecha_registro": "2025-06-11 13:37:18.050219+00",
+        "direccion": "los geraneos #07 villa jardines de la cruz comuna de la cruz",
+        "fecha_nacimiento": "1964-10-16"
+      },
+      {
+        "id": 20,
+        "rut": "19.045.038-4",
+        "nombre": "patricio alejandro rivera gaete",
+        "telefono": "+569799233260",
+        "correo": "patricioalejandroriveragaete@gmail.com",
+        "enfermedad_base": "sano",
+        "contacto_emergencia": "+56979233260",
+        "caso_clinico": "onicocriptosis recurrente\\uñas involutas",
+        "fecha_registro": "2025-06-11 13:43:55.901184+00",
+        "direccion": "av.21 de mayo #2040",
+        "fecha_nacimiento": "1996-05-04"
+      },
+      {
+        "id": 21,
+        "rut": "9.542.018-4",
+        "nombre": "julio enrrique galleguillos miranda",
+        "telefono": "+56939021802",
+        "correo": "likke.miranda6419@gmail.com",
+        "enfermedad_base": "sano",
+        "contacto_emergencia": "+56985433364",
+        "caso_clinico": "pie valgo\\uñas involutas",
+        "fecha_registro": "2025-06-11 13:49:28.722084+00",
+        "direccion": "villa el bosque calle serguio jorquera #65 la cruz",
+        "fecha_nacimiento": "1964-09-24"
+      },
+      {
+        "id": 22,
+        "rut": "19.761.144-8",
+        "nombre": "agustin maximiliano arias mena",
+        "telefono": "+56933787030",
+        "correo": "agustin.arias@sansano.usm.cl",
+        "enfermedad_base": "sano",
+        "contacto_emergencia": "+56933787030",
+        "caso_clinico": "hiperqueratosis",
+        "fecha_registro": "2025-06-11 14:00:32.457534+00",
+        "direccion": "coquimbo #11 la calera",
+        "fecha_nacimiento": "1998-08-22"
+      },
+      {
+        "id": 23,
+        "rut": "15.521.150-4",
+        "nombre": "pamela andrea martinez peralta",
+        "telefono": "+56948892169",
+        "correo": "pame-martinez.peralta@gmail.com",
+        "enfermedad_base": "asma\\rinitis",
+        "contacto_emergencia": "+56948892169",
+        "caso_clinico": "onicomicosis\\uñas involutas",
+        "fecha_registro": "2025-06-11 14:15:33.04014+00",
+        "direccion": "villa las palmas pasaje volcan chaiten la cruz",
+        "fecha_nacimiento": "1982-11-22"
+      },
+      {
+        "id": 27,
+        "rut": "22.130.808-5",
+        "nombre": "ricardo rodolfo saavedra meza",
+        "telefono": "+56963576485",
+        "correo": "arimlap.1980@gmail.com",
+        "enfermedad_base": "transtorno general en el desarrollo TDA.",
+        "contacto_emergencia": "+56963576485",
+        "caso_clinico": "limpieza profunda",
+        "fecha_registro": "2025-06-11 15:01:58.838326+00",
+        "direccion": "calle caracoles n°50 departamento #204",
+        "fecha_nacimiento": "2006-06-03"
+      },
+      {
+        "id": 28,
+        "rut": "24.058.106-K",
+        "nombre": "David Antonio Duran Meza",
+        "telefono": "+56963576485",
+        "correo": "airmlap.1980@gmail.com",
+        "enfermedad_base": "sano",
+        "contacto_emergencia": "+56963576485",
+        "caso_clinico": "onicocriptosis recurrente\\lamina involutada",
+        "fecha_registro": "2025-06-11 15:14:06.924574+00",
+        "direccion": "calle caracoles #50 puerta de alcala torre13 #204",
+        "fecha_nacimiento": "2012-09-05"
+      }
+    ],
+    "pacientes_usoproductoenficha": [
+      {
+        "id": 1,
+        "cantidad": 1,
+        "fecha_uso": "2025-05-31 23:14:40.230658+00",
+        "ficha_id": 1,
+        "insumo_id": 1
+      },
+      {
+        "id": 15,
+        "cantidad": 1,
+        "fecha_uso": "2025-06-01 00:45:49.422354+00",
+        "ficha_id": 2,
+        "insumo_id": 1
+      },
+      {
+        "id": 16,
+        "cantidad": 2,
+        "fecha_uso": "2025-06-01 00:45:49.433256+00",
+        "ficha_id": 2,
+        "insumo_id": 3
+      },
+      {
+        "id": 17,
+        "cantidad": 2,
+        "fecha_uso": "2025-06-01 00:45:49.437592+00",
+        "ficha_id": 2,
+        "insumo_id": 6
+      },
+      {
+        "id": 18,
+        "cantidad": 6,
+        "fecha_uso": "2025-06-01 00:45:49.442003+00",
+        "ficha_id": 2,
+        "insumo_id": 5
+      },
+      {
+        "id": 19,
+        "cantidad": 1,
+        "fecha_uso": "2025-06-01 00:45:49.446067+00",
+        "ficha_id": 2,
+        "insumo_id": 7
+      },
+      {
+        "id": 20,
+        "cantidad": 6,
+        "fecha_uso": "2025-06-01 00:45:49.450486+00",
+        "ficha_id": 2,
+        "insumo_id": 4
+      },
+      {
+        "id": 21,
+        "cantidad": 2,
+        "fecha_uso": "2025-06-01 00:45:49.454771+00",
+        "ficha_id": 2,
+        "insumo_id": 10
+      },
+      {
+        "id": 22,
+        "cantidad": 1,
+        "fecha_uso": "2025-06-01 00:45:49.460359+00",
+        "ficha_id": 2,
+        "insumo_id": 9
+      },
+      {
+        "id": 23,
+        "cantidad": 1,
+        "fecha_uso": "2025-06-01 00:45:49.464854+00",
+        "ficha_id": 2,
+        "insumo_id": 8
+      }
+    ],
+    "usuarios_usuario": [
+      {
+        "id": 1,
+        "password": "pbkdf2_sha256$600000$eaAc43KXuDwaXN2ULC4GvY$VEAzuIkPYlihiOIT6ZXTzPDMEoVrJQCPJ8oqVJJGGtM=",
+        "last_login": null,
+        "is_superuser": true,
+        "username": "admin",
+        "first_name": "",
+        "last_name": "",
+        "email": "admin@example.com",
+        "is_staff": true,
+        "is_active": true,
+        "date_joined": "2025-05-31 22:57:32.496425+00",
+        "rol": "profesional"
+      }
+    ],
+    "usuarios_usuario_groups": [],
+    "usuarios_usuario_user_permissions": []
+  }

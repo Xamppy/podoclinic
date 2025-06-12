@@ -23,7 +23,7 @@ from django.http import JsonResponse, HttpResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
-from .views import database_backup, database_restore
+# from .views import database_backup, database_restore
 
 # Vista para manejar 404 en rutas de API
 def api_not_found(request):
@@ -47,8 +47,7 @@ urlpatterns = [
     path('api/citas/', include('citas.urls')),
     path('api/insumos/', include('insumos.urls')),
     path('api/usuarios/', include('usuarios.urls')),
-    path('api/database/backup/', database_backup, name='database_backup'),
-    path('api/database/restore/', database_restore, name='database_restore'),
+    path('api/database/', include('pacientes.urls')),
     path('favicon.ico', favicon_view),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

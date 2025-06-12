@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { citasService } from '../api/citas';
 import { insumosService } from '../api/insumos';
 import axiosInstance from '../api/axios';
-import { format, differenceInYears } from 'date-fns';
+import { format, differenceInYears, parseISO } from 'date-fns';
 import es from 'date-fns/locale/es';
 import { formatInTimeZone } from 'date-fns-tz';
 
@@ -94,14 +94,27 @@ const DashboardPage = () => {
 
   // Función para formatear la fecha
   const formatearFecha = (fecha) => {
-    return format(new Date(fecha), "EEEE d 'de' MMMM", { locale: es });
+    try {
+      // Usar parseISO para interpretar correctamente la fecha sin problemas de timezone
+      const date = parseISO(fecha);
+      return format(date, "EEEE d 'de' MMMM", { locale: es });
+    } catch (error) {
+      console.error('Error al formatear fecha:', error, fecha);
+      return fecha; // Devolver la fecha original si hay error
+    }
   };
 
   const calcularEdad = (fechaNacimiento) => {
     if (!fechaNacimiento) return null;
-    const fechaNac = new Date(fechaNacimiento);
-    const edad = differenceInYears(new Date(), fechaNac);
-    return edad;
+    try {
+      // Usar parseISO para interpretar correctamente la fecha sin problemas de timezone
+      const fechaNac = parseISO(fechaNacimiento);
+      const edad = differenceInYears(new Date(), fechaNac);
+      return edad;
+    } catch (error) {
+      console.error('Error al calcular edad:', error, fechaNacimiento);
+      return null;
+    }
   };
 
   if (loading) {
@@ -142,7 +155,7 @@ const DashboardPage = () => {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Citas del Día</h2>
             <p className="text-sm text-gray-600 capitalize">
-              {formatearFecha(new Date())}
+              {format(new Date(), "EEEE d 'de' MMMM", { locale: es })}
             </p>
           </div>
           

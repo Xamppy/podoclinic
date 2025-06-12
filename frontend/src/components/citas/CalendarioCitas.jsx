@@ -844,7 +844,7 @@ const CalendarioCitas = () => {
           <div className="relative p-6 border w-full max-w-md shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-gray-900">
-                Nueva Cita - {format(selectedDate, 'dd/MM/yyyy')}
+                Nueva Cita - {selectedDate ? format(selectedDate, 'dd/MM/yyyy') : 'Fecha no seleccionada'}
               </h3>
               <button 
                 className="text-gray-500 hover:text-gray-700"

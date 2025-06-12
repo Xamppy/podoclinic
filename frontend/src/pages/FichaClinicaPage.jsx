@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { pacientesService } from '../api/pacientes';
 import { insumosService } from '../api/insumos';
-import { differenceInYears } from 'date-fns';
+import { differenceInYears, parseISO, format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const FichaClinicaPage = () => {
   const [pacientes, setPacientes] = useState([]);
@@ -213,16 +214,34 @@ const FichaClinicaPage = () => {
   };
 
   const filteredPacientes = pacientes.filter(paciente => {
-    const searchTermLimpio = limpiarRut(searchTerm);
-    const rutPacienteLimpio = limpiarRut(paciente.rut);
+    const searchTermLower = searchTerm.toLowerCase().trim();
     
-    return paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           rutPacienteLimpio.includes(searchTermLimpio);
+    // Si el término de búsqueda está vacío, mostrar todos
+    if (!searchTermLower) return true;
+    
+    // Filtrar por nombre (siempre buscar en el nombre)
+    const nombreMatch = paciente.nombre.toLowerCase().includes(searchTermLower);
+    
+    // Filtrar por RUT solo si el término de búsqueda contiene números o 'k'
+    let rutMatch = false;
+    if (/[0-9kK]/.test(searchTerm)) {
+      const searchTermLimpio = limpiarRut(searchTerm);
+      const rutPacienteLimpio = limpiarRut(paciente.rut);
+      rutMatch = rutPacienteLimpio.includes(searchTermLimpio);
+    }
+    
+    return nombreMatch || rutMatch;
   });
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('es-ES', options);
+    try {
+      // Usar parseISO para interpretar correctamente la fecha sin problemas de timezone
+      const date = parseISO(dateString);
+      return format(date, "d 'de' MMMM 'de' yyyy", { locale: es });
+    } catch (error) {
+      console.error('Error al formatear fecha:', error, dateString);
+      return dateString; // Devolver la fecha original si hay error
+    }
   };
 
   const handleGenerarCertificado = () => {
@@ -244,9 +263,15 @@ const FichaClinicaPage = () => {
 
   const calcularEdad = (fechaNacimiento) => {
     if (!fechaNacimiento) return null;
-    const fechaNac = new Date(fechaNacimiento);
-    const edad = differenceInYears(new Date(), fechaNac);
-    return edad;
+    try {
+      // Usar parseISO para interpretar correctamente la fecha sin problemas de timezone
+      const fechaNac = parseISO(fechaNacimiento);
+      const edad = differenceInYears(new Date(), fechaNac);
+      return edad;
+    } catch (error) {
+      console.error('Error al calcular edad:', error, fechaNacimiento);
+      return null;
+    }
   };
 
   const agregarProducto = () => {
@@ -890,7 +915,7 @@ const FichaClinicaPage = () => {
             {/* Sección visible solo en pantalla */}
             <div className="print:hidden">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Generar Certificado Médico</h3>
+                <h3 className="text-lg font-medium text-gray-900">Generar Certificado</h3>
                 <div className="flex space-x-2">
                   <button
                     onClick={handlePrintCertificado}
@@ -957,7 +982,7 @@ const FichaClinicaPage = () => {
               </div>
             </div>
 
-            {/* Certificado Médico (visible en pantalla e impresión) */}
+            {/* Certificado (visible en pantalla e impresión) */}
             <div className="bg-white p-8 max-w-4xl mx-auto print:p-0 print:shadow-none certificado-contenedor" style={{ position: 'relative' }}>
               <img
                 src={`${process.env.PUBLIC_URL}/logo-podoclinic.png`}
@@ -966,7 +991,7 @@ const FichaClinicaPage = () => {
               />
               <div style={{ marginLeft: 0, marginTop: 0 }}>
               <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold mb-2">CERTIFICADO MÉDICO PODOLÓGICO</h1>
+                <h1 className="text-2xl font-bold mb-2">CERTIFICADO PODOLÓGICO</h1>
                 <p className="text-gray-600">{
                   certificadoData.tipo_certificado === 'deportivo' ? '(APTITUD DEPORTIVA)' :
                   certificadoData.tipo_certificado === 'laboral' ? '(APTITUD LABORAL)' : ''
@@ -975,7 +1000,7 @@ const FichaClinicaPage = () => {
 
               <div className="mb-8">
                 <p className="mb-4">
-                  El/la profesional que suscribe certifica que:
+                  La profesional que suscribe certifica que:
                 </p>
                 <p className="mb-4">
                   Don/Doña <strong>{selectedPaciente.nombre}</strong>, 
@@ -1005,7 +1030,7 @@ const FichaClinicaPage = () => {
               </div>
 
               <div className="text-center mb-8">
-                <p>Santiago, {formatDate(new Date())}</p>
+                <p>La Cruz, {format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es })}</p>
               </div>
 
               <div className="mt-16 pt-8 border-t border-gray-300">
@@ -1017,7 +1042,7 @@ const FichaClinicaPage = () => {
                   <p>Podóloga</p>
                   <p>RUT: 10.925.406-1</p>
                   <p>ROL: N° 3578</p>
-                  <p>VILLA EL BOSQUE - ALCALDE SERGIO JORQUERA N°65, LA CRUZ</p>
+                  <p>VILLA EL BOSQUE - ALCALDE SERGIO JORQUERA N°65, LA CRUZ, REGIÓN DE VALPARAÍSO</p>
                 </div>
               </div>
             </div>
