@@ -15,6 +15,8 @@ from django.conf import settings
 from django.template.loader import render_to_string
 import logging
 import shutil
+import os
+
 
 # Vista separada para crear citas desde el admin (sin ViewSet)
 @api_view(['POST'])
@@ -103,6 +105,18 @@ def crear_cita_admin(request):
             duracion_extendida=data.get('duracion_extendida', False),
             duracion_cita=data.get('duracion_cita', 60)  # Por defecto 60 minutos
         )
+        
+        # TODO: Implementar envío de email cuando se configure Mailgun
+        # success, message = send_email(
+        #     to_email=cita.paciente.email,
+        #     subject='Nueva Cita Agendada - Podoclinic',
+        #     template_name='usuarios/email/notificacion_cita.html',
+        #     context=context
+        # )
+        # 
+        # if not success:
+        #     print(f"Error al enviar email: {message}")
+        print(f"Cita creada para {cita.paciente.nombre} - Email pendiente de configuración")
         
         # Devolver la respuesta
         serializer = CitaSerializer(cita)
@@ -198,6 +212,18 @@ class CitaViewSet(viewsets.ModelViewSet):
                 tipo_cita=data.get('tipo_cita', 'podologia'),  # Guardar el tipo de cita
                 duracion_extendida=data.get('duracion_extendida', False)  # Guardar si la cita requiere 2 horas
             )
+            
+            # TODO: Implementar envío de email cuando se configure Mailgun
+            # success, message = send_email(
+            #     to_email=cita.paciente.email,
+            #     subject='Nueva Cita Agendada - Podoclinic',
+            #     template_name='usuarios/email/notificacion_cita.html',
+            #     context=context
+            # )
+            # 
+            # if not success:
+            #     print(f"Error al enviar email: {message}")
+            print(f"Cita creada para {cita.paciente.nombre} - Email pendiente de configuración")
             
             # Devolver la respuesta
             serializer = self.get_serializer(cita)
@@ -306,7 +332,7 @@ def test_email(request):
         send_mail(
             subject="Correo de Prueba - PodoClinic",
             message=mensaje_texto,
-            from_email=settings.EMAIL_FROM,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
             html_message=mensaje_html,
             fail_silently=False,
@@ -321,7 +347,7 @@ def test_email(request):
                 'EMAIL_HOST': settings.EMAIL_HOST,
                 'EMAIL_PORT': settings.EMAIL_PORT,
                 'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
-                'EMAIL_FROM': settings.EMAIL_FROM
+                'DEFAULT_FROM_EMAIL': settings.DEFAULT_FROM_EMAIL
             }
         })
         
@@ -334,7 +360,7 @@ def test_email(request):
                 'EMAIL_HOST': settings.EMAIL_HOST,
                 'EMAIL_PORT': settings.EMAIL_PORT,
                 'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
-                'EMAIL_FROM': settings.EMAIL_FROM
+                'DEFAULT_FROM_EMAIL': settings.DEFAULT_FROM_EMAIL
             }
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -409,7 +435,7 @@ def test_email_paciente(request):
             send_mail(
                 subject="Correo de Prueba para Paciente - PodoClinic (MODO DEBUG)",
                 message=mensaje_texto,
-                from_email=settings.EMAIL_FROM,
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[paciente.correo],
                 html_message=mensaje_html,
                 fail_silently=False,
@@ -426,9 +452,9 @@ def test_email_paciente(request):
                 email = EmailMultiAlternatives(
                     subject="Correo de Prueba para Paciente - PodoClinic",
                     body=mensaje_texto,
-                    from_email=settings.EMAIL_FROM,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[paciente.correo],
-                    reply_to=[settings.EMAIL_FROM],
+                    reply_to=[settings.DEFAULT_FROM_EMAIL],
                     headers={'X-PodoClinic-Test': 'True'}
                 )
                 
@@ -436,7 +462,7 @@ def test_email_paciente(request):
                 email.attach_alternative(mensaje_html, "text/html")
                 
                 # Intento de envío con detalles
-                logger.info(f"Configuración correo: FROM={settings.EMAIL_FROM}, TO={paciente.correo}")
+                logger.info(f"Configuración correo: FROM={settings.DEFAULT_FROM_EMAIL}, TO={paciente.correo}")
                 result = email.send(fail_silently=False)
                 logger.info(f"Resultado de envío: {result}")
             except Exception as e:
@@ -445,7 +471,7 @@ def test_email_paciente(request):
                 send_mail(
                     subject="Correo de Prueba para Paciente (alternativo) - PodoClinic",
                     message=mensaje_texto,
-                    from_email=settings.EMAIL_FROM,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[paciente.correo],
                     html_message=mensaje_html,
                     fail_silently=False,
@@ -469,7 +495,7 @@ def test_email_paciente(request):
                 'EMAIL_HOST': settings.EMAIL_HOST,
                 'EMAIL_PORT': settings.EMAIL_PORT,
                 'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
-                'EMAIL_FROM': settings.EMAIL_FROM,
+                'DEFAULT_FROM_EMAIL': settings.DEFAULT_FROM_EMAIL,
                 'EMAIL_DEBUG': getattr(settings, 'EMAIL_DEBUG', False),
                 'BACKEND': settings.EMAIL_BACKEND
             }
@@ -484,12 +510,50 @@ def test_email_paciente(request):
                 'EMAIL_HOST': settings.EMAIL_HOST,
                 'EMAIL_PORT': settings.EMAIL_PORT,
                 'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
-                'EMAIL_FROM': settings.EMAIL_FROM
+                'DEFAULT_FROM_EMAIL': settings.DEFAULT_FROM_EMAIL
             }
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def crear_cita(request):
+    try:
+        # ... existing code ...
+        
+        # Después de crear la cita exitosamente
+        if cita.paciente.email:
+            # Preparar el contexto para el email
+            context = {
+                'titulo': 'Nueva Cita Agendada',
+                'mensaje': f'Hola {cita.paciente.nombre}, tu cita ha sido agendada exitosamente.',
+                'detalles_cita': {
+                    'fecha': cita.fecha,
+                    'hora': cita.hora,
+                    'tipo_cita': cita.get_tipo_cita_display(),
+                    'tipo_tratamiento': cita.tipo_tratamiento
+                },
+                'accion_url': f'{settings.FRONTEND_URL}/citas/{cita.id}',
+                'accion_texto': 'Ver detalles de la cita'
+            }
+            
+            # Enviar email
+            success, message = send_email(
+                to_email=cita.paciente.email,
+                subject='Nueva Cita Agendada - Podoclinic',
+                template_name='usuarios/email/notificacion_cita.html',
+                context=context
+            )
+            
+            if not success:
+                print(f"Error al enviar email: {message}")
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['PUT'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def actualizar_cita(request, cita_id):
     try:
         # Obtener la cita a actualizar
@@ -594,12 +658,58 @@ def actualizar_cita(request, cita_id):
         # Guardar los cambios
         cita.save()
         
+        # Después de actualizar la cita exitosamente
+        if cita.paciente.email:
+            # Preparar el contexto para el email
+            context = {
+                'titulo': 'Cita Actualizada',
+                'mensaje': f'Hola {cita.paciente.nombre}, tu cita ha sido actualizada.',
+                'detalles_cita': {
+                    'fecha': cita.fecha,
+                    'hora': cita.hora,
+                    'tipo_cita': cita.get_tipo_cita_display(),
+                    'tipo_tratamiento': cita.tipo_tratamiento
+                },
+                'accion_url': f'{settings.FRONTEND_URL}/citas/{cita.id}',
+                'accion_texto': 'Ver detalles de la cita'
+            }
+            
+            # Enviar email
+            success, message = send_email(
+                to_email=cita.paciente.email,
+                subject='Cita Actualizada - Podoclinic',
+                template_name='usuarios/email/notificacion_cita.html',
+                context=context
+            )
+            
+            if not success:
+                print(f"Error al enviar email: {message}")
+        
         # Devolver la respuesta
         serializer = CitaSerializer(cita)
         return Response(serializer.data)
         
     except Exception as e:
-        return Response(
-            {'error': f'Error al actualizar la cita: {str(e)}'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def diagnostico_email(request):
+    """
+    Vista para diagnosticar la configuración de email
+    """
+    return Response({
+        'configuracion_email': {
+            'EMAIL_HOST': settings.EMAIL_HOST,
+            'EMAIL_PORT': settings.EMAIL_PORT,
+            'EMAIL_HOST_USER': settings.EMAIL_HOST_USER,
+            'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
+            'DEFAULT_FROM_EMAIL': settings.DEFAULT_FROM_EMAIL,
+            'EMAIL_BACKEND': settings.EMAIL_BACKEND
+        },
+        'variables_entorno': {
+            'EMAIL_HOST_ENV': os.environ.get('EMAIL_HOST', 'NO_DEFINIDA'),
+            'EMAIL_HOST_USER_ENV': os.environ.get('EMAIL_HOST_USER', 'NO_DEFINIDA'),
+            'DEFAULT_FROM_EMAIL_ENV': os.environ.get('DEFAULT_FROM_EMAIL', 'NO_DEFINIDA')
+        }
+    })

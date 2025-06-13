@@ -120,11 +120,45 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Función para renovar el token JWT
+const refreshToken = async () => {
+  try {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      throw new Error('No hay refresh token disponible');
+    }
+    
+    const response = await axios.post('/api/usuarios/auth/refresh/', {
+      refresh: refreshToken
+    }, {
+      withCredentials: true
+    });
+    
+    const { access, refresh } = response.data;
+    localStorage.setItem('authToken', access);
+    if (refresh) {
+      localStorage.setItem('refreshToken', refresh);
+    }
+    
+    return access;
+  } catch (error) {
+    console.error('Error al renovar token:', error);
+    // Si no se puede renovar, limpiar tokens
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    // Redirigir al login
+    window.location.href = '/login';
+    throw error;
+  }
+};
+
 // Interceptor para manejar errores
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     console.error('Error en la petición:', error);
+    
+    const originalRequest = error.config;
     
     // Mejora en el manejo de errores para proporcionar más detalles
     if (error.response) {
@@ -133,26 +167,34 @@ api.interceptors.response.use(
       console.error('Estado HTTP:', error.response.status);
       console.error('Cabeceras:', error.response.headers);
       
-      // Si el error es 401 o 403, podría ser un problema de CSRF
-      if (error.response.status === 401 || error.response.status === 403) {
-        // Intentar obtener un nuevo token CSRF y reintentar la solicitud
-        const originalRequest = error.config;
+      // Si el error es 401, intentar renovar el token JWT
+      if (error.response.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
         
-        // Evitar bucles infinitos
-        if (!originalRequest._retry) {
-          originalRequest._retry = true;
-          try {
-            // Obtener un nuevo token CSRF
-            const newCSRFToken = await fetchCSRFToken();
-            if (newCSRFToken) {
-              // Configurar el nuevo token y reintentar
-              console.log('Reintentando solicitud con nuevo token CSRF');
-              originalRequest.headers['X-CSRFToken'] = newCSRFToken;
-              return api(originalRequest);
-            }
-          } catch (retryError) {
-            console.error('Error al reintentar la solicitud:', retryError);
+        try {
+          const newToken = await refreshToken();
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
+        } catch (refreshError) {
+          console.error('Error al renovar token:', refreshError);
+          return Promise.reject(error);
+        }
+      }
+      
+      // Si el error es 403, podría ser un problema de CSRF
+      if (error.response.status === 403 && !originalRequest._retry) {
+        originalRequest._retry = true;
+        try {
+          // Obtener un nuevo token CSRF
+          const newCSRFToken = await fetchCSRFToken();
+          if (newCSRFToken) {
+            // Configurar el nuevo token y reintentar
+            console.log('Reintentando solicitud con nuevo token CSRF');
+            originalRequest.headers['X-CSRFToken'] = newCSRFToken;
+            return api(originalRequest);
           }
+        } catch (retryError) {
+          console.error('Error al reintentar la solicitud:', retryError);
         }
       }
     } else if (error.request) {

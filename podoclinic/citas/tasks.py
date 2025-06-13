@@ -48,7 +48,7 @@ def enviar_correo_confirmacion_cita(paciente_id, cita_id):
         send_mail(
             subject=asunto,
             message=mensaje_texto,
-            from_email=settings.EMAIL_FROM,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[paciente.correo],
             html_message=mensaje_html,
             fail_silently=False,

@@ -152,6 +152,17 @@ const AdminCitasPage = () => {
     cargarDatos();
   }, [cargarDatos]); // Solo depender de cargarDatos
 
+  const cargarHorariosDisponibles = async (fecha, citaId = null) => {
+    try {
+      const response = await axiosInstance.get(`/citas/horarios-disponibles/?fecha=${fecha}&cita_id=${citaId || ''}`);
+      setHorariosDisponibles(response.data.horarios_disponibles);
+      setHorasOcupadas(response.data.horas_ocupadas);
+    } catch (error) {
+      console.error('Error al cargar horarios disponibles:', error);
+      mostrarNotificacion('Error al cargar horarios disponibles', 'error');
+    }
+  };
+
   const handleSelectSlot = async (slotInfo) => {
     console.log("Slot seleccionado:", slotInfo);
     

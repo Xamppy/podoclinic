@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.template.loader import render_to_string
 from .models import Cita
@@ -61,6 +61,13 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             return
             
         logger.info(f"Enviando correo a: {paciente.correo}")
+        
+        # DIAGNÓSTICO: Mostrar configuración Anymail
+        logger.info(f"=== CONFIGURACIÓN MAILGUN API (ANYMAIL) ===")
+        logger.info(f"Backend: {settings.EMAIL_BACKEND}")
+        logger.info(f"API Key: {'SET' if os.environ.get('MAILGUN_API_KEY') else 'NOT SET'}")
+        logger.info(f"Domain: {os.environ.get('MAILGUN_SENDER_DOMAIN', 'esmeraldapodoclinica.cl')}")
+        logger.info(f"From Email: {settings.DEFAULT_FROM_EMAIL}")
 
         # Buscar el logo en varias ubicaciones posibles
         posibles_rutas = [
@@ -92,13 +99,19 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             except Exception as e:
                 logger.error(f"Error al leer el logo: {str(e)}")
         
+        # CREAR EMAIL CON ANYMAIL (sin configuración manual)
+        logger.info(f"Creando email con Anymail/Mailgun API...")
+        
         # Crear el mensaje de correo electrónico base
         email = EmailMultiAlternatives(
             subject=asunto,
             body=render_to_string('emails/confirmacion_cita_texto.txt', contexto),
-            from_email=settings.EMAIL_FROM,
+            from_email=settings.DEFAULT_FROM_EMAIL,  # Usar configuración global
             to=[paciente.correo]
+            # ¡No necesitamos connection! Anymail maneja todo automáticamente
         )
+        
+        logger.info(f"Email creado exitosamente con Anymail")
         
         # Crear la versión HTML
         html_content = render_to_string('emails/confirmacion_cita.html', contexto)
@@ -133,12 +146,13 @@ def enviar_correo_en_segundo_plano(paciente, cita):
         logger.info(f"Correo de confirmación enviado a {paciente.correo}")
         
     except Exception as e:
-        logger.error(f"Error al enviar correo: {str(e)}")
+        logger.error(f"Error al enviar correo: {str(e)}", exc_info=True)  # exc_info=True da más detalles
 
 @receiver(post_save, sender=Cita)
 def enviar_correo_confirmacion(sender, instance, created, **kwargs):
     """
     Envía un correo electrónico de confirmación cuando se crea una nueva cita
+    CORREGIDO PARA USAR MAILGUN
     """
     if created:  # Solo enviar cuando la cita es nueva
         try:

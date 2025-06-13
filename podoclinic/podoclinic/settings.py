@@ -48,10 +48,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',  # Para blacklist de tokens
     'corsheaders',
     'django_filters',
     'django_celery_results',  # Para almacenar resultados de tareas Celery
     'django_celery_beat',     # Para tareas periódicas con Celery
+    'anymail',                # Django Anymail para Mailgun API
     'pacientes',
     'citas',
     'insumos',
@@ -108,6 +110,16 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = True
 CSRF_COOKIE_NAME = 'csrftoken'
+
+# Configuración de sesiones
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Usar base de datos para sesiones
+SESSION_COOKIE_AGE = 60 * 60 * 8  # 8 horas (28800 segundos)
+SESSION_COOKIE_SECURE = False  # Cambiar a True si usas HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Prevenir acceso desde JavaScript
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_SAVE_EVERY_REQUEST = True  # Renovar sesión en cada request
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # No expirar al cerrar navegador
+SESSION_COOKIE_NAME = 'sessionid'
 
 ROOT_URLCONF = 'podoclinic.urls'
 
@@ -219,10 +231,24 @@ REST_FRAMEWORK = {
 
 # JWT Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),  # 8 horas en lugar de 1
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # 7 días en lugar de 1
+    'ROTATE_REFRESH_TOKENS': True,  # Rotar tokens para mayor seguridad
+    'BLACKLIST_AFTER_ROTATION': True,  # Invalidar tokens antiguos
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JWK_URL': None,
+    'LEEWAY': 0,
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'JTI_CLAIM': 'jti',
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(hours=8),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),
 }
 
 # Configuración de logging
@@ -272,12 +298,16 @@ LOGGING = {
     },
 }
 
-# Configuración de correo electrónico
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_FROM = os.environ.get('EMAIL_FROM', EMAIL_HOST_USER)
-EMAIL_DEBUG = False  # Cambiar a False en producción
+# Configuración de correo electrónico (Mailgun API con Anymail)
+EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Esmeralda <contacto@esmeraldapodoclinica.cl>')
+
+# Configuración de Anymail para Mailgun
+ANYMAIL = {
+    "MAILGUN_API_KEY": os.environ.get('MAILGUN_API_KEY'),
+    "MAILGUN_SENDER_DOMAIN": os.environ.get('MAILGUN_SENDER_DOMAIN', 'esmeraldapodoclinica.cl'),
+    "MAILGUN_API_URL": os.environ.get('MAILGUN_API_URL', 'https://api.mailgun.net/v3'),  # Para cuentas US
+}
+
+# Configuración adicional de Anymail (opcional)
+ANYMAIL_DEBUG_API_REQUESTS = os.environ.get('ANYMAIL_DEBUG', 'False') == 'True'
