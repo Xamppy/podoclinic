@@ -10,6 +10,13 @@ import os
 from datetime import datetime
 from email.mime.image import MIMEImage
 
+# Diccionario de meses en español
+MESES_ESPANOL = {
+    1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
+    5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
+    9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+}
+
 # Configurar el logger
 logger = logging.getLogger(__name__)
 
@@ -22,9 +29,9 @@ def enviar_correo_en_segundo_plano(paciente, cita):
         try:
             if isinstance(cita.fecha, str):
                 fecha_obj = datetime.strptime(cita.fecha, '%Y-%m-%d')
-                fecha_formateada = fecha_obj.strftime('%d de %B de %Y')
+                fecha_formateada = f"{fecha_obj.day} de {MESES_ESPANOL[fecha_obj.month]} de {fecha_obj.year}"
             else:
-                fecha_formateada = cita.fecha.strftime('%d de %B de %Y')
+                fecha_formateada = f"{cita.fecha.day} de {MESES_ESPANOL[cita.fecha.month]} de {cita.fecha.year}"
                 
             if isinstance(cita.hora, str):
                 # Si la hora viene como string, extraer solo la parte de la hora
