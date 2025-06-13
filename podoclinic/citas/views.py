@@ -518,34 +518,14 @@ def test_email_paciente(request):
 @permission_classes([IsAuthenticated])
 def crear_cita(request):
     try:
-        # ... existing code ...
+        # Crear la cita usando el serializer
+        serializer = CitaSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # Después de crear la cita exitosamente
-        if cita.paciente.email:
-            # Preparar el contexto para el email
-            context = {
-                'titulo': 'Nueva Cita Agendada',
-                'mensaje': f'Hola {cita.paciente.nombre}, tu cita ha sido agendada exitosamente.',
-                'detalles_cita': {
-                    'fecha': cita.fecha,
-                    'hora': cita.hora,
-                    'tipo_cita': cita.get_tipo_cita_display(),
-                    'tipo_tratamiento': cita.tipo_tratamiento
-                },
-                'accion_url': f'{settings.FRONTEND_URL}/citas/{cita.id}',
-                'accion_texto': 'Ver detalles de la cita'
-            }
-            
-            # Enviar email
-            success, message = send_email(
-                to_email=cita.paciente.email,
-                subject='Nueva Cita Agendada - Podoclinic',
-                template_name='usuarios/email/notificacion_cita.html',
-                context=context
-            )
-            
-            if not success:
-                print(f"Error al enviar email: {message}")
+        cita = serializer.save()
+        
+        # El email se enviará automáticamente por la señal post_save en signals.py
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
@@ -658,32 +638,7 @@ def actualizar_cita(request, cita_id):
         # Guardar los cambios
         cita.save()
         
-        # Después de actualizar la cita exitosamente
-        if cita.paciente.email:
-            # Preparar el contexto para el email
-            context = {
-                'titulo': 'Cita Actualizada',
-                'mensaje': f'Hola {cita.paciente.nombre}, tu cita ha sido actualizada.',
-                'detalles_cita': {
-                    'fecha': cita.fecha,
-                    'hora': cita.hora,
-                    'tipo_cita': cita.get_tipo_cita_display(),
-                    'tipo_tratamiento': cita.tipo_tratamiento
-                },
-                'accion_url': f'{settings.FRONTEND_URL}/citas/{cita.id}',
-                'accion_texto': 'Ver detalles de la cita'
-            }
-            
-            # Enviar email
-            success, message = send_email(
-                to_email=cita.paciente.email,
-                subject='Cita Actualizada - Podoclinic',
-                template_name='usuarios/email/notificacion_cita.html',
-                context=context
-            )
-            
-            if not success:
-                print(f"Error al enviar email: {message}")
+        # Nota: Para actualizaciones, el email no se envía automáticamente
         
         # Devolver la respuesta
         serializer = CitaSerializer(cita)
