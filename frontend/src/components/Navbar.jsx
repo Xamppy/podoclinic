@@ -11,7 +11,7 @@ const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="text-2xl font-bold text-blue-600">
-                Clínica Podológica Esmeralda
+                Podología Clínica Esmeralda
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -28,7 +28,7 @@ const Navbar = () => {
           <div className="hidden sm:flex sm:items-center">
             <img 
               src={`${process.env.PUBLIC_URL}/logo-podoclinic.png`}
-              alt="Logo Clínica Podológica Esmeralda" 
+              alt="Logo Podología Clínica Esmeralda" 
               className="h-10 w-auto"
             />
           </div>
@@ -68,7 +68,7 @@ const Navbar = () => {
           <div className="flex justify-center pb-3">
             <img 
               src={`${process.env.PUBLIC_URL}/logo-podoclinic.png`}
-              alt="Logo Clínica Podológica Esmeralda" 
+              alt="Logo Podología Clínica Esmeralda" 
               className="h-10 w-auto"
             />
           </div>

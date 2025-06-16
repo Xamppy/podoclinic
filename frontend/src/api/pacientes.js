@@ -7,6 +7,9 @@ export const pacientesService = {
   // Obtener un paciente por RUT
   getByRut: (rut) => api.get(`/pacientes/?rut=${rut}`),
   
+  // Verificar si un RUT ya existe
+  verificarRutExistente: (rut) => api.get(`/pacientes/verificar_rut/?rut=${rut}`),
+  
   // Crear un nuevo paciente usando el endpoint con AllowAny
   create: (pacienteData) => {
     console.log('Enviando datos a crear_paciente_admin:', pacienteData);
@@ -30,7 +33,7 @@ export const pacientesService = {
   },
   
   // Eliminar un paciente
-  delete: (rut) => api.delete(`/pacientes/${rut}/`),
+  delete: (rut) => api.delete(`/pacientes/eliminar_paciente_admin/${rut}/`),
   
   // Obtener ficha clínica
   getFichaClinica: async (rut) => {

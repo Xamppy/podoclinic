@@ -156,6 +156,57 @@ def actualizar_paciente_admin(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+@api_view(['DELETE', 'OPTIONS'])
+@permission_classes([AllowAny])
+def eliminar_paciente_admin(request, rut):
+    """
+    Vista específica para eliminar pacientes por RUT desde la interfaz de administración.
+    No requiere autenticación.
+    """
+    # Manejar solicitudes OPTIONS para CORS
+    if request.method == 'OPTIONS':
+        response = Response()
+        response['Allow'] = 'DELETE, OPTIONS'
+        response['Access-Control-Allow-Methods'] = 'DELETE, OPTIONS'
+        response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return response
+    
+    # Protección para otros métodos no permitidos
+    if request.method != 'DELETE':
+        return Response(
+            {'error': 'Método no permitido. Esta vista solo acepta solicitudes DELETE.'},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+        
+    try:
+        print(f"Intentando eliminar paciente con RUT: {rut}")
+        
+        # Buscar el paciente por RUT
+        try:
+            paciente = Paciente.objects.get(rut=rut)
+        except Paciente.DoesNotExist:
+            return Response(
+                {'error': f'No se encontró un paciente con el RUT {rut}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Eliminar el paciente
+        nombre_paciente = paciente.nombre
+        paciente.delete()
+        
+        return Response(
+            {'message': f'Paciente {nombre_paciente} (RUT: {rut}) eliminado exitosamente'},
+            status=status.HTTP_200_OK
+        )
+    
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response(
+            {'error': f'Error al eliminar el paciente: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
 class PacienteViewSet(viewsets.ModelViewSet):
     queryset = Paciente.objects.all()
     serializer_class = PacienteSerializer
@@ -479,309 +530,67 @@ def _generate_insert_sql(obj, table_name):
     
     return f'INSERT INTO "{table_name}" ({fields_str}) VALUES ({values_str});'
 
-
-
-
-
-# Funciones de restauración eliminadas - Solo se mantiene la funcionalidad de backup
+@api_view(['GET', 'OPTIONS'])
+@permission_classes([AllowAny])
+def verificar_rut_existente(request):
     """
-    Restaura desde archivo SQL
+    Vista para verificar si un RUT ya existe en la base de datos.
+    Útil para validación en tiempo real en el frontend.
     """
+    # Manejar solicitudes OPTIONS para CORS
+    if request.method == 'OPTIONS':
+        response = Response()
+        response['Allow'] = 'GET, OPTIONS'
+        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return response
+    
     try:
-        # Intentar múltiples codificaciones para manejar caracteres especiales
-        content = None
-        encodings_to_try = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1', 'ascii']
+        rut = request.query_params.get('rut', None)
         
-        for encoding in encodings_to_try:
-            try:
-                backup_file.seek(0)  # Volver al inicio del archivo
-                content = backup_file.read().decode(encoding)
-                print(f"Archivo decodificado exitosamente con codificación: {encoding}")
-                break
-            except UnicodeDecodeError as e:
-                print(f"Error con codificación {encoding}: {str(e)}")
-                continue
+        if not rut:
+            return Response(
+                {'error': 'El parámetro RUT es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        # Si ninguna codificación funcionó, usar 'replace' para caracteres problemáticos
-        if content is None:
-            backup_file.seek(0)
-            content = backup_file.read().decode('utf-8', errors='replace')
-            print("Usando UTF-8 con reemplazo de caracteres problemáticos")
+        # Formatear el RUT usando la función de utils
+        from .utils import formatear_rut
+        rut_formateado = formatear_rut(rut)
         
-        # Limpiar caracteres problemáticos adicionales
-        content = content.replace('\x00', '')  # Remover caracteres nulos
-        content = content.replace('\ufeff', '')  # Remover BOM si existe
+        if not rut_formateado:
+            return Response(
+                {'existe': False, 'rut_valido': False, 'mensaje': 'Formato de RUT inválido'},
+                status=status.HTTP_200_OK
+            )
         
-        result = {
-            'comandos_ejecutados': 0,
-            'pacientes_restaurados': 0,
-            'tratamientos_restaurados': 0,
-            'citas_restauradas': 0,
-            'advertencias': [],
-            'errores': []
-        }
+        # Verificar si existe un paciente con ese RUT
+        existe = Paciente.objects.filter(rut=rut_formateado).exists()
         
-        # Si no se va a limpiar la base de datos, solo ejecutar INSERTs
-        if not clear_database:
-            return _restore_sql_data_only(content, result)
-        
-        if clear_database:
-            _clear_database_tables()
-        
-        # Ejecutar comandos SQL sin transacción atómica grande
-        with connection.cursor() as cursor:
-            # Procesar línea por línea para filtrar mejor
-            lines = content.split('\n')
-            current_command = []
-            
-            for line in lines:
-                line = line.strip()
-                
-                # Saltar líneas vacías
-                if not line:
-                    continue
-                
-                # Saltar comentarios que empiezan con --
-                if line.startswith('--'):
-                    continue
-                
-                # Saltar metadatos de pg_dump
-                if (line.startswith('Type:') or 
-                    line.startswith('Schema:') or 
-                    line.startswith('Owner:') or
-                    line.startswith('\\.')):
-                    continue
-                
-                # Saltar comandos de configuración que pueden causar problemas
-                if (line.startswith('SET ') or
-                    line.startswith('SELECT pg_catalog.') or
-                    line.startswith('\\connect')):
-                    continue
-                
-                # Acumular líneas del comando actual
-                current_command.append(line)
-                
-                # Si la línea termina con ;, ejecutar el comando
-                if line.endswith(';'):
-                    command = ' '.join(current_command).strip()
-                    current_command = []
-                    
-                    # Procesar el comando
-                    if command:
-                        _execute_sql_command_safe(cursor, command, result)
-            
-            # Ejecutar comando pendiente si existe
-            if current_command:
-                command = ' '.join(current_command).strip()
-                if command:
-                    _execute_sql_command_safe(cursor, command, result)
-            
-            # Contar registros restaurados
-            try:
-                from .models import Paciente
-                from citas.models import Tratamiento, Cita
-                
-                result['pacientes_restaurados'] = Paciente.objects.count()
-                result['tratamientos_restaurados'] = Tratamiento.objects.count()
-                result['citas_restauradas'] = Cita.objects.count()
-            except Exception as e:
-                result['advertencias'].append(f"No se pudo contar registros: {str(e)}")
-        
-        return result
-        
-    except Exception as e:
-        raise Exception(f"Error al procesar archivo SQL: {str(e)}")
-
-def _restore_sql_data_only(content, result):
-    """
-    Restaura solo los datos (INSERTs) desde un archivo SQL, ignorando estructura
-    """
-    with transaction.atomic():
-        with connection.cursor() as cursor:
-            # Procesar línea por línea buscando solo INSERTs
-            lines = content.split('\n')
-            current_command = []
-            in_copy_block = False
-            
-            for line in lines:
-                line = line.strip()
-                
-                # Saltar líneas vacías y comentarios
-                if not line or line.startswith('--'):
-                    continue
-                
-                # Detectar inicio de bloque COPY y saltarlo
-                if line.upper().startswith('COPY'):
-                    in_copy_block = True
-                    result['advertencias'].append(f"Comando COPY ignorado (no compatible): {line[:50]}...")
-                    continue
-                
-                # Detectar fin de bloque COPY
-                if in_copy_block and line == '\\.':
-                    in_copy_block = False
-                    continue
-                
-                # Saltar contenido dentro de bloque COPY
-                if in_copy_block:
-                    continue
-                
-                # Acumular líneas del comando actual
-                current_command.append(line)
-                
-                # Si la línea termina con ;, procesar el comando
-                if line.endswith(';'):
-                    command = ' '.join(current_command).strip()
-                    current_command = []
-                    
-                    # Solo ejecutar comandos INSERT
-                    if command.upper().startswith('INSERT'):
-                        try:
-                            cursor.execute(command)
-                            result['comandos_ejecutados'] += 1
-                        except Exception as e:
-                            # Para INSERTs, los errores de duplicados son esperables
-                            if 'duplicate key' in str(e).lower() or 'already exists' in str(e).lower():
-                                result['advertencias'].append(f"Registro duplicado ignorado: {str(e)}")
-                            else:
-                                result['errores'].append(f"Error ejecutando INSERT: {str(e)}")
-        
-        # Contar registros restaurados
-        try:
-            from .models import Paciente
-            from citas.models import Tratamiento, Cita
-            
-            result['pacientes_restaurados'] = Paciente.objects.count()
-            result['tratamientos_restaurados'] = Tratamiento.objects.count()
-            result['citas_restauradas'] = Cita.objects.count()
-        except Exception as e:
-            result['advertencias'].append(f"No se pudo contar registros: {str(e)}")
-    
-    return result
-
-def _execute_sql_command_safe(cursor, command, result):
-    """
-    Ejecuta un comando SQL individual en su propia transacción con manejo de errores mejorado
-    """
-    command_upper = command.upper()
-    
-    # Saltar comandos COPY ya que no son compatibles con Django
-    if command_upper.startswith('COPY'):
-        result['advertencias'].append(f"Comando COPY ignorado (no compatible): {command[:50]}...")
-        return
-    
-    # Solo ejecutar comandos relevantes
-    if not (command_upper.startswith('INSERT') or
-            command_upper.startswith('UPDATE') or
-            command_upper.startswith('DELETE') or
-            command_upper.startswith('CREATE') or
-            command_upper.startswith('ALTER') or
-            command_upper.startswith('SELECT')):
-        result['advertencias'].append(f"Comando no permitido saltado: {command[:50]}...")
-        return
-    
-    # Usar savepoint para cada comando individual
-    try:
-        with transaction.atomic():
-            # Modificar CREATE TABLE para usar IF NOT EXISTS solo si no lo tiene ya
-            if command_upper.startswith('CREATE TABLE') and 'IF NOT EXISTS' not in command_upper:
-                command = command.replace('CREATE TABLE', 'CREATE TABLE IF NOT EXISTS', 1)
-            
-            # Modificar CREATE SEQUENCE para usar IF NOT EXISTS solo si no lo tiene ya
-            elif command_upper.startswith('CREATE SEQUENCE') and 'IF NOT EXISTS' not in command_upper:
-                command = command.replace('CREATE SEQUENCE', 'CREATE SEQUENCE IF NOT EXISTS', 1)
-            
-            # Modificar CREATE INDEX para usar IF NOT EXISTS solo si no lo tiene ya
-            elif command_upper.startswith('CREATE INDEX') and 'IF NOT EXISTS' not in command_upper:
-                command = command.replace('CREATE INDEX', 'CREATE INDEX IF NOT EXISTS', 1)
-            
-            # Para comandos INSERT, agregar ON CONFLICT DO NOTHING para evitar errores de duplicados
-            elif command_upper.startswith('INSERT INTO'):
-                if 'ON CONFLICT' not in command_upper:
-                    command = command.rstrip(';') + ' ON CONFLICT DO NOTHING;'
-            
-            cursor.execute(command)
-            result['comandos_ejecutados'] += 1
-            
-    except Exception as e:
-        error_msg = str(e).lower()
-        
-        # Clasificar errores: algunos son esperables y no críticos
-        if any(phrase in error_msg for phrase in [
-            'ya existe', 'already exists', 'duplicate key', 
-            'violates unique constraint', 'relation already exists'
-        ]):
-            # Estos son errores esperables cuando no se limpia la BD
-            result['advertencias'].append(f"Elemento ya existe (saltado): {str(e)}")
+        if existe:
+            # Obtener información básica del paciente existente
+            paciente = Paciente.objects.get(rut=rut_formateado)
+            return Response({
+                'existe': True,
+                'rut_valido': True,
+                'paciente': {
+                    'nombre': paciente.nombre,
+                    'rut': paciente.rut,
+                    'telefono': paciente.telefono,
+                    'correo': paciente.correo
+                },
+                'mensaje': f'Ya existe un paciente con el RUT {rut_formateado}'
+            })
         else:
-            # Otros errores son más serios
-            result['errores'].append(f"Error ejecutando comando SQL: {str(e)}")
-            print(f"Error SQL: {str(e)}")
-            print(f"Comando: {command[:100]}...")
-
-def _execute_sql_command(cursor, command, result):
-    """
-    Ejecuta un comando SQL individual con manejo de errores mejorado
-    """
-    command_upper = command.upper()
-    
-    # Saltar comandos COPY ya que no son compatibles con Django
-    if command_upper.startswith('COPY'):
-        result['advertencias'].append(f"Comando COPY ignorado (no compatible): {command[:50]}...")
-        return
-    
-    # Modificar CREATE TABLE para usar IF NOT EXISTS solo si no lo tiene ya
-    if command_upper.startswith('CREATE TABLE') and 'IF NOT EXISTS' not in command_upper:
-        command = command.replace('CREATE TABLE', 'CREATE TABLE IF NOT EXISTS', 1)
-    
-    # Modificar CREATE SEQUENCE para usar IF NOT EXISTS solo si no lo tiene ya
-    elif command_upper.startswith('CREATE SEQUENCE') and 'IF NOT EXISTS' not in command_upper:
-        command = command.replace('CREATE SEQUENCE', 'CREATE SEQUENCE IF NOT EXISTS', 1)
-    
-    # Solo ejecutar comandos relevantes
-    if (command_upper.startswith('INSERT') or
-        command_upper.startswith('UPDATE') or
-        command_upper.startswith('DELETE') or
-        command_upper.startswith('CREATE') or
-        command_upper.startswith('ALTER')):
-        
-        try:
-            cursor.execute(command)
-            result['comandos_ejecutados'] += 1
-        except Exception as e:
-            error_msg = str(e).lower()
+            return Response({
+                'existe': False,
+                'rut_valido': True,
+                'mensaje': 'RUT disponible'
+            })
             
-            # Manejar errores comunes de manera más elegante
-            if ('already exists' in error_msg or 
-                'duplicate key' in error_msg or
-                'relation already exists' in error_msg):
-                result['advertencias'].append(f"Elemento ya existe (ignorado): {str(e)}")
-            else:
-                result['errores'].append(f"Error ejecutando comando SQL: {str(e)}")
-
-def _clear_database_tables():
-    """
-    Limpia las tablas principales de la base de datos
-    """
-    with connection.cursor() as cursor:
-        # Desactivar restricciones de clave foránea temporalmente
-        cursor.execute("SET session_replication_role = replica;")
-        
-        # Lista de tablas a limpiar (en orden para evitar conflictos de FK)
-        tables_to_clear = [
-            'pacientes_usoproductoenficha',
-            'pacientes_fichaclinica',
-            'citas_cita',
-            'insumos_movimientoinsumo',
-            'pacientes_paciente',
-            'citas_tratamiento',
-            'insumos_insumo',
-        ]
-        
-        for table in tables_to_clear:
-            try:
-                cursor.execute(f'TRUNCATE TABLE "{table}" RESTART IDENTITY CASCADE;')
-            except Exception as e:
-                logger.warning(f"No se pudo limpiar tabla {table}: {str(e)}")
-        
-        # Reactivar restricciones de clave foránea
-        cursor.execute("SET session_replication_role = DEFAULT;")
+    except Exception as e:
+        logger.error(f"Error al verificar RUT existente: {str(e)}")
+        return Response(
+            {'error': f'Error al verificar el RUT: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

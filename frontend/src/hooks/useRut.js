@@ -1,8 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { pacientesService } from '../api/pacientes';
 
 export const useRut = () => {
   const [rut, setRut] = useState('');
   const [rutError, setRutError] = useState('');
+  const [verificandoExistencia, setVerificandoExistencia] = useState(false);
+  const [pacienteExistente, setPacienteExistente] = useState(null);
 
   const validarRut = useCallback((rut) => {
     // Eliminar puntos y guión
@@ -44,18 +47,64 @@ export const useRut = () => {
     return `${rutFormateado}-${dv}`;
   }, []);
 
+  const verificarExistenciaRut = useCallback(async (rutFormateado) => {
+    if (!rutFormateado || rutFormateado.length < 9) {
+      setPacienteExistente(null);
+      return;
+    }
+    
+    try {
+      setVerificandoExistencia(true);
+      const response = await pacientesService.verificarRutExistente(rutFormateado);
+      
+      if (response.data.existe) {
+        setPacienteExistente(response.data.paciente);
+        setRutError(`Ya existe un paciente con este RUT: ${response.data.paciente.nombre}`);
+      } else {
+        setPacienteExistente(null);
+        // Solo limpiar el error si no es por formato inválido
+        if (rutError && rutError.includes('Ya existe')) {
+          setRutError('');
+        }
+      }
+    } catch (error) {
+      console.error('Error al verificar existencia del RUT:', error);
+      setPacienteExistente(null);
+    } finally {
+      setVerificandoExistencia(false);
+    }
+  }, [rutError]);
+
   const handleRutChange = useCallback((e) => {
     const valor = e.target.value;
     const rutFormateado = formatearRut(valor);
     setRut(rutFormateado);
+    setPacienteExistente(null);
     
     if (rutFormateado.length > 0) {
       const esValido = validarRut(rutFormateado);
-      setRutError(esValido ? '' : 'RUT inválido');
+      if (!esValido) {
+        setRutError('RUT inválido');
+      } else {
+        setRutError('');
+        // Verificar existencia solo si el RUT es válido
+        verificarExistenciaRut(rutFormateado);
+      }
     } else {
       setRutError('');
     }
-  }, [formatearRut, validarRut]);
+  }, [formatearRut, validarRut, verificarExistenciaRut]);
+
+  // Efecto para verificar existencia cuando cambia el RUT válido
+  useEffect(() => {
+    if (rut && validarRut(rut) && !rutError.includes('RUT inválido')) {
+      const timeoutId = setTimeout(() => {
+        verificarExistenciaRut(rut);
+      }, 500); // Debounce de 500ms
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [rut, validarRut, verificarExistenciaRut, rutError]);
 
   return {
     rut,
@@ -63,6 +112,8 @@ export const useRut = () => {
     handleRutChange,
     validarRut,
     formatearRut,
+    verificandoExistencia,
+    pacienteExistente,
     setRut
   };
 }; 

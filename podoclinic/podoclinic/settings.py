@@ -34,7 +34,14 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-ij)^kt($dka^zp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split()
+# Detectar si estamos en desarrollo local
+IS_LOCAL_DEV = True  # Forzar desarrollo local temporalmente
+
+# Configuración de hosts permitidos para desarrollo local
+if IS_LOCAL_DEV:
+    ALLOWED_HOSTS = ['*']  # Permitir todos los hosts en desarrollo
+else:
+    ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'esmeraldapodoclinica.cl,www.esmeraldapodoclinica.cl,148.113.171.213').split(',')
 
 
 # Application definition
@@ -74,10 +81,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Configuración CORS más específica
+# Configuración CORS para producción
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "https://esmeraldapodoclinica.cl",
+    "https://www.esmeraldapodoclinica.cl",
+    "http://localhost:3000",  # Solo para desarrollo local
+    "http://127.0.0.1:3000",  # Solo para desarrollo local
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
@@ -100,21 +109,23 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# Configuración CSRF
+# Configuración CSRF para producción
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
+    'https://esmeraldapodoclinica.cl',
+    'https://www.esmeraldapodoclinica.cl',
+    'http://localhost:3000',  # Solo para desarrollo local
+    'http://127.0.0.1:3000',  # Solo para desarrollo local
 ]
-CSRF_COOKIE_SECURE = False  # Cambiar a True si usas HTTPS
+CSRF_COOKIE_SECURE = not IS_LOCAL_DEV  # False en desarrollo local, True en producción
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_USE_SESSIONS = True
+CSRF_USE_SESSIONS = not IS_LOCAL_DEV  # False en desarrollo (usa cookies), True en producción (usa sesiones)
 CSRF_COOKIE_NAME = 'csrftoken'
 
 # Configuración de sesiones
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Usar base de datos para sesiones
 SESSION_COOKIE_AGE = 60 * 60 * 8  # 8 horas (28800 segundos)
-SESSION_COOKIE_SECURE = False  # Cambiar a True si usas HTTPS
+SESSION_COOKIE_SECURE = not IS_LOCAL_DEV  # False en desarrollo local, True en producción
 SESSION_COOKIE_HTTPONLY = True  # Prevenir acceso desde JavaScript
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_SAVE_EVERY_REQUEST = True  # Renovar sesión en cada request
@@ -311,3 +322,44 @@ ANYMAIL = {
 
 # Configuración adicional de Anymail (opcional)
 ANYMAIL_DEBUG_API_REQUESTS = os.environ.get('ANYMAIL_DEBUG', 'False') == 'True'
+
+# ===== CONFIGURACIONES DE SEGURIDAD PARA PRODUCCIÓN =====
+
+# Configuración de seguridad HTTPS
+SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True') == 'True' and not IS_LOCAL_DEV
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Headers de seguridad
+SECURE_HSTS_SECONDS = 31536000  # 1 año
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Configuración de archivos estáticos para producción
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Configuración de base de datos para producción
+DATABASES['default']['CONN_MAX_AGE'] = 60  # Conexiones persistentes
+
+# Configuración de logging para producción
+LOGGING['handlers']['file']['level'] = 'WARNING'  # Solo warnings y errores en archivo
+LOGGING['handlers']['console']['level'] = 'ERROR'  # Solo errores en consola
+
+# Variables de entorno requeridas para producción
+REQUIRED_ENV_VARS = [
+    'DJANGO_SECRET_KEY',
+    'DB_PASSWORD',
+    'MAILGUN_API_KEY',
+]
+
+# Verificar variables de entorno críticas
+missing_vars = [var for var in REQUIRED_ENV_VARS if not os.environ.get(var)]
+if missing_vars and not DEBUG:
+    raise ValueError(f"Variables de entorno faltantes: {', '.join(missing_vars)}")
+
+# Configuración de Redis para producción (si usas Celery)
+if not DEBUG:
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
