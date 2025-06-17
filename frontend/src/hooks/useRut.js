@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { pacientesService } from '../api/pacientes';
 
-export const useRut = () => {
+export const useRut = (rutOriginal = null) => {
   const [rut, setRut] = useState('');
   const [rutError, setRutError] = useState('');
   const [verificandoExistencia, setVerificandoExistencia] = useState(false);
@@ -53,6 +53,16 @@ export const useRut = () => {
       return;
     }
     
+    // Si estamos en modo edición y el RUT no ha cambiado, no verificar
+    if (rutOriginal && rutFormateado === rutOriginal) {
+      setPacienteExistente(null);
+      // Solo limpiar el error si no es por formato inválido
+      if (rutError && rutError.includes('Ya existe')) {
+        setRutError('');
+      }
+      return;
+    }
+    
     try {
       setVerificandoExistencia(true);
       const response = await pacientesService.verificarRutExistente(rutFormateado);
@@ -73,7 +83,7 @@ export const useRut = () => {
     } finally {
       setVerificandoExistencia(false);
     }
-  }, [rutError]);
+  }, [rutError, rutOriginal]);
 
   const handleRutChange = useCallback((e) => {
     const valor = e.target.value;

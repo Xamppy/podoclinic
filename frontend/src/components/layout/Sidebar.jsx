@@ -3,12 +3,12 @@ import { NavLink } from 'react-router-dom';
 
 const Sidebar = () => {
   const menuItems = [
-    { path: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/admin/pacientes', label: 'Pacientes', icon: '👥' },
-    { path: '/admin/citas', label: 'Citas', icon: '📅' },
-    { path: '/admin/fichas-clinicas', label: 'Fichas Clínicas', icon: '📋' },
-    { path: '/admin/inventario', label: 'Inventario', icon: '📦' },
-    { path: '/admin/respaldo', label: 'Respaldo', icon: '💾' },
+    { path: '/app/dashboard', label: 'Dashboard', icon: '📊' },
+    { path: '/app/pacientes', label: 'Pacientes', icon: '👥' },
+    { path: '/app/citas', label: 'Citas', icon: '📅' },
+    { path: '/app/fichas-clinicas', label: 'Fichas Clínicas', icon: '📋' },
+    { path: '/app/inventario', label: 'Inventario', icon: '📦' },
+    { path: '/app/respaldo', label: 'Respaldo', icon: '💾' },
   ];
 
   return (

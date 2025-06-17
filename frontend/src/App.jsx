@@ -25,28 +25,37 @@ const App = () => {
       <WhatsAppProvider>
         <Router>
           <Routes>
-            {/* Ruta raíz redirige a admin/login */}
-            <Route path="/" element={<Navigate to="/admin/login" replace />} />
+            {/* Ruta raíz redirige a app/login */}
+            <Route path="/" element={<Navigate to="/app/login" replace />} />
+            
+            {/* Compatibilidad con rutas antiguas - redirigir /admin/* a /app/* */}
+            <Route path="/admin/login" element={<Navigate to="/app/login" replace />} />
+            <Route path="/admin/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="/admin/pacientes" element={<Navigate to="/app/pacientes" replace />} />
+            <Route path="/admin/citas" element={<Navigate to="/app/citas" replace />} />
+            <Route path="/admin/fichas-clinicas" element={<Navigate to="/app/fichas-clinicas" replace />} />
+            <Route path="/admin/inventario" element={<Navigate to="/app/inventario" replace />} />
+            <Route path="/admin/respaldo" element={<Navigate to="/app/respaldo" replace />} />
             
             {/* Rutas públicas */}
             <Route path="/public/*" element={<PublicRoutes />} />
             
-            {/* Rutas protegidas del admin */}
-            <Route path="/admin/login" element={<LoginPage />} />
+            {/* Rutas protegidas de la aplicación */}
+            <Route path="/app/login" element={<LoginPage />} />
             
             <Route
-              path="/admin"
+              path="/app"
               element={
                 <ProtectedRoute>
                   <Layout>
-                    <Navigate to="/admin/dashboard" replace />
+                    <Navigate to="/app/dashboard" replace />
                   </Layout>
                 </ProtectedRoute>
               }
             />
             
             <Route
-              path="/admin/dashboard"
+              path="/app/dashboard"
               element={
                 <ProtectedRoute>
                   <Layout>
@@ -57,7 +66,7 @@ const App = () => {
             />
             
             <Route
-              path="/admin/pacientes"
+              path="/app/pacientes"
               element={
                 <ProtectedRoute>
                   <Layout>
@@ -68,7 +77,7 @@ const App = () => {
             />
             
             <Route
-              path="/admin/citas"
+              path="/app/citas"
               element={
                 <ProtectedRoute>
                   <Layout>
@@ -79,7 +88,7 @@ const App = () => {
             />
             
             <Route
-              path="/admin/fichas-clinicas"
+              path="/app/fichas-clinicas"
               element={
                 <ProtectedRoute>
                   <Layout>
@@ -90,7 +99,7 @@ const App = () => {
             />
             
             <Route
-              path="/admin/inventario"
+              path="/app/inventario"
               element={
                 <ProtectedRoute>
                   <Layout>
@@ -101,7 +110,7 @@ const App = () => {
             />
             
             <Route
-              path="/admin/respaldo"
+              path="/app/respaldo"
               element={
                 <ProtectedRoute>
                   <Layout>

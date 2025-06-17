@@ -8,7 +8,7 @@ const Header = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login');
+    navigate('/app/login');
   };
 
   return (

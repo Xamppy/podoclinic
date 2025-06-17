@@ -8,7 +8,8 @@ const PacientesPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
-  const { rut, rutError, handleRutChange, setRut, verificandoExistencia, pacienteExistente } = useRut();
+  const [rutOriginal, setRutOriginal] = useState(''); // Para rastrear el RUT original en modo edición
+  const { rut, rutError, handleRutChange, setRut, verificandoExistencia, pacienteExistente } = useRut(rutOriginal);
   const [formData, setFormData] = useState({
     nombre: '',
     telefono: '',
@@ -149,6 +150,7 @@ const PacientesPage = () => {
   const handleEditClick = (paciente) => {
     setSelectedPaciente(paciente);
     setRut(paciente.rut);
+    setRutOriginal(paciente.rut); // Guardar el RUT original
     setFormData({
       nombre: paciente.nombre || '',
       telefono: paciente.telefono || '',
@@ -168,6 +170,7 @@ const PacientesPage = () => {
     setShowForm(false);
     setSelectedPaciente(null);
     setRut(''); // Limpiar RUT también
+    setRutOriginal(''); // Limpiar RUT original también
     // Limpiar formulario
     setFormData({
       nombre: '',
@@ -189,7 +192,11 @@ const PacientesPage = () => {
       const loadingMsg = mostrarNotificacion('Actualizando paciente...', 'info');
       
       // Preparar los datos para la actualización
-      const datosActualizados = { ...formData, rut: selectedPaciente.rut };
+      const datosActualizados = { 
+        ...formData, 
+        rut: rut, // Usar el RUT actual (que puede haber cambiado)
+        rut_original: rutOriginal // Incluir el RUT original para identificar el paciente
+      };
       
       // Manejar el campo fecha_nacimiento
       if (datosActualizados.fecha_nacimiento === '') {
@@ -197,11 +204,12 @@ const PacientesPage = () => {
         datosActualizados.fecha_nacimiento = null;
       }
       
-      console.log('rut a actualizar:', selectedPaciente.rut);
+      console.log('RUT original:', rutOriginal);
+      console.log('RUT nuevo:', rut);
       console.log('datos a enviar:', datosActualizados);
       
-      // Enviar los datos incluyendo explícitamente el RUT
-      await pacientesService.update(selectedPaciente.rut, datosActualizados);
+      // Enviar los datos usando el RUT original para identificar el paciente
+      await pacientesService.update(rutOriginal, datosActualizados);
       
       // Eliminar mensaje de carga si aún existe
       if (document.body.contains(loadingMsg)) {
@@ -214,6 +222,7 @@ const PacientesPage = () => {
       
       // Limpiar formulario
       setRut('');
+      setRutOriginal('');
       setFormData({
         nombre: '',
         telefono: '',
@@ -309,6 +318,7 @@ const PacientesPage = () => {
               if (showForm) {
                 // Limpiar todo cuando se cancela
                 setRut('');
+                setRutOriginal('');
                 setFormData({
                   nombre: '',
                   telefono: '',
@@ -336,7 +346,13 @@ const PacientesPage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">RUT</label>
+              <label className="block text-sm font-medium text-gray-700">
+                RUT {editMode && (
+                  <span className="text-xs text-blue-600 font-normal ml-2">
+                    (Editable - puedes cambiar RUTs provisionales)
+                  </span>
+                )}
+              </label>
               <div className="relative">
                 <input
                   type="text"
@@ -345,12 +361,11 @@ const PacientesPage = () => {
                   className={`mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 ${
                     rutError 
                       ? 'border-red-300 focus:border-red-500' 
-                      : pacienteExistente 
+                      : pacienteExistente && (!editMode || rut !== rutOriginal)
                         ? 'border-red-300 focus:border-red-500'
                         : 'border-gray-300 focus:border-indigo-500'
                   }`}
                   placeholder="12.345.678-9"
-                  disabled={editMode}
                 />
                 {verificandoExistencia && (
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -359,7 +374,7 @@ const PacientesPage = () => {
                 )}
               </div>
               {rutError && <p className="mt-1 text-sm text-red-600">{rutError}</p>}
-              {pacienteExistente && !rutError && (
+              {pacienteExistente && !rutError && (!editMode || rut !== rutOriginal) && (
                 <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                   <div className="flex">
                     <div className="flex-shrink-0">
@@ -369,12 +384,17 @@ const PacientesPage = () => {
                     </div>
                     <div className="ml-3">
                       <h3 className="text-sm font-medium text-yellow-800">
-                        Paciente ya registrado
+                        {editMode ? 'RUT ya registrado' : 'Paciente ya registrado'}
                       </h3>
                       <div className="mt-2 text-sm text-yellow-700">
                         <p><strong>Nombre:</strong> {pacienteExistente.nombre}</p>
                         <p><strong>Teléfono:</strong> {pacienteExistente.telefono}</p>
                         <p><strong>Correo:</strong> {pacienteExistente.correo}</p>
+                        {editMode && (
+                          <p className="mt-1 text-yellow-600">
+                            <strong>No puedes cambiar a este RUT porque ya está en uso.</strong>
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -477,14 +497,18 @@ const PacientesPage = () => {
             </button>
             <button
               type="submit"
-              disabled={!editMode && (rutError || pacienteExistente || verificandoExistencia)}
+              disabled={
+                (!editMode && (rutError || pacienteExistente || verificandoExistencia)) ||
+                (editMode && (rutError || (pacienteExistente && rut !== rutOriginal) || verificandoExistencia))
+              }
               className={`px-4 py-2 rounded-md ${
-                !editMode && (rutError || pacienteExistente || verificandoExistencia)
+                (!editMode && (rutError || pacienteExistente || verificandoExistencia)) ||
+                (editMode && (rutError || (pacienteExistente && rut !== rutOriginal) || verificandoExistencia))
                   ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                   : 'bg-indigo-600 text-white hover:bg-indigo-700'
               }`}
             >
-              {verificandoExistencia && !editMode ? 'Verificando...' : editMode ? 'Actualizar' : 'Guardar'}
+              {verificandoExistencia ? 'Verificando...' : editMode ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
         </form>

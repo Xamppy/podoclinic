@@ -19,16 +19,24 @@ export const pacientesService = {
   },
   
   // Actualizar un paciente usando el endpoint admin
-  update: (rut, paciente) => {
-    // Verificar que el RUT esté presente
+  update: (rutOriginal, paciente) => {
+    // Preparar los datos del paciente
     const pacienteData = { ...paciente };
+    
+    // Si no hay rut_original en los datos, usar el rutOriginal pasado como parámetro
+    if (!pacienteData.rut_original) {
+      pacienteData.rut_original = rutOriginal;
+    }
+    
+    // Asegurar que el RUT actual esté presente
     if (!pacienteData.rut) {
-      pacienteData.rut = rut;
+      pacienteData.rut = rutOriginal;
     }
     
     console.log('Enviando datos a actualizar_paciente_admin:', pacienteData);
+    console.log('RUT original (parámetro):', rutOriginal);
     
-    // Asegurarse de que el RUT esté incluido en los datos
+    // Enviar los datos con rut_original para identificar el paciente
     return api.put('/pacientes/actualizar_paciente_admin/', pacienteData);
   },
   

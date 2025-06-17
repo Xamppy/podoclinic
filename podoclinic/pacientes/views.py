@@ -82,6 +82,7 @@ def crear_paciente_admin(request):
 def actualizar_paciente_admin(request):
     """
     Vista específica para actualizar pacientes desde la interfaz de administración.
+    Permite actualizar el RUT del paciente con validaciones de seguridad.
     No requiere autenticación.
     """
     # Manejar solicitudes OPTIONS para CORS
@@ -103,7 +104,7 @@ def actualizar_paciente_admin(request):
         data = request.data
         print(f"Datos recibidos en actualizar_paciente_admin: {data}")
         
-        # Validar que se proporcione el RUT
+        # Validar que se proporcione el RUT actual y el nuevo (si aplica)
         if 'rut' not in data:
             return Response(
                 {'error': 'Falta el RUT del paciente'},
@@ -119,17 +120,76 @@ def actualizar_paciente_admin(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Buscar el paciente por RUT
+        # Obtener el RUT original del paciente (viene en rut_original)
+        rut_original = data.get('rut_original')
+        nuevo_rut = data['rut']
+        
+        # Si no se proporciona rut_original, usar el rut actual como original
+        if not rut_original:
+            rut_original = nuevo_rut
+            logger.warning(f"No se proporcionó rut_original, usando rut actual: {rut_original}")
+        
+        logger.info(f"Buscando paciente con RUT original: {rut_original}")
+        logger.info(f"Nuevo RUT será: {nuevo_rut}")
+        
+        # Buscar el paciente por el RUT original
         try:
-            paciente = Paciente.objects.get(rut=data['rut'])
+            paciente = Paciente.objects.get(rut=rut_original)
+            logger.info(f"Paciente encontrado: {paciente.nombre} (ID: {paciente.id})")
         except Paciente.DoesNotExist:
-            return Response(
-                {'error': f'No se encontró un paciente con el RUT {data["rut"]}'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            # También intentar buscar por el nuevo RUT en caso de que sea el mismo
+            try:
+                if nuevo_rut != rut_original:
+                    paciente = Paciente.objects.get(rut=nuevo_rut)
+                    logger.info(f"Paciente encontrado con nuevo RUT: {paciente.nombre} (ID: {paciente.id})")
+                    # Actualizar rut_original para que coincida
+                    rut_original = nuevo_rut
+                else:
+                    raise Paciente.DoesNotExist()
+            except Paciente.DoesNotExist:
+                logger.error(f"No se encontró paciente con RUT original: {rut_original} ni con nuevo RUT: {nuevo_rut}")
+                return Response(
+                    {'error': f'No se encontró un paciente con el RUT {rut_original}. Verifica que el paciente existe.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        
+        # Si el RUT está cambiando, validar que el nuevo RUT no exista ya
+        if nuevo_rut != rut_original:
+            from .utils import formatear_rut, validar_rut
+            
+            # Formatear el nuevo RUT
+            nuevo_rut_formateado = formatear_rut(nuevo_rut)
+            if not nuevo_rut_formateado:
+                return Response(
+                    {'error': 'El formato del nuevo RUT es inválido'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validar el dígito verificador del nuevo RUT
+            if not validar_rut(nuevo_rut):
+                return Response(
+                    {'error': 'El nuevo RUT tiene un dígito verificador inválido'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Verificar que el nuevo RUT no exista ya
+            if Paciente.objects.filter(rut=nuevo_rut_formateado).exclude(id=paciente.id).exists():
+                return Response(
+                    {'error': f'Ya existe un paciente con el RUT {nuevo_rut_formateado}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Log del cambio de RUT para auditoría
+            logger.info(f"Cambio de RUT para paciente {paciente.nombre}: {rut_original} -> {nuevo_rut_formateado}")
+            
+            # Actualizar el RUT en los datos
+            data['rut'] = nuevo_rut_formateado
         
         # Preparar los datos para la actualización
         datos_actualizados = data.copy()
+        # Remover el campo rut_original si existe
+        if 'rut_original' in datos_actualizados:
+            del datos_actualizados['rut_original']
         
         # Manejar fecha_nacimiento
         if 'fecha_nacimiento' in datos_actualizados:
@@ -140,6 +200,7 @@ def actualizar_paciente_admin(request):
         serializer = PacienteSerializer(paciente, data=datos_actualizados, partial=True)
         if serializer.is_valid():
             paciente = serializer.save()
+            logger.info(f"Paciente actualizado exitosamente: {paciente.nombre} (RUT: {paciente.rut})")
             return Response(serializer.data)
         else:
             print(f"Errores de validación: {serializer.errors}")
@@ -151,6 +212,7 @@ def actualizar_paciente_admin(request):
     except Exception as e:
         import traceback
         traceback.print_exc()
+        logger.error(f"Error al actualizar paciente: {str(e)}")
         return Response(
             {'error': f'Error al actualizar el paciente: {str(e)}'},
             status=status.HTTP_400_BAD_REQUEST

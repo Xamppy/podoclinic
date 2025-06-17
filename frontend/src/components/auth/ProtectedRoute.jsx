@@ -11,7 +11,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!currentUser) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    return <Navigate to="/app/login" state={{ from: location }} replace />;
   }
 
   return children;

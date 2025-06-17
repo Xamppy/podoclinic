@@ -12,7 +12,7 @@ const LoginPage = () => {
   // Si ya hay un usuario autenticado, redirigir al dashboard
   useEffect(() => {
     if (currentUser) {
-      const from = location.state?.from?.pathname || '/admin/dashboard';
+      const from = location.state?.from?.pathname || '/app/dashboard';
       navigate(from, { replace: true });
     }
   }, [currentUser, navigate, location]);
@@ -21,7 +21,7 @@ const LoginPage = () => {
     e.preventDefault();
     try {
       await login(credentials);
-      const from = location.state?.from?.pathname || '/admin/dashboard';
+      const from = location.state?.from?.pathname || '/app/dashboard';
       navigate(from, { replace: true });
     } catch (err) {
       setError('Credenciales inválidas');
