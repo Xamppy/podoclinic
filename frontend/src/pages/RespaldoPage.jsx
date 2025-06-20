@@ -61,7 +61,7 @@ const RespaldoPage = () => {
         <h2 className="text-2xl font-semibold mb-6">Generar Copia de Seguridad</h2>
         
         <p className="mb-6 text-xl leading-relaxed">
-          Desde esta sección puede generar una copia de seguridad completa de todos los datos de Clínica Podológica Esmeralda.
+          Desde esta sección puede generar una copia de seguridad completa de todos los datos de Esmeralda Podología Clínica.
           El archivo generado puede guardarse donde usted prefiera: escritorio, disco externo o pendrive.
         </p>
         

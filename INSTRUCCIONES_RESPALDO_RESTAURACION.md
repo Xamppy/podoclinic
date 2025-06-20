@@ -1,4 +1,4 @@
-# 📋 **Guía de Respaldo y Restauración - Clínica Podológica Esmeralda**
+# 📋 **Guía de Respaldo y Restauración - Esmeralda Podología Clínica**
 
 ## 🔄 **Sistema de Respaldo y Restauración**
 

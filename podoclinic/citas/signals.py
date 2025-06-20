@@ -48,7 +48,7 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             hora_formateada = str(cita.hora)
         
         # Asunto del correo
-        asunto = "Confirmación de su Cita - Clínica Podológica Esmeralda"
+        asunto = "Confirmación de su Cita - Esmeralda Podología Clínica"
         
         # Contexto para la plantilla
         contexto = {
@@ -56,7 +56,7 @@ def enviar_correo_en_segundo_plano(paciente, cita):
             'fecha_cita': fecha_formateada,
             'hora_cita': hora_formateada,
             'tipo_cita': cita.tratamiento.get_nombre_display() if 'manicura' in cita.tratamiento.nombre.lower() else cita.get_tipo_cita_display(),
-            'nombre_clinica': 'Clínica Podológica Esmeralda',
+            'nombre_clinica': 'Esmeralda Podología Clínica',
             'telefono_clinica': '+56 9 8543 3364',
             'whatsapp_clinica': '+56 9 8543 3364',
             'direccion_clinica': 'Villa El Bosque - Alcalde Sergio Jorquera N°65, La Cruz'
