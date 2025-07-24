@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { WhatsAppProvider } from './context/WhatsAppContext';
 
+// Import responsive styles
+import './styles/responsive.css';
+
 // Layouts
 import Layout from './components/layout/Layout';
 

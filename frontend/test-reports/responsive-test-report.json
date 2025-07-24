@@ -1,0 +1,53 @@
+{
+  "timestamp": "2025-07-24T19:23:56.390Z",
+  "summary": {
+    "totalTests": 10,
+    "passedTests": 8,
+    "failedTests": 2,
+    "skippedTests": 0,
+    "coverage": {
+      "total": 0
+    }
+  },
+  "breakpoints": {
+    "mobile": {
+      "width": 375,
+      "height": 667,
+      "description": "Mobile (iPhone)"
+    },
+    "tablet": {
+      "width": 768,
+      "height": 1024,
+      "description": "Tablet (iPad)"
+    },
+    "desktop": {
+      "width": 1440,
+      "height": 900,
+      "description": "Desktop"
+    },
+    "largeDesktop": {
+      "width": 1920,
+      "height": 1080,
+      "description": "Large Desktop"
+    }
+  },
+  "testResults": [],
+  "recommendations": [
+    {
+      "type": "error",
+      "message": "Some responsive tests are failing. Review the test output above for specific issues."
+    },
+    {
+      "type": "warning",
+      "message": "Test coverage is below 80%. Consider adding more responsive tests."
+    },
+    {
+      "type": "info",
+      "message": "Test responsive behavior manually on real devices to complement automated tests."
+    },
+    {
+      "type": "info",
+      "message": "Use browser dev tools to test responsive behavior during development."
+    }
+  ]
+}

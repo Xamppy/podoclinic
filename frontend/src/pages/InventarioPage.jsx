@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, Fragment } from 'react';
 import { insumosService } from '../api/insumos';
 import { Menu, Transition } from '@headlessui/react';
 import { FunnelIcon, PrinterIcon, PlusIcon } from '@heroicons/react/24/outline';
+import ResponsiveTable from '../components/common/ResponsiveTable';
 
 const InventarioPage = () => {
   const [insumos, setInsumos] = useState([]);
@@ -311,6 +312,86 @@ const InventarioPage = () => {
   // Determinar si hay insumos críticos para imprimir
   const hayInsumosCriticos = insumos.some(insumo => insumo.stock_actual <= insumo.stock_critico);
 
+  // Definir columnas para la tabla responsiva
+  const columns = [
+    {
+      key: 'nombre',
+      label: 'Nombre',
+      render: (value, item) => (
+        <div className="text-sm font-medium text-gray-900" title={value}>
+          {value}
+        </div>
+      )
+    },
+    {
+      key: 'id',
+      label: 'ID',
+      render: (value) => (
+        <span className="text-sm text-gray-500">{value}</span>
+      )
+    },
+    {
+      key: 'descripcion',
+      label: 'Descripción',
+      render: (value) => (
+        <span className="text-sm text-gray-500" title={value || '-'}>
+          {value || '-'}
+        </span>
+      )
+    },
+    {
+      key: 'unidad_medida',
+      label: 'Unidad',
+      render: (value) => (
+        <span className="text-sm text-gray-500">{value}</span>
+      )
+    },
+    {
+      key: 'stock_actual',
+      label: 'Stock',
+      render: (value, item) => (
+        <span className={`text-sm ${item.stock_actual <= item.stock_critico ? 'font-bold text-red-600' : 'text-gray-500'}`}>
+          {value}
+        </span>
+      )
+    },
+    {
+      key: 'stock_critico',
+      label: 'Crítico',
+      render: (value) => (
+        <span className="text-sm text-gray-500">{value}</span>
+      )
+    },
+    {
+      key: 'valor_unitario_formato',
+      label: 'Valor',
+      render: (value) => (
+        <span className="text-sm text-gray-500">{value}</span>
+      )
+    },
+    {
+      key: 'fecha_vencimiento',
+      label: 'Vencimiento',
+      render: (value) => (
+        <span className="text-sm text-gray-500">
+          {value ? new Date(value).toLocaleDateString() : '-'}
+        </span>
+      )
+    },
+    {
+      key: 'faltante',
+      label: 'Faltante',
+      render: (value, item) => {
+        const faltante = item.stock_actual < item.stock_critico ? (item.stock_critico - item.stock_actual) : 0;
+        return (
+          <span className={`text-sm ${faltante > 0 ? 'font-bold text-red-600' : 'text-gray-500'}`}>
+            {faltante}
+          </span>
+        );
+      }
+    }
+  ];
+
   return (
     <div className="p-6">
       {showAlert && (
@@ -328,9 +409,9 @@ const InventarioPage = () => {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Inventario</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <h1 className="text-xl sm:text-2xl font-bold">Inventario</h1>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <button
             onClick={imprimirListaCompras}
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
@@ -438,119 +519,16 @@ const InventarioPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden" id="tabla-insumos">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 table-fixed">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="w-16 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ID
-              </th>
-              <th className="w-40 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nombre
-              </th>
-              <th className="w-60 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Descripción
-              </th>
-              <th className="w-24 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Unidad
-              </th>
-              <th className="w-20 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stock
-              </th>
-              <th className="w-20 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Crítico
-              </th>
-              <th className="w-24 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Valor
-              </th>
-              <th className="w-28 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Vencimiento
-              </th>
-              <th className="w-20 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Faltante
-              </th>
-              <th className="w-32 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {insumosFiltered.length > 0 ? (
-              insumosFiltered.map((insumo) => (
-                <tr key={insumo.id} className={insumo.stock_actual <= insumo.stock_critico ? 'bg-red-50' : ''}>
-                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
-                    {insumo.id}
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="text-sm font-medium text-gray-900 truncate" title={insumo.nombre}>
-                      {insumo.nombre}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-500">
-                    <div className="truncate" title={insumo.descripcion || '-'}>
-                      {insumo.descripcion || '-'}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
-                    {insumo.unidad_medida}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
-                    <span className={insumo.stock_actual <= insumo.stock_critico ? 'font-bold text-red-600' : ''}>
-                      {insumo.stock_actual}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
-                    {insumo.stock_critico}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-500 text-right">
-                    {insumo.valor_unitario_formato}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-500 text-center">
-                    <div className="truncate">
-                      {insumo.fecha_vencimiento ? new Date(insumo.fecha_vencimiento).toLocaleDateString() : '-'}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-sm text-center">
-                    <span className={insumo.stock_actual < insumo.stock_critico ? 'font-bold text-red-600' : 'text-gray-500'}>
-                      {insumo.stock_actual < insumo.stock_critico ? (insumo.stock_critico - insumo.stock_actual) : 0}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={() => handleEdit(insumo)}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 bg-indigo-100 rounded hover:bg-indigo-200 transition-colors"
-                        aria-label="Editar insumo"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(insumo.id)}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-100 rounded hover:bg-red-200 transition-colors"
-                        aria-label="Eliminar insumo"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="10" className="px-4 py-8 text-center text-gray-500">
-                  <div className="text-sm">
-                    {filterOptions.soloStockCritico 
-                      ? 'No hay insumos en stock crítico' 
-                      : 'No hay insumos disponibles'}
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-        </div>
-      </div>
+      <ResponsiveTable
+        data={insumosFiltered}
+        columns={columns}
+        onEdit={handleEdit}
+        onDelete={(insumo) => handleDelete(insumo.id)}
+        emptyMessage={filterOptions.soloStockCritico 
+          ? 'No hay insumos en stock crítico' 
+          : 'No hay insumos disponibles'}
+        keyField="id"
+      />
 
       {/* Modal de Formulario */}
       {showForm && (

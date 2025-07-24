@@ -322,91 +322,93 @@ const FichaClinicaPage = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Fichas Clínicas</h1>
+    <div className="p-3 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 space-y-2 sm:space-y-0">
+        <h1 className="text-xl sm:text-2xl font-bold">Fichas Clínicas</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Lista de Pacientes */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-2xl font-semibold mb-4">Pacientes</h2>
-          <div className="mb-4">
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+          <h2 className="text-lg sm:text-2xl font-semibold mb-3 sm:mb-4">Pacientes</h2>
+          <div className="mb-3 sm:mb-4">
             <input
               type="text"
               placeholder="Buscar por nombre o RUT..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-3 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-3 text-base sm:text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[44px]"
             />
           </div>
-          <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+          <div className="space-y-2 max-h-[40vh] sm:max-h-[calc(100vh-300px)] overflow-y-auto">
             {filteredPacientes.map(paciente => (
               <button
                 key={paciente.rut}
                 onClick={() => handlePacienteSelect(paciente.rut)}
-                className={`w-full text-left p-4 rounded-lg transition-colors ${
+                className={`w-full text-left p-3 sm:p-4 rounded-lg transition-colors min-h-[44px] ${
                   selectedPaciente?.rut === paciente.rut
                     ? 'bg-indigo-100 text-indigo-700'
                     : 'hover:bg-gray-100'
                 }`}
               >
-                <p className="text-xl font-medium">{paciente.nombre}</p>
-                <p className="text-lg text-gray-600">{paciente.rut}</p>
+                <p className="text-base sm:text-xl font-medium">{paciente.nombre}</p>
+                <p className="text-sm sm:text-lg text-gray-600">{paciente.rut}</p>
               </button>
             ))}
           </div>
         </div>
 
         {/* Lista de Fichas del Paciente Seleccionado */}
-        <div className="md:col-span-2">
+        <div className="lg:col-span-2">
           {selectedPaciente ? (
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-3xl font-semibold mb-2">{selectedPaciente.nombre}</h2>
-                  <p className="text-xl text-indigo-600 mb-1">{selectedPaciente.rut}</p>
-                  {selectedPaciente.direccion && (
-                    <p className="text-xl text-indigo-600 mb-1">Dirección: {selectedPaciente.direccion}</p>
-                  )}
-                  {selectedPaciente.fecha_nacimiento && (
-                    <p className="text-xl font-bold text-indigo-600">
-                      Edad: {calcularEdad(selectedPaciente.fecha_nacimiento)} años
-                    </p>
-                  )}
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+                <div className="flex-1">
+                  <h2 className="text-xl sm:text-3xl font-semibold mb-2">{selectedPaciente.nombre}</h2>
+                  <div className="space-y-1">
+                    <p className="text-base sm:text-xl text-indigo-600">{selectedPaciente.rut}</p>
+                    {selectedPaciente.direccion && (
+                      <p className="text-sm sm:text-xl text-indigo-600">Dirección: {selectedPaciente.direccion}</p>
+                    )}
+                    {selectedPaciente.fecha_nacimiento && (
+                      <p className="text-base sm:text-xl font-bold text-indigo-600">
+                        Edad: {calcularEdad(selectedPaciente.fecha_nacimiento)} años
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="space-x-2">
+                <div className="flex-shrink-0">
                   <button
                     onClick={() => setShowForm(true)}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-lg"
+                    className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-base sm:text-lg min-h-[44px]"
                   >
                     Nueva Ficha
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
+              <div className="space-y-3 sm:space-y-4 max-h-[40vh] sm:max-h-[calc(100vh-300px)] overflow-y-auto">
                 {fichas.map((ficha, index) => (
                   <button
                     key={index}
                     onClick={() => handleFichaClick(ficha)}
-                    className={`w-full text-left p-4 border rounded-lg transition-colors ${
+                    className={`w-full text-left p-3 sm:p-4 border rounded-lg transition-colors min-h-[44px] ${
                       selectedFicha?.id === ficha.id
                         ? 'bg-indigo-50 border-indigo-200'
                         : 'hover:bg-gray-50'
                     }`}
                   >
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-medium">Ficha del {formatDate(ficha.fecha)}</h3>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                      <h3 className="font-medium text-sm sm:text-base">Ficha del {formatDate(ficha.fecha)}</h3>
                     </div>
-                    <p className="text-gray-600 mt-2 line-clamp-2">{ficha.descripcion_atencion}</p>
+                    <p className="text-gray-600 mt-2 line-clamp-2 text-sm sm:text-base">{ficha.descripcion_atencion}</p>
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="bg-white p-6 rounded-lg shadow text-center text-gray-500">
-              Seleccione un paciente para ver sus fichas clínicas
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow text-center text-gray-500">
+              <p className="text-sm sm:text-base">Seleccione un paciente para ver sus fichas clínicas</p>
             </div>
           )}
         </div>
@@ -415,16 +417,16 @@ const FichaClinicaPage = () => {
       {/* Modal de Nueva Ficha */}
       {showForm && (
         <div 
-          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-2 sm:p-4"
           onClick={() => setShowForm(false)}
         >
           <div 
-            className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white"
+            className="relative top-4 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-full sm:max-w-2xl shadow-lg rounded-md bg-white min-h-[calc(100vh-2rem)] sm:min-h-0"
             onClick={e => e.stopPropagation()}
           >
             <div className="mt-3">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">
                   {isEditing ? 'Editar Ficha Clínica' : 'Nueva Ficha Clínica'}
                 </h3>
                 <button
@@ -439,7 +441,7 @@ const FichaClinicaPage = () => {
                       productos_usados: []
                     });
                   }}
-                  className="text-gray-400 hover:text-gray-500"
+                  className="text-gray-400 hover:text-gray-500 self-end sm:self-auto min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <span className="sr-only">Cerrar</span>
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -448,54 +450,70 @@ const FichaClinicaPage = () => {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                {/* Sección 1: Información Básica */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">Información Básica</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Atención</label>
+                      <input
+                        type="date"
+                        value={formData.fecha}
+                        onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 min-h-[44px] text-base"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sección 2: Descripción de la Atención */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">Descripción de la Atención</h4>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Fecha de Atención</label>
-                    <input
-                      type="date"
-                      value={formData.fecha}
-                      onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de consulta y evaluación</label>
+                    <textarea
+                      value={formData.descripcion_atencion}
+                      onChange={(e) => setFormData({ ...formData, descripcion_atencion: e.target.value })}
+                      rows="4"
+                      placeholder="Motivo de consulta, evaluación, observaciones generales..."
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base resize-y"
                       required
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Descripción de la Atención</label>
-                  <textarea
-                    value={formData.descripcion_atencion}
-                    onChange={(e) => setFormData({ ...formData, descripcion_atencion: e.target.value })}
-                    rows="3"
-                    placeholder="Motivo de consulta, evaluación, observaciones generales..."
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
+                {/* Sección 3: Procedimiento */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">Procedimiento Realizado</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Detalles del tratamiento</label>
+                    <textarea
+                      value={formData.procedimiento}
+                      onChange={(e) => setFormData({ ...formData, procedimiento: e.target.value })}
+                      rows="4"
+                      placeholder="Detalles del tratamiento efectuado..."
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base resize-y"
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Procedimiento Realizado</label>
-                  <textarea
-                    value={formData.procedimiento}
-                    onChange={(e) => setFormData({ ...formData, procedimiento: e.target.value })}
-                    rows="3"
-                    placeholder="Detalles del tratamiento efectuado..."
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Indicaciones</label>
-                  <textarea
-                    value={formData.indicaciones}
-                    onChange={(e) => setFormData({ ...formData, indicaciones: e.target.value })}
-                    rows="3"
-                    placeholder="Recomendaciones y cuidados para el paciente..."
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
+                {/* Sección 4: Indicaciones */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">Indicaciones</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Recomendaciones para el paciente</label>
+                    <textarea
+                      value={formData.indicaciones}
+                      onChange={(e) => setFormData({ ...formData, indicaciones: e.target.value })}
+                      rows="4"
+                      placeholder="Recomendaciones y cuidados para el paciente..."
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base resize-y"
+                      required
+                    />
+                  </div>
                 </div>
                 
                 {/* Nueva sección para productos usados */}
@@ -551,50 +569,74 @@ const FichaClinicaPage = () => {
                     </div>
                   </div>
                   
-                  {/* Tabla de productos agregados */}
+                  {/* Lista de productos agregados - Responsive */}
                   {formData.productos_usados.length > 0 && (
-                    <div className="mt-3 border rounded-md overflow-hidden">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Acción</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {formData.productos_usados.map((producto, index) => (
-                            <tr key={index}>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm">{producto.nombre}</td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm">{producto.cantidad}</td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-center">
-                                <button
-                                  type="button"
-                                  onClick={() => eliminarProducto(index)}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  Eliminar
-                                </button>
-                              </td>
+                    <div className="mt-3">
+                      {/* Vista de tabla para pantallas grandes */}
+                      <div className="hidden sm:block border rounded-md overflow-hidden">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
+                              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Acción</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {formData.productos_usados.map((producto, index) => (
+                              <tr key={index}>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm">{producto.nombre}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm">{producto.cantidad}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => eliminarProducto(index)}
+                                    className="text-red-500 hover:text-red-700 min-h-[44px] px-2"
+                                  >
+                                    Eliminar
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      {/* Vista de tarjetas para móviles */}
+                      <div className="sm:hidden space-y-2">
+                        {formData.productos_usados.map((producto, index) => (
+                          <div key={index} className="bg-white border rounded-lg p-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{producto.nombre}</p>
+                                <p className="text-gray-600 text-sm">Cantidad: {producto.cantidad}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => eliminarProducto(index)}
+                                className="text-red-500 hover:text-red-700 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
 
-                <div className="flex justify-end space-x-3">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t">
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 min-h-[44px] text-base"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                    className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 min-h-[44px] text-base"
                   >
                     Guardar
                   </button>
@@ -608,37 +650,37 @@ const FichaClinicaPage = () => {
       {/* Modal de Vista de Ficha */}
       {viewMode === 'view' && selectedFicha && (
         <div 
-          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-2 sm:p-4"
           onClick={handleCloseModal}
         >
           <div 
-            className="relative top-20 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white"
+            className="relative top-4 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-full sm:max-w-4xl shadow-lg rounded-md bg-white min-h-[calc(100vh-2rem)] sm:min-h-0"
             onClick={e => e.stopPropagation()}
           >
             <div className="mt-3">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-3 sm:space-y-0">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">
                   Ficha Clínica del {formatDate(selectedFicha.fecha)}
                 </h3>
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <button
                     onClick={(e) => {
                       handleCloseModal();
                       handleEditClick(e, selectedFicha);
                     }}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                    className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 min-h-[44px] text-base"
                   >
                     Editar
                   </button>
                   <button
                     onClick={handleGenerarCertificado}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 min-h-[44px] text-base"
                   >
                     Generar Certificado
                   </button>
                   <button
                     onClick={handleCloseModal}
-                    className="text-gray-400 hover:text-gray-500"
+                    className="text-gray-400 hover:text-gray-500 self-end sm:self-auto min-h-[44px] min-w-[44px] flex items-center justify-center"
                   >
                     <span className="sr-only">Cerrar</span>
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -648,19 +690,19 @@ const FichaClinicaPage = () => {
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">Información del Paciente</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-600"><strong>Nombre:</strong> {selectedPaciente.nombre}</p>
-                    <p className="text-gray-600"><strong>RUT:</strong> {selectedPaciente.rut}</p>
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
+                <h4 className="font-medium text-gray-700 mb-2 text-sm sm:text-base">Información del Paciente</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                  <div className="space-y-1">
+                    <p className="text-gray-600 text-sm sm:text-base"><strong>Nombre:</strong> {selectedPaciente.nombre}</p>
+                    <p className="text-gray-600 text-sm sm:text-base"><strong>RUT:</strong> {selectedPaciente.rut}</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     {selectedPaciente.direccion && (
-                      <p className="text-gray-600"><strong>Dirección:</strong> {selectedPaciente.direccion}</p>
+                      <p className="text-gray-600 text-sm sm:text-base"><strong>Dirección:</strong> {selectedPaciente.direccion}</p>
                     )}
                     {selectedPaciente.fecha_nacimiento && (
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 text-sm sm:text-base">
                         <strong>Edad:</strong> {calcularEdad(selectedPaciente.fecha_nacimiento)} años
                       </p>
                     )}
@@ -668,20 +710,20 @@ const FichaClinicaPage = () => {
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div className="bg-white p-4 rounded-lg border">
-                  <h4 className="font-medium text-gray-700 mb-2">Descripción de la Atención</h4>
-                  <p className="text-gray-600 whitespace-pre-wrap">{selectedFicha.descripcion_atencion}</p>
+              <div className="space-y-4 sm:space-y-6">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <h4 className="font-medium text-gray-700 mb-2 text-sm sm:text-base">Descripción de la Atención</h4>
+                  <p className="text-gray-600 whitespace-pre-wrap text-sm sm:text-base">{selectedFicha.descripcion_atencion}</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg border">
-                  <h4 className="font-medium text-gray-700 mb-2">Procedimiento</h4>
-                  <p className="text-gray-600 whitespace-pre-wrap">{selectedFicha.procedimiento}</p>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <h4 className="font-medium text-gray-700 mb-2 text-sm sm:text-base">Procedimiento</h4>
+                  <p className="text-gray-600 whitespace-pre-wrap text-sm sm:text-base">{selectedFicha.procedimiento}</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg border">
-                  <h4 className="font-medium text-gray-700 mb-2">Indicaciones</h4>
-                  <p className="text-gray-600 whitespace-pre-wrap">{selectedFicha.indicaciones}</p>
+                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                  <h4 className="font-medium text-gray-700 mb-2 text-sm sm:text-base">Indicaciones</h4>
+                  <p className="text-gray-600 whitespace-pre-wrap text-sm sm:text-base">{selectedFicha.indicaciones}</p>
                 </div>
 
                 {/* Mostrar productos utilizados si existen */}
@@ -722,21 +764,21 @@ const FichaClinicaPage = () => {
       {/* Modal de Edición */}
       {viewMode === 'edit' && (
         <div 
-          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-2 sm:p-4"
           onClick={handleCloseModal}
         >
           <div 
-            className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white"
+            className="relative top-4 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-full sm:max-w-2xl shadow-lg rounded-md bg-white min-h-[calc(100vh-2rem)] sm:min-h-0"
             onClick={e => e.stopPropagation()}
           >
             <div className="mt-3">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">
                   Editar Ficha Clínica
                 </h3>
                 <button
                   onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-500"
+                  className="text-gray-400 hover:text-gray-500 self-end sm:self-auto min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <span className="sr-only">Cerrar</span>
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -745,54 +787,68 @@ const FichaClinicaPage = () => {
                 </button>
               </div>
               
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                {/* Sección 1: Información Básica */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">Información Básica</h4>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Fecha de Atención</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Atención</label>
                     <input
                       type="date"
                       value={formData.fecha}
                       onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 min-h-[44px] text-base"
                       required
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Descripción de la Atención</label>
-                  <textarea
-                    value={formData.descripcion_atencion}
-                    onChange={(e) => setFormData({ ...formData, descripcion_atencion: e.target.value })}
-                    rows="3"
-                    placeholder="Motivo de consulta, evaluación, observaciones generales..."
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
+                {/* Sección 2: Descripción de la Atención */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">Descripción de la Atención</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de consulta y evaluación</label>
+                    <textarea
+                      value={formData.descripcion_atencion}
+                      onChange={(e) => setFormData({ ...formData, descripcion_atencion: e.target.value })}
+                      rows="4"
+                      placeholder="Motivo de consulta, evaluación, observaciones generales..."
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base resize-y"
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Procedimiento Realizado</label>
-                  <textarea
-                    value={formData.procedimiento}
-                    onChange={(e) => setFormData({ ...formData, procedimiento: e.target.value })}
-                    rows="3"
-                    placeholder="Detalles del tratamiento efectuado..."
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
+                {/* Sección 3: Procedimiento */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">Procedimiento Realizado</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Detalles del tratamiento</label>
+                    <textarea
+                      value={formData.procedimiento}
+                      onChange={(e) => setFormData({ ...formData, procedimiento: e.target.value })}
+                      rows="4"
+                      placeholder="Detalles del tratamiento efectuado..."
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base resize-y"
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Indicaciones</label>
-                  <textarea
-                    value={formData.indicaciones}
-                    onChange={(e) => setFormData({ ...formData, indicaciones: e.target.value })}
-                    rows="3"
-                    placeholder="Recomendaciones y cuidados para el paciente..."
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
+                {/* Sección 4: Indicaciones */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-3">Indicaciones</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Recomendaciones para el paciente</label>
+                    <textarea
+                      value={formData.indicaciones}
+                      onChange={(e) => setFormData({ ...formData, indicaciones: e.target.value })}
+                      rows="4"
+                      placeholder="Recomendaciones y cuidados para el paciente..."
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base resize-y"
+                      required
+                    />
+                  </div>
                 </div>
                 
                 {/* Nueva sección para productos usados */}
@@ -881,17 +937,17 @@ const FichaClinicaPage = () => {
                   )}
                 </div>
 
-                <div className="flex justify-end space-x-3 mt-4">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-4 pt-4 border-t">
                   <button
                     type="button"
                     onClick={handleCloseModal}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 min-h-[44px] text-base"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                    className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 min-h-[44px] text-base"
                   >
                     Guardar Cambios
                   </button>
@@ -905,27 +961,27 @@ const FichaClinicaPage = () => {
       {/* Modal de Certificado Médico */}
       {showCertificado && (
         <div 
-          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 p-2 sm:p-4"
           onClick={() => setShowCertificado(false)}
         >
           <div 
-            className="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white"
+            className="relative top-4 sm:top-20 mx-auto p-4 sm:p-5 border w-full max-w-full sm:max-w-4xl shadow-lg rounded-md bg-white min-h-[calc(100vh-2rem)] sm:min-h-0"
             onClick={e => e.stopPropagation()}
           >
             {/* Sección visible solo en pantalla */}
             <div className="print:hidden">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Generar Certificado</h3>
-                <div className="flex space-x-2">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-3 sm:space-y-0">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">Generar Certificado</h3>
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <button
                     onClick={handlePrintCertificado}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 min-h-[44px] text-base"
                   >
                     Imprimir Certificado
                   </button>
                   <button
                     onClick={() => setShowCertificado(false)}
-                    className="text-gray-400 hover:text-gray-500"
+                    className="text-gray-400 hover:text-gray-500 self-end sm:self-auto min-h-[44px] min-w-[44px] flex items-center justify-center"
                   >
                     <span className="sr-only">Cerrar</span>
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -935,13 +991,13 @@ const FichaClinicaPage = () => {
                 </div>
               </div>
 
-              <div className="mb-6 space-y-4">
+              <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Tipo de Certificado</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Certificado</label>
                   <select
                     value={certificadoData.tipo_certificado}
                     onChange={(e) => setCertificadoData({ ...certificadoData, tipo_certificado: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 min-h-[44px] text-base"
                   >
                     <option value="general">Certificado General</option>
                     <option value="deportivo">Certificado Deportivo</option>
@@ -950,32 +1006,32 @@ const FichaClinicaPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Motivo</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Motivo</label>
                   <textarea
                     value={certificadoData.motivo}
                     onChange={(e) => setCertificadoData({ ...certificadoData, motivo: e.target.value })}
-                    rows="3"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    rows="4"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base resize-y"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Indicación</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Indicación</label>
                   <textarea
                     value={certificadoData.indicacion}
                     onChange={(e) => setCertificadoData({ ...certificadoData, indicacion: e.target.value })}
-                    rows="3"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    rows="4"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base resize-y"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Días de Reposo</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Días de Reposo</label>
                   <input
                     type="number"
                     value={certificadoData.dias_reposo}
                     onChange={(e) => setCertificadoData({ ...certificadoData, dias_reposo: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 min-h-[44px] text-base"
                     min="0"
                   />
                 </div>

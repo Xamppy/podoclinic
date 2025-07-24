@@ -146,16 +146,17 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+    <div className="p-4 sm:p-6">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Citas del día */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Citas del Día</h2>
-            <p className="text-sm text-gray-600 capitalize">
-              {format(new Date(), "EEEE d 'de' MMMM", { locale: es })}
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+            <h2 className="text-lg sm:text-xl font-semibold">Citas del Día</h2>
+            <p className="text-xs sm:text-sm text-gray-600 capitalize">
+              <span className="hidden sm:inline">{format(new Date(), "EEEE d 'de' MMMM", { locale: es })}</span>
+              <span className="sm:hidden">{format(new Date(), "d MMM", { locale: es })}</span>
             </p>
           </div>
           
@@ -205,8 +206,11 @@ const DashboardPage = () => {
         </div>
 
         {/* Insumos críticos */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Insumos con Stock Crítico</h2>
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">
+            <span className="hidden sm:inline">Insumos con Stock Crítico</span>
+            <span className="sm:hidden">Stock Crítico</span>
+          </h2>
           {insumosCriticos.length === 0 ? (
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <p className="text-gray-500">No hay insumos con stock crítico</p>

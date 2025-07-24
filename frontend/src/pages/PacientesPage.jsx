@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { pacientesService } from '../api/pacientes';
 import { useRut } from '../hooks/useRut';
+import { getTouchTargetClasses, getTouchLoadingClasses } from '../utils/responsive';
+import TouchButton from '../components/common/TouchButton';
 
 const PacientesPage = () => {
   const [pacientes, setPacientes] = useState([]);
@@ -21,6 +23,9 @@ const PacientesPage = () => {
     fecha_nacimiento: ''
   });
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: 'info' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(null);
 
   useEffect(() => {
     cargarPacientes();
@@ -92,19 +97,13 @@ const PacientesPage = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      // Mostrar mensaje de carga
-      const loadingMsg = mostrarNotificacion('Creando paciente...', 'info');
-      
       const response = await pacientesService.create({
         rut,
         ...formData
       });
-      
-      // Eliminar mensaje de carga si aún existe
-      if (document.body.contains(loadingMsg)) {
-        document.body.removeChild(loadingMsg);
-      }
       
       setShowForm(false);
       await cargarPacientes();
@@ -144,6 +143,8 @@ const PacientesPage = () => {
       }
       
       mostrarNotificacion(mensajeError, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -187,10 +188,9 @@ const PacientesPage = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     
+    setIsUpdating(true);
+    
     try {
-      // Mostrar mensaje de carga
-      const loadingMsg = mostrarNotificacion('Actualizando paciente...', 'info');
-      
       // Preparar los datos para la actualización
       const datosActualizados = { 
         ...formData, 
@@ -210,11 +210,6 @@ const PacientesPage = () => {
       
       // Enviar los datos usando el RUT original para identificar el paciente
       await pacientesService.update(rutOriginal, datosActualizados);
-      
-      // Eliminar mensaje de carga si aún existe
-      if (document.body.contains(loadingMsg)) {
-        document.body.removeChild(loadingMsg);
-      }
       
       setEditMode(false);
       setShowForm(false);
@@ -256,22 +251,18 @@ const PacientesPage = () => {
       }
       
       mostrarNotificacion(mensajeError, 'error');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleDeleteClick = async (rut) => {
     // Mostrar un diálogo de confirmación
     if (window.confirm('¿Está seguro de que desea eliminar este paciente? Esta acción no se puede deshacer.')) {
+      setIsDeleting(rut);
+      
       try {
-        // Mostrar mensaje de carga
-        const loadingMsg = mostrarNotificacion('Eliminando paciente...', 'info');
-        
         await pacientesService.delete(rut);
-        
-        // Eliminar mensaje de carga si aún existe
-        if (document.body.contains(loadingMsg)) {
-          document.body.removeChild(loadingMsg);
-        }
         
         // Recargar la lista de pacientes
         await cargarPacientes();
@@ -298,6 +289,8 @@ const PacientesPage = () => {
         }
         
         mostrarNotificacion(mensajeError, 'error');
+      } finally {
+        setIsDeleting(null);
       }
     }
   };
@@ -307,10 +300,10 @@ const PacientesPage = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Pacientes</h1>
-        <button
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <h1 className="text-xl sm:text-2xl font-bold">Pacientes</h1>
+        <TouchButton
           onClick={() => {
             if (editMode) {
               handleCancelEdit();
@@ -333,18 +326,18 @@ const PacientesPage = () => {
               setShowForm(!showForm);
             }
           }}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          variant={showForm ? 'secondary' : 'primary'}
         >
           {showForm ? 'Cancelar' : 'Nuevo Paciente'}
-        </button>
+        </TouchButton>
       </div>
 
       {showForm && (
-        <form onSubmit={editMode ? handleUpdate : handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6">
+        <form onSubmit={editMode ? handleUpdate : handleSubmit} className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
           <div className="mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">{editMode ? 'Editar Paciente' : 'Nuevo Paciente'}</h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">{editMode ? 'Editar Paciente' : 'Nuevo Paciente'}</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 RUT {editMode && (
@@ -487,34 +480,38 @@ const PacientesPage = () => {
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end space-x-3">
-            <button
+          <div className="mt-6 flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+            <TouchButton
               type="button"
               onClick={editMode ? handleCancelEdit : () => setShowForm(false)}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+              variant="secondary"
+              className="w-full sm:w-auto"
+              disabled={isSubmitting || isUpdating}
             >
               Cancelar
-            </button>
-            <button
+            </TouchButton>
+            <TouchButton
               type="submit"
               disabled={
-                (!editMode && (rutError || pacienteExistente || verificandoExistencia)) ||
-                (editMode && (rutError || (pacienteExistente && rut !== rutOriginal) || verificandoExistencia))
+                isSubmitting || isUpdating || verificandoExistencia ||
+                (!editMode && (rutError || pacienteExistente)) ||
+                (editMode && (rutError || (pacienteExistente && rut !== rutOriginal)))
               }
-              className={`px-4 py-2 rounded-md ${
-                (!editMode && (rutError || pacienteExistente || verificandoExistencia)) ||
-                (editMode && (rutError || (pacienteExistente && rut !== rutOriginal) || verificandoExistencia))
-                  ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
-              }`}
+              variant="primary"
+              className="w-full sm:w-auto"
+              loading={isSubmitting || isUpdating || verificandoExistencia}
             >
-              {verificandoExistencia ? 'Verificando...' : editMode ? 'Actualizar' : 'Guardar'}
-            </button>
+              {verificandoExistencia ? 'Verificando...' : 
+               isSubmitting ? 'Guardando...' :
+               isUpdating ? 'Actualizando...' :
+               editMode ? 'Actualizar' : 'Guardar'}
+            </TouchButton>
           </div>
         </form>
       )}
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      {/* Desktop Table View (Large screens only) */}
+      <div className="hidden xl:block bg-white shadow rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -533,18 +530,27 @@ const PacientesPage = () => {
                 <td className="px-6 py-4 whitespace-nowrap">{paciente.telefono}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{paciente.correo}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button 
-                    className="text-indigo-600 hover:text-indigo-900 mr-3" 
-                    onClick={() => handleEditClick(paciente)}
-                  >
-                    Editar
-                  </button>
-                  <button 
-                    className="text-red-600 hover:text-red-900"
-                    onClick={() => handleDeleteClick(paciente.rut)}
-                  >
-                    Eliminar
-                  </button>
+                  <div className="flex space-x-2">
+                    <TouchButton
+                      variant="ghost"
+                      size="small"
+                      onClick={() => handleEditClick(paciente)}
+                      disabled={isDeleting === paciente.rut}
+                      className="text-indigo-600 hover:text-indigo-900"
+                    >
+                      Editar
+                    </TouchButton>
+                    <TouchButton
+                      variant="ghost"
+                      size="small"
+                      onClick={() => handleDeleteClick(paciente.rut)}
+                      disabled={isDeleting === paciente.rut}
+                      loading={isDeleting === paciente.rut}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      {isDeleting === paciente.rut ? 'Eliminando...' : 'Eliminar'}
+                    </TouchButton>
+                  </div>
                 </td>
               </tr>
             )) : (
@@ -556,6 +562,117 @@ const PacientesPage = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Tablet Scrollable Table View */}
+      <div className="hidden md:block xl:hidden bg-white shadow rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '800px' }}>
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">RUT</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-10">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {pacientes.length > 0 ? pacientes.map((paciente) => (
+                <tr key={paciente.rut}>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10">{paciente.rut}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{paciente.nombre}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{paciente.telefono}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{paciente.correo}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sticky right-0 bg-white z-10">
+                    <div className="flex space-x-2">
+                      <TouchButton
+                        variant="outline"
+                        size="small"
+                        onClick={() => handleEditClick(paciente)}
+                        disabled={isDeleting === paciente.rut}
+                        className="text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                      >
+                        Editar
+                      </TouchButton>
+                      <TouchButton
+                        variant="outline"
+                        size="small"
+                        onClick={() => handleDeleteClick(paciente.rut)}
+                        disabled={isDeleting === paciente.rut}
+                        loading={isDeleting === paciente.rut}
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        {isDeleting === paciente.rut ? 'Eliminando...' : 'Eliminar'}
+                      </TouchButton>
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="5" className="px-4 py-4 text-center text-gray-500">
+                    No hay pacientes registrados
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {/* Scroll indicator for tablets */}
+        <div className="bg-gray-50 px-4 py-2 text-xs text-gray-500 text-center border-t">
+          ← Desliza horizontalmente para ver más información →
+        </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {pacientes.length > 0 ? pacientes.map((paciente) => (
+          <div key={paciente.rut} className="bg-white shadow rounded-lg p-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">{paciente.nombre}</h3>
+                  <p className="text-sm text-gray-500">RUT: {paciente.rut}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-gray-500 w-20">Teléfono:</span>
+                  <span className="text-sm text-gray-900">{paciente.telefono}</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-gray-500 w-20">Correo:</span>
+                  <span className="text-sm text-gray-900 break-all">{paciente.correo}</span>
+                </div>
+              </div>
+              
+              <div className="flex space-x-3 pt-3 border-t border-gray-200">
+                <TouchButton
+                  variant="primary"
+                  onClick={() => handleEditClick(paciente)}
+                  disabled={isDeleting === paciente.rut}
+                  className="flex-1"
+                >
+                  Editar
+                </TouchButton>
+                <TouchButton
+                  variant="danger"
+                  onClick={() => handleDeleteClick(paciente.rut)}
+                  disabled={isDeleting === paciente.rut}
+                  loading={isDeleting === paciente.rut}
+                  className="flex-1"
+                >
+                  {isDeleting === paciente.rut ? 'Eliminando...' : 'Eliminar'}
+                </TouchButton>
+              </div>
+            </div>
+          </div>
+        )) : (
+          <div className="bg-white shadow rounded-lg p-6 text-center">
+            <p className="text-gray-500">No hay pacientes registrados</p>
+          </div>
+        )}
       </div>
     </div>
   );

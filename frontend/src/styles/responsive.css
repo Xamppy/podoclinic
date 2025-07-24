@@ -1,0 +1,410 @@
+/**
+ * Estilos CSS personalizados para utilidades responsivas
+ */
+
+/* Utilidades para safe areas (iOS) */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Utilidades para scroll suave */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Utilidades para texto truncado responsivo */
+.text-truncate-mobile {
+  @apply truncate;
+}
+
+@screen sm {
+  .text-truncate-mobile {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+}
+
+/* Utilidades para hover condicional (solo en dispositivos que soportan hover) */
+@media (hover: hover) {
+  .hover-conditional:hover {
+    @apply bg-gray-100;
+  }
+  
+  .hover-conditional-blue:hover {
+    @apply bg-blue-50 text-blue-600;
+  }
+  
+  .hover-conditional-indigo:hover {
+    @apply bg-indigo-50 text-indigo-600;
+  }
+}
+
+/* Utilidades para focus visible mejorado */
+.focus-visible-enhanced:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Utilidades para animaciones reducidas en dispositivos que lo prefieren */
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe-animate {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Utilidades para contraste alto */
+@media (prefers-contrast: high) {
+  .contrast-enhanced {
+    @apply border-2 border-black;
+  }
+  
+  .contrast-enhanced-text {
+    @apply text-black;
+  }
+}
+
+/* Utilidades para modo oscuro (preparación futura) */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-bg {
+    @apply bg-gray-900;
+  }
+  
+  .dark-mode-text {
+    @apply text-gray-100;
+  }
+}
+
+/* Utilidades para impresión */
+@media print {
+  .print-hidden {
+    display: none !important;
+  }
+  
+  .print-visible {
+    display: block !important;
+  }
+  
+  .print-break-before {
+    page-break-before: always;
+  }
+  
+  .print-break-after {
+    page-break-after: always;
+  }
+  
+  .print-no-break {
+    page-break-inside: avoid;
+  }
+}
+
+/* Utilidades para orientación */
+@media (orientation: portrait) {
+  .portrait-only {
+    display: block;
+  }
+  
+  .landscape-hidden {
+    display: none;
+  }
+}
+
+@media (orientation: landscape) {
+  .landscape-only {
+    display: block;
+  }
+  
+  .portrait-hidden {
+    display: none;
+  }
+}
+
+/* Utilidades para dispositivos táctiles */
+@media (pointer: coarse) {
+  .touch-device-spacing {
+    @apply p-4;
+  }
+  
+  .touch-device-text {
+    @apply text-base;
+  }
+  
+  /* Asegurar targets táctiles mínimos */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Espaciado adicional para elementos táctiles */
+  .touch-spacing {
+    @apply p-3;
+  }
+  
+  /* Feedback visual mejorado para touch */
+  .touch-feedback:active {
+    @apply scale-95 bg-opacity-80;
+    transition: transform 0.1s ease-in-out;
+  }
+}
+
+@media (pointer: fine) {
+  .mouse-device-spacing {
+    @apply p-2;
+  }
+  
+  .mouse-device-text {
+    @apply text-sm;
+  }
+  
+  /* Targets más pequeños para mouse */
+  .mouse-target {
+    min-height: 32px;
+    min-width: 32px;
+  }
+}
+
+/* Utilidades universales para touch targets */
+.touch-target-44 {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.touch-target-48 {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Utilidades para feedback táctil */
+.touch-feedback {
+  @apply transition-all duration-150 ease-in-out;
+}
+
+.touch-feedback:active {
+  @apply scale-95;
+}
+
+/* Utilidades para ripple effect */
+.ripple-container {
+  @apply relative overflow-hidden;
+}
+
+.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Utilidades para estados de loading en touch */
+.touch-loading {
+  @apply cursor-wait opacity-75 pointer-events-none;
+}
+
+.touch-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Utilidades para alta densidad de píxeles */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .high-dpi-border {
+    border-width: 0.5px;
+  }
+}
+
+/* Utilidades para scroll personalizado */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Utilidades para modales responsivos */
+.modal-backdrop-responsive {
+  @apply fixed inset-0 bg-black bg-opacity-50 z-40;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content-responsive {
+  @apply relative bg-white rounded-lg shadow-xl;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+@screen sm {
+  .modal-content-responsive {
+    max-height: calc(100vh - 4rem);
+  }
+}
+
+/* Utilidades para formularios responsivos */
+.form-field-responsive {
+  @apply mb-4;
+}
+
+.form-field-responsive label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.form-field-responsive input,
+.form-field-responsive textarea,
+.form-field-responsive select {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+  min-height: 44px;
+}
+
+@screen sm {
+  .form-field-responsive input,
+  .form-field-responsive textarea,
+  .form-field-responsive select {
+    @apply text-sm;
+    min-height: 40px;
+  }
+}
+
+/* Utilidades para tablas responsivas */
+.table-responsive-wrapper {
+  @apply overflow-x-auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive-wrapper table {
+  @apply min-w-full;
+}
+
+/* Utilidades para navegación responsiva */
+.nav-responsive {
+  @apply flex items-center justify-between;
+}
+
+.nav-responsive .nav-brand {
+  @apply flex-shrink-0;
+}
+
+.nav-responsive .nav-menu {
+  @apply hidden;
+}
+
+@screen md {
+  .nav-responsive .nav-menu {
+    @apply flex space-x-4;
+  }
+}
+
+.nav-responsive .nav-toggle {
+  @apply block;
+}
+
+@screen md {
+  .nav-responsive .nav-toggle {
+    @apply hidden;
+  }
+}
+
+/* Utilidades para cards responsivos */
+.card-responsive {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4;
+}
+
+@screen sm {
+  .card-responsive {
+    @apply p-6;
+  }
+}
+
+/* Utilidades para espaciado responsivo */
+.spacing-responsive-sm {
+  @apply space-y-2;
+}
+
+@screen sm {
+  .spacing-responsive-sm {
+    @apply space-y-3;
+  }
+}
+
+.spacing-responsive-md {
+  @apply space-y-3;
+}
+
+@screen sm {
+  .spacing-responsive-md {
+    @apply space-y-4;
+  }
+}
+
+@screen lg {
+  .spacing-responsive-md {
+    @apply space-y-6;
+  }
+}
+
+.spacing-responsive-lg {
+  @apply space-y-4;
+}
+
+@screen sm {
+  .spacing-responsive-lg {
+    @apply space-y-6;
+  }
+}
+
+@screen lg {
+  .spacing-responsive-lg {
+    @apply space-y-8;
+  }
+}
