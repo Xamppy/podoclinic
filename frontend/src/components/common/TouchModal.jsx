@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useVerticalSwipe } from '../../hooks/useSwipe';
 import { isMobile, handleMobileModalClose } from '../../utils/responsive';
+import { manageFocus, keyboardNavigation, announceToScreenReader } from '../../utils/accessibility';
 import TouchButton from './TouchButton';
 
 /**
@@ -25,37 +26,54 @@ const TouchModal = ({
   // Configurar swipe down para cerrar en móvil
   const swipeRef = useVerticalSwipe(
     null, // No action for swipe up
-    closeOnSwipeDown && isMobile() ? () => handleMobileModalClose(onClose) : null,
+    closeOnSwipeDown && isMobile() ? onClose : null,
     {
       threshold: 100,
       preventDefaultTouchmoveEvent: false,
     }
   );
 
-  // Manejar tecla Escape
+  // Gestión de accesibilidad y foco
   useEffect(() => {
-    const handleEscape = (event) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
+    if (!isOpen) return;
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      // Prevenir scroll del body cuando el modal está abierto
-      document.body.style.overflow = 'hidden';
+    const previousActiveElement = document.activeElement;
+    let cleanupFocus = null;
+    let cleanupEscape = null;
+
+    // Anunciar apertura del modal
+    announceToScreenReader(`Modal abierto: ${title || 'Diálogo'}`);
+
+    // Configurar trap de foco
+    if (modalRef.current) {
+      cleanupFocus = manageFocus.trapFocus(modalRef.current);
     }
 
+    // Manejar tecla Escape
+    cleanupEscape = keyboardNavigation.handleEscape(onClose);
+
+    // Prevenir scroll del body
+    document.body.style.overflow = 'hidden';
+
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      // Cleanup
+      if (cleanupFocus) cleanupFocus();
+      if (cleanupEscape) cleanupEscape();
+
       document.body.style.overflow = 'unset';
+
+      // Restaurar foco anterior
+      manageFocus.restoreFocus(previousActiveElement);
+
+      // Anunciar cierre del modal
+      announceToScreenReader('Modal cerrado');
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, title]);
 
   // Manejar click en backdrop
   const handleBackdropClick = (event) => {
     if (closeOnBackdropClick && event.target === backdropRef.current) {
-      handleMobileModalClose(onClose);
+      onClose();
     }
   };
 
@@ -77,7 +95,7 @@ const TouchModal = ({
   };
 
   // Clases responsivas
-  const responsiveClasses = isMobile() 
+  const responsiveClasses = isMobile()
     ? 'min-h-screen sm:min-h-0 sm:my-8 rounded-none sm:rounded-lg'
     : 'my-8 rounded-lg';
 
@@ -90,7 +108,10 @@ const TouchModal = ({
     >
       <div className="flex min-h-full items-center justify-center p-0 sm:p-4">
         <div
-          ref={swipeRef}
+          ref={(el) => {
+            modalRef.current = el;
+            if (swipeRef) swipeRef.current = el;
+          }}
           className={`
             relative bg-white shadow-xl transform transition-all
             ${sizeClasses[size]}
@@ -100,6 +121,7 @@ const TouchModal = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby={title ? 'modal-title' : undefined}
+          aria-describedby="modal-content"
           tabIndex={-1}
           {...props}
         >
@@ -107,7 +129,7 @@ const TouchModal = ({
           {(title || showCloseButton) && (
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
               {title && (
-                <h3 
+                <h3
                   id="modal-title"
                   className="text-lg sm:text-xl font-semibold text-gray-900"
                 >
@@ -118,7 +140,7 @@ const TouchModal = ({
                 <TouchButton
                   variant="ghost"
                   size="small"
-                  onClick={() => handleMobileModalClose(onClose)}
+                  onClick={onClose}
                   className="text-gray-400 hover:text-gray-600 ml-auto"
                   aria-label="Cerrar modal"
                 >
@@ -138,10 +160,9 @@ const TouchModal = ({
           )}
 
           {/* Content */}
-          <div 
-            ref={modalRef}
+          <div
+            id="modal-content"
             className="p-4 sm:p-6 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] overflow-y-auto"
-            tabIndex={-1}
           >
             {children}
           </div>
@@ -184,7 +205,7 @@ export const TouchConfirmModal = ({
             {message}
           </p>
         )}
-        
+
         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
           <TouchButton
             variant="secondary"
@@ -244,7 +265,7 @@ export const TouchFormModal = ({
         <div className="space-y-4">
           {children}
         </div>
-        
+
         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
           <TouchButton
             type="button"

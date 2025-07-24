@@ -1,6 +1,67 @@
 /**
- * Estilos CSS personalizados para utilidades responsivas
+ * Estilos CSS personalizados para utilidades responsivas y accesibilidad
  */
+
+/* Accessibility: Focus styles for keyboard users */
+.keyboard-user *:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 9999;
+  border-radius: 4px;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .touch-feedback {
+    border: 2px solid currentColor;
+  }
+  
+  .bg-indigo-600 {
+    background-color: #000 !important;
+    color: #fff !important;
+  }
+  
+  .text-gray-300 {
+    color: #000 !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 /* Utilidades para safe areas (iOS) */
 .safe-area-top {

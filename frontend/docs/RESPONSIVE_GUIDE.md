@@ -322,6 +322,108 @@ Siempre probar en dispositivos físicos para validar:
 - Legibilidad de texto
 - Usabilidad general
 
+## Accesibilidad Responsiva
+
+### Navegación por Teclado
+
+```jsx
+import { keyboardNavigation } from '../utils/accessibility';
+
+// Manejar tecla Escape
+useEffect(() => {
+  const cleanup = keyboardNavigation.handleEscape(() => {
+    // Cerrar modal/menú
+  });
+  return cleanup;
+}, []);
+
+// Activación con Enter/Space
+const cleanup = keyboardNavigation.handleActivation(element, callback);
+```
+
+### Gestión de Foco
+
+```jsx
+import { manageFocus } from '../utils/accessibility';
+
+// Trap focus en modales
+useEffect(() => {
+  if (isOpen && modalRef.current) {
+    const cleanup = manageFocus.trapFocus(modalRef.current);
+    return cleanup;
+  }
+}, [isOpen]);
+```
+
+### Anuncios para Lectores de Pantalla
+
+```jsx
+import { announceToScreenReader } from '../utils/accessibility';
+
+// Anunciar cambios importantes
+announceToScreenReader('Formulario guardado exitosamente');
+announceToScreenReader('Error: Complete todos los campos', 'assertive');
+```
+
+### Atributos ARIA Esenciales
+
+```jsx
+// Modales
+<div
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modal-title"
+  aria-describedby="modal-content"
+>
+
+// Botones
+<button
+  aria-label="Cerrar modal"
+  aria-expanded={isOpen}
+>
+
+// Navegación
+<nav role="navigation" aria-label="Navegación principal">
+```
+
+### CSS para Accesibilidad
+
+```css
+/* Focus visible para usuarios de teclado */
+.keyboard-user *:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+/* Contenido solo para lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Soporte para movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Alto contraste */
+@media (prefers-contrast: high) {
+  .touch-feedback {
+    border: 2px solid currentColor;
+  }
+}
+```
+
 ## Troubleshooting
 
 ### Problemas Comunes
@@ -346,6 +448,11 @@ Siempre probar en dispositivos físicos para validar:
    - Implementar lazy loading
    - Optimizar imágenes
    - Reducir re-renders innecesarios
+
+6. **Problemas de accesibilidad**
+   - Ejecutar `npm run check-accessibility`
+   - Probar con navegación por teclado
+   - Verificar con lectores de pantalla
 
 ## Recursos Adicionales
 

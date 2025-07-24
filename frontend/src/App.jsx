@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { WhatsAppProvider } from './context/WhatsAppContext';
+import { detectKeyboardUser } from './utils/accessibility';
 
 // Import responsive styles
 import './styles/responsive.css';
@@ -23,10 +24,20 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import PublicRoutes from './routes/PublicRoutes';
 
 const App = () => {
+  // Detectar usuarios de teclado para mejorar accesibilidad
+  useEffect(() => {
+    const cleanup = detectKeyboardUser();
+    return cleanup;
+  }, []);
+
   return (
     <AuthProvider>
       <WhatsAppProvider>
         <Router>
+          {/* Skip to main content link for accessibility */}
+          <a href="#main-content" className="skip-link">
+            Saltar al contenido principal
+          </a>
           <Routes>
             {/* Ruta raíz redirige a app/login */}
             <Route path="/" element={<Navigate to="/app/login" replace />} />

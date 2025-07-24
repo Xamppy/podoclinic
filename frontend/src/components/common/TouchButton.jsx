@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getResponsiveClasses, getInteractionProps, supportsHover } from '../../utils/responsive';
+import { keyboardNavigation } from '../../utils/accessibility';
 
 /**
  * Componente de botón optimizado para interacciones táctiles
@@ -18,6 +19,15 @@ const TouchButton = ({
 }) => {
   const [ripples, setRipples] = useState([]);
   const [isPressed, setIsPressed] = useState(false);
+  const buttonRef = useRef(null);
+
+  // Manejar activación por teclado
+  useEffect(() => {
+    if (!buttonRef.current || !onClick) return;
+
+    const cleanup = keyboardNavigation.handleActivation(buttonRef.current, onClick);
+    return cleanup;
+  }, [onClick]);
 
   // Obtener clases responsivas
   const responsiveClasses = getResponsiveClasses('button', size);
@@ -59,13 +69,23 @@ const TouchButton = ({
     const button = event.currentTarget;
     const rect = button.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
-    const x = event.clientX - rect.left - size / 2;
-    const y = event.clientY - rect.top - size / 2;
+    
+    // Validar coordenadas del evento para evitar NaN
+    const clientX = event.clientX || (event.touches && event.touches[0] ? event.touches[0].clientX : rect.left + rect.width / 2);
+    const clientY = event.clientY || (event.touches && event.touches[0] ? event.touches[0].clientY : rect.top + rect.height / 2);
+    
+    const x = clientX - rect.left - size / 2;
+    const y = clientY - rect.top - size / 2;
+
+    // Validar que las coordenadas sean números válidos
+    if (isNaN(x) || isNaN(y) || isNaN(size)) {
+      return; // No crear ripple si hay valores inválidos
+    }
 
     const newRipple = {
-      x,
-      y,
-      size,
+      x: Math.round(x),
+      y: Math.round(y),
+      size: Math.round(size),
       id: Date.now(),
     };
 
@@ -100,6 +120,7 @@ const TouchButton = ({
 
   return (
     <button
+      ref={buttonRef}
       className={finalClasses}
       disabled={disabled || loading}
       onTouchStart={handleTouchStart}

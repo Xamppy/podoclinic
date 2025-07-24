@@ -1,8 +1,9 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useHorizontalSwipe } from '../../hooks/useSwipe';
 import { getTouchTargetClasses } from '../../utils/responsive';
 import { useResponsivePerformance } from '../../hooks/useResponsivePerformance';
+import { keyboardNavigation, announceToScreenReader } from '../../utils/accessibility';
 import ResponsiveImage from '../common/ResponsiveImage';
 
 const Sidebar = memo(({ isOpen, onClose }) => {
@@ -16,12 +17,28 @@ const Sidebar = memo(({ isOpen, onClose }) => {
     { path: '/app/respaldo', label: 'Respaldo', icon: '💾' },
   ];
 
-  const handleNavClick = () => {
+  const handleNavClick = (label) => {
+    // Anunciar navegación
+    announceToScreenReader(`Navegando a ${label}`);
+    
     // Close sidebar on mobile when navigating
     if (onClose) {
       onClose();
     }
   };
+
+  // Manejar tecla Escape para cerrar sidebar en móvil
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+
+    const cleanup = keyboardNavigation.handleEscape(() => {
+      if (onClose) {
+        onClose();
+      }
+    });
+
+    return cleanup;
+  }, [isOpen, isMobile, onClose]);
 
   // Configurar swipe para cerrar sidebar en móvil
   const swipeRef = useHorizontalSwipe(
@@ -96,15 +113,17 @@ const Sidebar = memo(({ isOpen, onClose }) => {
           <NavLink
             key={item.path}
             to={item.path}
-            onClick={handleNavClick}
+            onClick={() => handleNavClick(item.label)}
             className={({ isActive }) =>
               `flex items-center space-x-2 px-4 py-3 rounded-lg transition-colors touch-feedback ${getTouchTargetClasses()} ${isActive
                 ? 'bg-indigo-600 text-white'
-                : 'text-gray-300 hover:bg-gray-700 active:bg-gray-600'
+                : 'text-gray-300 hover:bg-gray-700 active:bg-gray-600 focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800'
               }`
             }
+            aria-label={`Ir a ${item.label}`}
+            role="menuitem"
           >
-            <span className="text-lg">{item.icon}</span>
+            <span className="text-lg" aria-hidden="true">{item.icon}</span>
             <span className="text-sm sm:text-base">{item.label}</span>
           </NavLink>
         ))}

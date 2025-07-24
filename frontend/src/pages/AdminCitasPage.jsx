@@ -173,32 +173,19 @@ const AdminCitasPage = () => {
 
   const handleSelectSlot = async (slotInfo) => {
     console.log("🎯 Slot seleccionado:", slotInfo);
-    console.log("🎯 Estado actual showForm:", showForm);
-    console.log("🎯 Dispositivo móvil:", window.innerWidth < 768);
-    console.log("🎯 User agent:", navigator.userAgent);
 
     const start = new Date(slotInfo.start);
     setSelectedDate(start);
 
     // Formatear la fecha para la API
     const fechaFormateada = format(start, 'yyyy-MM-dd');
-    console.log("🎯 Fecha formateada:", fechaFormateada);
-
     setFormData(prev => ({
       ...prev,
       fecha: fechaFormateada,
       tipo_cita: prev.tipo_cita || 'podologia' // Asegurar que tenga un valor por defecto
     }));
 
-    console.log("🎯 Mostrando modal...");
-    
-    // Forzar el estado del modal en móvil
-    setTimeout(() => {
-      setShowForm(true);
-      console.log("🎯 Modal forzado a mostrar");
-    }, 0);
-    
-    console.log("🎯 showForm después de setShowForm(true):", true);
+    setShowForm(true);
 
     try {
       // Primero establecer un estado de carga
@@ -1041,50 +1028,35 @@ const AdminCitasPage = () => {
           </h1>
         </div>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-          {/* Debug: Estado actual de la vista */}
-          <div className="lg:hidden text-xs bg-yellow-100 p-2 rounded mb-2">
-            Vista: {currentView} | Fecha calendario: {currentDate.toLocaleDateString()}
-          </div>
+
           
           {/* Botones de vista para móvil */}
           <div className="flex space-x-2 lg:hidden">
             <button
               className={`flex-1 px-2 py-2 rounded-md transition-colors text-xs font-medium ${currentView === 'month' ? 'bg-indigo-700 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               style={{ minHeight: '44px' }}
-              onClick={() => {
-                console.log('🎯 Botón Mes clickeado');
-                setCurrentView('month');
-              }}
+              onClick={() => setCurrentView('month')}
             >
               Mes
             </button>
             <button
               className={`flex-1 px-2 py-2 rounded-md transition-colors text-xs font-medium ${currentView === 'week' ? 'bg-indigo-700 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               style={{ minHeight: '44px' }}
-              onClick={() => {
-                console.log('🎯 Botón Semana clickeado');
-                setCurrentView('week');
-              }}
+              onClick={() => setCurrentView('week')}
             >
               Semana
             </button>
             <button
               className={`flex-1 px-2 py-2 rounded-md transition-colors text-xs font-medium ${currentView === 'day' ? 'bg-indigo-700 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               style={{ minHeight: '44px' }}
-              onClick={() => {
-                console.log('🎯 Botón Día clickeado');
-                setCurrentView('day');
-              }}
+              onClick={() => setCurrentView('day')}
             >
               Día
             </button>
             <button
               className={`flex-1 px-2 py-2 rounded-md transition-colors text-xs font-medium ${currentView === 'agenda' ? 'bg-indigo-700 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               style={{ minHeight: '44px' }}
-              onClick={() => {
-                console.log('🎯 Botón Lista clickeado');
-                setCurrentView('agenda');
-              }}
+              onClick={() => setCurrentView('agenda')}
             >
               Lista
             </button>
@@ -1095,10 +1067,7 @@ const AdminCitasPage = () => {
             className={`hidden lg:block w-full sm:w-auto px-3 py-2 sm:px-4 rounded-md transition-colors text-sm font-medium ${currentView === 'agenda' ? 'bg-indigo-700 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             style={{ minHeight: '44px' }}
-            onClick={() => {
-              console.log('🎯 Botón Ver Agenda clickeado');
-              setCurrentView('agenda');
-            }}
+            onClick={() => setCurrentView('agenda')}
           >
             <span className="hidden sm:inline">Ver Agenda</span>
             <span className="sm:hidden">Agenda</span>
@@ -1107,7 +1076,6 @@ const AdminCitasPage = () => {
             className="w-full sm:w-auto px-3 py-2 sm:px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium"
             style={{ minHeight: '44px' }}
             onClick={() => {
-              console.log("🎯 Botón Nueva Cita presionado");
               setSelectedDate(new Date());
               setFormData(prev => ({ ...prev, fecha: format(new Date(), 'yyyy-MM-dd') }));
               handleSelectSlot({ start: new Date() });

@@ -27,7 +27,12 @@ const Layout = ({ children }) => {
       
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         <Header onToggleSidebar={toggleSidebar} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 lg:p-6">
+        <main 
+          id="main-content"
+          className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 lg:p-6"
+          role="main"
+          aria-label="Contenido principal"
+        >
           {children}
         </main>
       </div>

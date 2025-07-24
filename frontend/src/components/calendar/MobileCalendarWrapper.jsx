@@ -13,13 +13,11 @@ const MobileCalendarWrapper = ({ children, onDateSelect }) => {
 
       // No procesar si el clic fue en la toolbar del calendario (botones de navegación)
       if (event.target.closest('.rbc-toolbar')) {
-        console.log('🎯 MobileCalendarWrapper: Ignorando clic en toolbar');
         return;
       }
       
       // No procesar si el clic fue en cualquier botón
       if (event.target.tagName === 'BUTTON' || event.target.closest('button')) {
-        console.log('🎯 MobileCalendarWrapper: Ignorando clic en botón');
         return;
       }
 
